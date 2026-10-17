@@ -36,7 +36,7 @@ For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter
 - IndexedDB storage for local model candidates, plus a production service worker and cached workspace for offline model work.
 - Batched Open-Meteo weather/soil inputs, official NWS alerts, nearby USGS stages, FEMA exposure and public wildlife context for all sites. FIRMS is credential-gated; lightning modes distinguish unavailable, recorded live events and replay. Source-specific caches, expiry and backoff preserve unknowns on failure.
 - Continuous weather, heat, lightning, flood, wildfire, soil and wildlife channels; dominant risk plus bounded secondary compounding; separate task policy. Ordinary crew reports do not force risk to 10.
-- An authoritative 3D risk atlas with eleven layers, site explanations, coverage/confidence, current overrides and a backend-scored 72-hour timeline.
+- An authoritative 3D risk atlas with eleven layers, site explanations, coverage/confidence, current overrides and a backend-scored 72-hour timeline loaded on demand for the selected plant.
 
 ## Repository context
 

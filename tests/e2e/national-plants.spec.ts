@@ -56,8 +56,8 @@ test("official forecast screening gives CA, AK and HI numeric map risks and stal
     const siteRisks = { ...snapshot.siteRisks, ...Object.fromEntries(plants.map(plant => [plant.id, siteRisk(plant, undefined, now, [], [], [], false, weatherScreenings[plant.id]).snapshot])) };
     return route.fulfill({ json: { ...snapshot, weatherScreenings, decisions, siteRisks } });
   });
-  await page.route("**/api/risk/atlas?**", async route => {
-    const data = await page.request.get("/api/snapshot").then(r => r.json());
+  await page.route("**/api/risk/atlas?**", route => {
+    const data = snapshot;
     const now = Date.now();
     const risks = Object.fromEntries(plants.map(plant => [plant.id, siteRisk(plant, undefined, now, [], [], [], false, { siteId: plant.id, source: "NOAA/NWS", sourceUrl: "https://api.weather.gov/test", fetchedAt: new Date(now - (stale ? 4 * 3600000 : 0)).toISOString(), issuedAt: new Date(now - 3600000).toISOString(), hours: [{ time: new Date(now - 60000).toISOString(), heatIndex: 104, windKmh: 55 }] }).snapshot]));
     return route.fulfill({ json: { version: 1, hour: 0, kind: "CURRENT", generatedAt: new Date(now).toISOString(), validAt: new Date(now).toISOString(), limitations: [], sites: data.sites.map((site: Site) => ({ site, snapshot: risks[site.id] ?? data.siteRisks[site.id] })) } });

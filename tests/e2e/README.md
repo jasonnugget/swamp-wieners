@@ -13,7 +13,7 @@ Run `npm run test:e2e` from the root. Installed Google Chrome is required. `play
 | `workflow.spec.ts` | Photo handoff across screens, independent replay lightning holds, briefing carry-forward, report resolution, browser training/inference, offline reload and mobile layout |
 | `redesign.spec.ts` | Loading/retry, editorial homepage, navigation/history, reduced motion, feature keyboard controls, atlas bounds and reset confirmation |
 
-The atlas tests reject any `/api/weather/*` request from the supervisor. Layer changes read one existing frame; slider changes request one batched national frame. The real crew-submission test verifies SSE updates to the supervisor's beacon, risk, evidence, holds and priority list. JEV and live lightning fixtures do not claim authenticated provider connectivity.
+The atlas tests reject any `/api/weather/*` request from the supervisor. Layer changes read one existing frame; slider changes request only the selected plant. Tests cover hiding the slider in overviews, restoring it through explicit site focus, stopping playback on exit, switching plants, visited-frame reuse and future failures while the map remains current. The real crew-submission test verifies SSE updates to the supervisor's beacon, risk, evidence, holds and priority list. JEV and live lightning fixtures do not claim authenticated provider connectivity.
 
 The isolated server sets `DISABLE_NWS_SCREENING=1`, `DISABLE_ENVIRONMENT_COLLECTION=1` and `DISABLE_EXTERNAL_PROVIDERS=1`. These flags disable their respective background jobs; explicit refresh requests can still collect. Tests use deterministic fixtures or existing persisted inputs. Actual source checks are recorded separately in [provider documentation](../../docs/environment-providers.md).
 

@@ -12,7 +12,7 @@ Workspace contracts live in [shared/types.ts](../shared/types.ts), observations 
 | `GET /api/snapshot` | Complete `Snapshot`: clock, sites, teams, forecasts, screenings, reports, strikes, alerts, briefings, period decisions, canonical `siteRisks`, JEV configuration and feed status |
 | `GET /api/sites/risks` | Canonical current risk snapshots keyed by site ID |
 | `GET /api/sites/:id/risk` | One canonical current snapshot; 404 for an unknown site |
-| `GET /api/risk/atlas?hour=0..72` | One national current/forecast risk frame for all sites |
+| `GET /api/risk/atlas?hour=0..72` | Current/forecast risk frame; optional `siteId` scopes scoring and response to one plant |
 | `GET /api/events` | Server-sent events announcing connection or state invalidation; clients refetch the snapshot |
 
 SSE messages are JSON in `data:` frames. Updates currently carry a timestamp rather than the full changed object. A comment heartbeat runs every twenty seconds. API responses are not service-worker cached; the client separately stores its last snapshot in localStorage.
@@ -109,15 +109,17 @@ Canonical observations add `provenance.providers` and `provenance.fieldEvidence`
 
 `POST /api/sites/:id/refresh` also queues independent provider work. The response can precede slower source completion; SSE invalidation requests a new snapshot as results arrive. Reads do not fan out source HTTP requests. Existing routes remain available. See [field mappings, failure semantics and intervals](environment-providers.md).
 
+JSON and static assets use negotiated compression when the client accepts it, with `Vary: Accept-Encoding`; decoded contracts are unchanged. `/api/events` bypasses compression so SSE updates flush immediately.
+
 ## Authoritative supervisor atlas
 
-`GET /api/risk/atlas?hour=0` returns a `RiskAtlas` with `version: 1`, `generatedAt`, `validAt`, `hour`, `kind`, `limitations`, and `sites: [{site, snapshot}]`. Each snapshot is the shared `SiteRiskSnapshot`. The default hour is zero; invalid, fractional or out-of-range hours return HTTP 400. This endpoint reads persisted evidence and never fans out external HTTP requests.
+`GET /api/risk/atlas?hour=0` returns a `RiskAtlas` with `version: 1`, `generatedAt`, `validAt`, `hour`, `kind`, `limitations`, and `sites: [{site, snapshot}]`. Each snapshot is the shared `SiteRiskSnapshot`. The default hour is zero; invalid, fractional or out-of-range hours return HTTP 400. Optional `siteId` returns exactly one plant and scopes engine scoring to that site; an unknown ID returns HTTP 404. The map requests the current national frame, while its selected-site forecast slider uses `?hour=1..72&siteId=...`. Without `siteId`, national frames remain supported for compatibility. This endpoint reads persisted evidence and never fans out external HTTP requests.
 
-Hour zero returns the same current snapshots as `/api/sites/risks` and `/api/snapshot.siteRisks`, using actual system time regardless of the historical demo clock. Hours 1 through 72 select a single national forecast frame, aligned to the system hour. The server normalizes that hour's persisted Open-Meteo forecast and invokes the same channel scorers, composite formula and task policy. A full 73-frame payload is not downloaded. Each response contains all sites; unavailable site/frame inputs remain null.
+Hour zero returns the same current snapshots as `/api/sites/risks` and `/api/snapshot.siteRisks`, using actual system time regardless of the historical demo clock. Hours 1 through 72 select a forecast frame aligned to the system hour, scoped to `siteId` when supplied. The server normalizes that hour's persisted Open-Meteo forecast and invokes the same channel scorers, composite formula and task policy. A full 73-frame payload is not downloaded. Responses contain one site when scoped, otherwise all sites; unavailable site/frame inputs remain null.
 
 Source freshness is checked against actual request time, while forecast validity and policy expiry use the requested future time. Source fetch timestamps are preserved; a warning without an original successful check time retains a null fetch timestamp. Static flood exposure and still-valid official warnings may apply; unresolved crew controls are explicitly assumed to persist. Future gauge readings, fire detections, strikes and public sightings are not invented. Forecast task states are screening scenarios, not future work authorization. Current model evidence stays in current snapshots; this projection does not invent hourly HeatCast/GroundCast predictions.
 
-The browser fetches one batch per selected hour, debounces scrubbing, cancels superseded reads, and refreshes after workspace/SSE updates. Layer changes select fields from the existing frame and make no HTTP request. A failed refresh marks retained evidence `CACHED / STALE`; initial offline current data can use the cached canonical workspace. The inspector exposes scores, coverage, confidence, structured drivers, task states, overrides and source metadata.
+The browser keeps a current national map and fetches only the selected plant per forecast hour. It debounces scrubbing, cancels superseded reads, and caches up to 48 visited site/hour results for sixty seconds. Workspace/SSE updates and refresh invalidate those cached results. Layer changes select fields from the existing frame and make no HTTP request. A failed refresh marks retained evidence `CACHED / STALE`; initial offline current data can use the cached canonical workspace. The inspector exposes scores, coverage, confidence, structured drivers, task states, overrides and source metadata.
 
 Map layers select values without recalculating risk:
 

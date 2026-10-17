@@ -99,3 +99,16 @@ test("projected warnings preserve real check timestamps or unknown provenance, n
   assert.equal(run().observation.provenance.fieldEvidence["flood.floodAlert"].fetchedAt, null);
   assert.equal(riskAtlas(snapshot, store, 72, now).sites[0].snapshot.observation.flood.floodAlert, null);
 }));
+
+
+test("site-scoped snapshots and forecasts exclude every other plant", () => fixture((store, snapshot) => {
+  const engine = new Engine(store, sites, {}, models, { now: new Date(now).toISOString(), heroSiteId: sites[0].id });
+  const scoped = engine.snapshot(sites[0].id);
+  assert.deepEqual(scoped.sites.map(s => s.id), [sites[0].id]);
+  assert.deepEqual(Object.keys(scoped.siteRisks), [sites[0].id]);
+  assert.deepEqual(Object.keys(scoped.decisions), [sites[0].id]);
+  scoped.siteRisks[sites[0].id] = snapshot.siteRisks[sites[0].id];
+  const future = riskAtlas(scoped, store, 24, now);
+  assert.equal(future.sites.length, 1);
+  assert.deepEqual(future.sites[0], riskAtlas(snapshot, store, 24, now).sites[0]);
+}));

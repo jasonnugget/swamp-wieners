@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ATLAS_LAYERS, atlasValue, atlasColor, type RiskLayer } from "../../../shared/atlas";
+import type { Site } from "../../../shared/types";
 import type { SafetyOverride } from "../../../shared/risk";
 import { TASK_LABELS } from "../../../shared/policy";
 import type { MapRegion } from "../../../shared/weather";
@@ -12,31 +13,28 @@ function AllClear({ override }: { override: SafetyOverride }) {
   const seconds = Math.max(0, Math.ceil((Date.parse(override.expiresAt!) - now) / 1000));
   return <p>All-clear: <time data-testid="all-clear">{`${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`}</time>{seconds === 0 && " · awaiting backend confirmation"}</p>;
 }
-export default function RiskControls({ data, layer, hour, region, selected, reducedMotion, onLayer, onHour, onRegion, onSelect }: {
-  data: ReturnType<typeof useRiskAtlas>; layer: RiskLayer; hour: number; region: MapRegion; selected: string; reducedMotion: boolean;
+export default function RiskControls({ data, showTimeline, sites, layer, hour, region, selected, reducedMotion, onLayer, onHour, onRegion, onSelect }: {
+  data: ReturnType<typeof useRiskAtlas>; showTimeline: boolean; sites: Site[]; layer: RiskLayer; hour: number; region: MapRegion; selected: string; reducedMotion: boolean;
   onLayer(layer: RiskLayer): void; onHour(hour: number): void; onRegion(region: MapRegion): void; onSelect(id: string): void;
 }) {
   const [playing, setPlaying] = useState(false), [search, setSearch] = useState("");
-  useEffect(() => { if (reducedMotion) setPlaying(false); }, [reducedMotion]);
+  useEffect(() => { if (reducedMotion || !showTimeline) setPlaying(false); }, [reducedMotion, showTimeline]);
   useEffect(() => {
-    if (!playing || reducedMotion || data.loading) return;
+    if (!showTimeline || !playing || reducedMotion || data.loading) return;
     const timer = setTimeout(() => { if (!document.hidden) onHour(hour >= 72 ? 0 : hour + 3); }, 2000);
     return () => clearTimeout(timer);
-  }, [playing, reducedMotion, data.loading, hour, onHour]);
+  }, [showTimeline, playing, reducedMotion, data.loading, hour, onHour]);
   const atlas = data.atlas, entry = atlas?.sites.find(p => p.site.id === selected), r = entry?.snapshot;
-  const value = atlasValue(r, layer), matches = search.trim() ? atlas?.sites.filter(p => `${p.site.name} ${p.site.state} ${p.site.id}`.toLowerCase().includes(search.toLowerCase())).slice(0, 6) ?? [] : [];
-  function selectRegion(next: MapRegion) {
-    onRegion(next);
-    const site = atlas?.sites.find(p => next === "alaska" ? p.site.state === "AK" : next === "hawaii" ? p.site.state === "HI" : !["AK", "HI"].includes(p.site.state))?.site;
-    if (site) onSelect(site.id);
-  }
+  const site = sites.find(s => s.id === selected);
+  const value = atlasValue(r, layer), matches = search.trim() ? sites.filter(p => `${p.name} ${p.state} ${p.id}`.toLowerCase().includes(search.toLowerCase())).slice(0, 6) : [];
   return <>
     <div className="atlas-layer-bar" role="group" aria-label="Environmental layers">{(Object.keys(ATLAS_LAYERS) as RiskLayer[]).map(id => <button type="button" key={id} aria-pressed={layer === id} onClick={() => onLayer(id)}>{ATLAS_LAYERS[id].name}</button>)}</div>
-    <div className="atlas-regions" role="group" aria-label="Map regions">{([["mainland", "Lower 48"], ["alaska", "Alaska"], ["hawaii", "Hawaii"], ["all", "All US"]] as const).map(([id, label]) => <button type="button" key={id} aria-pressed={region === id} onClick={() => selectRegion(id)}>{label}</button>)}</div>
+    <div className="atlas-regions" role="group" aria-label="Map regions">{([["mainland", "Lower 48"], ["alaska", "Alaska"], ["hawaii", "Hawaii"], ["all", "All US"]] as const).map(([id, label]) => <button type="button" key={id} aria-pressed={region === id} onClick={() => onRegion(id)}>{label}</button>)}</div>
     <aside className="atlas-inspector" aria-label="Site risk inspection" aria-busy={data.loading}>
       <div className="atlas-inspector-top"><span>{hour === 0 ? "CURRENT SITE RISK" : `FORECAST · +${hour} HOURS`}</span><button type="button" onClick={data.refresh} disabled={data.loading} aria-label="Refresh risk atlas">{data.loading ? "Syncing…" : "Refresh ↗"}</button></div>
-      <h2 className="atlas-location-title">{entry?.site.name ?? "Select a site"}</h2>
-      <p className="atlas-coordinate">{entry ? `${entry.site.county}, ${entry.site.state} · EIA ${entry.site.id}` : "No frame available"}</p>
+      <h2 className="atlas-location-title">{site?.name ?? "Select a site"}</h2>
+      <p className="atlas-coordinate">{site ? `${site.county}, ${site.state} · EIA ${site.id}` : "No frame available"}</p>
+
       <div className="atlas-value" style={{ color: atlasColor(value, layer) }} data-testid="atlas-layer-value">{value == null ? "?" : value.toFixed(1)}<span>{ATLAS_LAYERS[layer].unit}</span></div>
       <p className="atlas-condition">{ATLAS_LAYERS[layer].name}{layer === "wind" && value !== null ? r?.observation.weather.gustMph === null ? " · sustained (gust unavailable)" : " · gust" : ""}{value === null ? " · Unknown / no data" : ""}</p>
       <dl className="atlas-metrics">
@@ -50,13 +48,14 @@ export default function RiskControls({ data, layer, hour, region, selected, redu
       {!!r?.activeOverrides.length && <section className="atlas-overrides" aria-label="Active policy overrides">{r.activeOverrides.map(o => <div key={o.id}><strong>{o.state === "HOLD" ? "STOP WORK" : "RESTRICTED"}</strong><p>{o.reason}</p>{o.source === "lightning" && r.observation.lightning.nearestStrikeMiles !== null && <p>Detected strike {r.observation.lightning.nearestStrikeMiles.toFixed(1)} miles away.</p>}{hour === 0 && o.expiresAt && o.source === "lightning" && <AllClear override={o}/>}</div>)}</section>}
       <dl className="atlas-tasks" aria-label="Task decisions">{r?.tasks.map(t => <div key={t.task}><dt>{TASK_LABELS[t.task]}</dt><dd>{t.state}</dd></div>)}</dl>
       {atlas?.limitations.map(line => <p className="atlas-error" key={line}>{line}</p>)}
-      <div className="atlas-search"><label htmlFor="atlas-place-search">Find a site</label><input id="atlas-place-search" type="search" value={search} placeholder="Plant, EIA ID or state" onChange={e => setSearch(e.target.value)} />{matches.length > 0 && <div className="atlas-search-results">{matches.map(p => <button type="button" key={p.site.id} onClick={() => { onSelect(p.site.id); setSearch(""); }}>{p.site.name}</button>)}</div>}</div>
+      <div className="atlas-search"><label htmlFor="atlas-place-search">Find a site</label><input id="atlas-place-search" type="search" value={search} placeholder="Plant, EIA ID or state" onChange={e => setSearch(e.target.value)} />{matches.length > 0 && <div className="atlas-search-results">{matches.map(p => <button type="button" key={p.id} onClick={() => { onSelect(p.id); setSearch(""); }}>{p.name}</button>)}</div>}</div>
       <p className="atlas-freshness">{data.stale ? "CACHED / STALE · " : ""}{atlas?.validAt ? `Valid ${new Date(atlas.validAt).toLocaleString()}` : "Waiting for frame"}</p>
       {data.error && <p className="atlas-error" role="status">{data.error}</p>}
       <details className="atlas-sources"><summary>Evidence sources</summary>{Object.entries(r?.observation.provenance.providers ?? {}).map(([id, p]) => <p key={id}>{p.source}: {p.status} · {p.mode} · fetched {p.fetchedAt ?? "never"}{p.error ? ` · ${p.error}` : ""}</p>)}</details>
     </aside>
-    <div className="atlas-timeline"><div className="atlas-time-heading"><button type="button" disabled={reducedMotion} onClick={() => setPlaying(!playing)} aria-label={playing ? "Pause risk forecast" : "Play risk forecast"}>{playing ? "Ⅱ" : "▷"}</button><div><span>{hour === 0 ? "Now" : `+${hour} hours`}</span><strong>{data.loading ? "Loading authoritative frame…" : atlas?.validAt ? new Date(atlas.validAt).toLocaleString() : "Risk frame unavailable"}</strong></div><button type="button" className="atlas-now" onClick={() => { onHour(0); setPlaying(false); }}>Back to now</button></div><input aria-label="Forecast hour" type="range" min={0} max={72} step={1} value={hour} onChange={e => { setPlaying(false); onHour(Number(e.target.value)); }} /><div className="atlas-time-ticks"><span>Now</span><span>+24h</span><span>+48h</span><span>+72h</span></div></div>
+    {showTimeline && <div className="atlas-timeline"><div className="atlas-time-heading"><button type="button" disabled={reducedMotion} onClick={() => setPlaying(!playing)} aria-label={playing ? "Pause risk forecast" : "Play risk forecast"}>{playing ? "Ⅱ" : "▷"}</button><div><span>{site?.name ?? "Select a site"} · {hour === 0 ? "Now" : `+${hour} hours`}</span><strong>{data.loading ? "Loading selected site…" : atlas?.validAt ? new Date(atlas.validAt).toLocaleString() : "Risk frame unavailable"}</strong></div><button type="button" className="atlas-now" onClick={() => { onHour(0); setPlaying(false); }}>Back to now</button></div><input aria-label="Forecast hour" type="range" min={0} max={72} step={1} value={hour} onChange={e => { setPlaying(false); onHour(Number(e.target.value)); }} /><div className="atlas-time-ticks"><span>Now</span><span>+24h</span><span>+48h</span><span>+72h</span></div></div>}
+
     <div className="atlas-scale"><span>{ATLAS_LAYERS[layer].name} · {ATLAS_LAYERS[layer].unit}</span><i data-layer={layer}/><div><span>{ATLAS_LAYERS[layer].low}</span><span>{ATLAS_LAYERS[layer].high}</span></div><small>Gray / ? = unknown</small></div>
-    <p className="atlas-coverage">{atlas?.sites.length ?? 0} sites · one authoritative backend frame{data.stale ? " · CACHED / STALE" : ""}<br/>{hour ? "Forecast screening · unavailable future evidence stays unknown" : "Live environmental risk · coverage and task policy remain separate"}</p>
+    <p className="atlas-coverage">{sites.length} sites · map shows current conditions{data.stale ? " · CACHED / STALE" : ""}<br/>{hour ? "Selected-site forecast only · unavailable future evidence stays unknown" : "Live environmental risk · coverage and task policy remain separate"}</p>
   </>;
 }
