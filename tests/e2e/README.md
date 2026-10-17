@@ -1,28 +1,24 @@
 # Browser workflows
 
-`national-plants.spec.ts` checks all-state plant coverage, selection of California/Alaska/Hawaii plants, honest missing model coverage, and report holds at newly added plants. The map workflow verifies all 285 plant beacons.
+Run `npm run test:e2e` from the root. Installed Google Chrome is required. `playwright.config.ts` builds the app, starts the API on port 4173 and uses `runtime/e2e/`. Tests run serially because they share the isolated server; workflows explicitly reset demonstration state. They do not reset the normal runtime database.
 
-It also checks numeric NOAA-based risk beacons for California, Alaska and Hawaii with explicit partial-coverage labels, then expires the fixture and verifies unknown markers return. The test server disables automatic NOAA background requests; browser fixtures cover success and failure deterministically. Live source checks run separately.
+| File | Coverage |
+| --- | --- |
+| `site-risk-api.spec.ts` | All-site current snapshot parity, observation validation, structured factors/drivers, model availability, provider status, atlas hours 0/72 and invalid query handling |
+| `weather-atlas.spec.ts` | Canonical risk ranges, unknown/low-confidence states, coverage, eleven layers, forecast frames, search/regions, geometry reuse, countdown/reset, stale reads and mobile overflow |
+| `risk-fixtures.ts` | Deterministic canonical frames produced with the backend scorer; not live provider evidence |
+| `national-plants.spec.ts` | All-state/catalog-only selection and reporting, matching-hour NOAA canonical fallback, stale-to-unknown behavior and no fabricated model coverage |
+| `map.spec.ts` | Camera orbit/zoom, selection/showcase, geographic report pins, pan/pinch rejection, reduced motion, focus restoration, flat fallback and scene-module errors |
+| `crew-teams.spec.ts` | Shared assignments, remembered defaults, plant-specific drafts/pins, report attribution, invalid-assignment rejection, history and reset preservation |
+| `workflow.spec.ts` | Photo handoff across screens, independent replay lightning holds, briefing carry-forward, report resolution, browser training/inference, offline reload and mobile layout |
+| `redesign.spec.ts` | Loading/retry, editorial homepage, navigation/history, reduced motion, feature keyboard controls, atlas bounds and reset confirmation |
 
-`crew-teams.spec.ts` covers roster and plant assignment creation, shared visibility, remembered reporting defaults after reload, plant-specific draft/pin changes, report attribution and holds, server rejection of invalid assignments, historical team names after edits, and team preservation through demo reset.
+The atlas tests reject any `/api/weather/*` request from the supervisor. Layer changes read one existing frame; slider changes request one batched national frame. The real crew-submission test verifies SSE updates to the supervisor's beacon, risk, evidence, holds and priority list. JEV and live lightning fixtures do not claim authenticated provider connectivity.
 
-`workflow.spec.ts` covers:
+The isolated server sets `DISABLE_NWS_SCREENING=1`, `DISABLE_ENVIRONMENT_COLLECTION=1` and `DISABLE_EXTERNAL_PROVIDERS=1`. These flags disable their respective background jobs; explicit refresh requests can still collect. Tests use deterministic fixtures or existing persisted inputs. Actual source checks are recorded separately in [provider documentation](../../docs/environment-providers.md).
 
-- Photo submission and immediate task holds on a second connected screen.
-- Lightning timer resets, 6 PM briefing carry-forward, and preserved resolution history.
-- Actual browser inference, calibration training, and saved candidates after offline reload.
-- Desktop map asset loading and mobile layout without horizontal overflow.
+WebGPU/SwiftShader flags allow headless execution on the test machine. A backend label is evidence of that execution path, not hardware performance. The tests allow explicit fallbacks and assert computations, not only screenshots. The offline workflow checks both Model Lab and the atlas using the cached canonical workspace; there is no independent weather-atlas cache.
 
-Run `npm run test:e2e` from the root. `playwright.config.ts` builds the app, starts the API on port 4173, and uses `runtime/e2e/` for records. Installed Google Chrome is required. Tests run serially because they share the demo server and reset its state before each test.
+The scene-module failure test blocks service workers so interception reaches the import. It distinguishes a missing chunk from unavailable graphics. Production tests do not exercise Vite's optimized-dependency cache; after development dependency changes, also verify the running Vite scene has no HTTP 504 dependency errors.
 
-The configured WebGPU/SwiftShader flags make headless execution possible on the test machine. A reported WebGPU backend is evidence of the execution path, not a hardware performance guarantee. The tests allow explicit fallbacks and assert actual computations rather than screenshots alone.
-
-`map.spec.ts` checks 3D camera orbit/zoom, site selection, expanded showcase controls, geographic pin raycasting, pan/pinch rejection, reduced-motion controls, keyboard focus restoration, and the interactive flat fallback when WebGL is unavailable. The offline reload workflow also checks that the Three.js scene and bundled outlines load without networking.
-
-The module-loading failure check blocks service workers so its network interception cannot be bypassed by the precache, then verifies that a missing scene chunk is reported separately from unavailable graphics. For development dependency changes, also open the running Vite URL and confirm the scene loads without HTTP 504 optimized-dependency errors; production tests do not exercise Vite's dependency cache.
-
-Screenshots and failure traces go to ignored `test-results/`. Keep fixtures in maintained test directories; do not commit temporary databases or uploaded test photos. Preserve the offline reload check when changing lazy imports, Three.js scene chunks, public URLs, or service-worker caching.
-
-`weather-atlas.spec.ts` supplies deterministic provider-response fixtures for national geography, Alaska/Hawaii navigation, weather layers, forecast valid times, location search, playback, reduced motion, stale-cache labels, and mobile controls. Live connectivity is checked separately against the actual API; fixtures alone do not establish provider availability.
-
-`redesign.spec.ts` covers loading readiness and retry, the two-line editorial hero, ambient motion controls, reduced-motion content, keyboard feature accordions, deep-linked navigation and browser history, plant selection across views, fullscreen atlas bounds, mobile overflow, and cancellation/confirmation of demo reset. Map and weather tests enter `/?view=atlas`; operational workflows enter their own views. The offline workflow verifies both the saved Model Lab and the separate cached atlas.
+Screenshots/traces go to ignored `test-results/`. Keep fixtures in maintained directories; do not commit test databases or uploads. Preserve offline checks after lazy-import, Three.js, static-URL or service-worker changes. The latest full implementation run passed 19 tests; see [verification context](../README.md) for the run boundary.

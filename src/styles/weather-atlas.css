@@ -62,7 +62,6 @@
 .atlas-scale i { display: block; height: 5px; border-radius: 3px; margin-top: 10px; background: linear-gradient(90deg,#739bb8,#a9c7bc,#e8d09b,#d98c68,#bd655c); }
 .atlas-scale i[data-layer="rain"] { background: linear-gradient(90deg,#344c51,#79a99b,#9fc9b0,#c9d6ad,#ead09a); }
 .atlas-scale i[data-layer="wind"] { background: linear-gradient(90deg,#4d6070,#82aab7,#b6cbd0,#d5c8a5,#d89b7d); }
-.atlas-scale i[data-layer="clouds"] { background: linear-gradient(90deg,#2e454e,#647a83,#91a2aa,#c0c8c9,#e1e3da); }
 .atlas-scale i[data-layer="risk"] { background: linear-gradient(90deg,#c9ee8d,#f0c477,#ff9676); }
 .atlas-scale > div { display: flex; justify-content: space-between; font: 8px monospace; color: #92a6a4; margin-top: 8px; }
 .atlas-coverage { position: absolute; z-index: 5; bottom: 15px; left: 28px; right: 28px; font: 8px/1.8 monospace; color: #819898; pointer-events: none; }
@@ -74,11 +73,6 @@
 .weather-atlas .scene-disclosure { left: 28px; bottom: 184px; font: 8px monospace; color: #8da3a5; }
 .weather-atlas .scene-bottom { display: none; }
 .weather-atlas .scene-warning { top: 247px; left: 28px; right: 310px; background: #28342f; }
-.weather-active .site-beacon:not(.is-selected) { width: 7px; height: 7px; font-size: 0; border: 0; background: #a9b6a4; box-shadow: none; }
-.weather-active .site-beacon, .weather-active .scene-site-card { display: none; }
-.weather-active .site-beacon:not(.is-selected):focus-visible, .weather-active .site-beacon:not(.is-selected):hover { width: 24px; height: 24px; font-size: 9px; }
-.atlas-weather-marker { position: absolute; top: 0; left: 0; pointer-events: auto; padding: 5px 7px; border: 1px solid #a0bdbb2b; border-radius: 4px; color: var(--weather-color); background: #101f27e8; font: 10px monospace; will-change: transform; }
-.atlas-weather-marker:hover, .atlas-weather-marker:focus-visible, .atlas-weather-marker.is-selected { background: #334448; color: #f0ddba; border-color: #d5c29b; }
 .weather-atlas.is-expanded { inset: 10px; border-radius: 18px; height: auto; border-color: #9cb0ad2b; }
 .weather-atlas.is-expanded .scene-heading h4 { font-size: 54px; }
 .weather-atlas.is-expanded .scene-heading { left: 37px; top: 32px; }
@@ -133,3 +127,29 @@
   .weather-atlas button { transition: none; }
   .atlas-weather-marker { will-change: auto; }
 }
+
+/* Canonical risk evidence uses the existing atlas surfaces and palette. */
+.atlas-inspector, .weather-atlas.is-expanded .atlas-inspector { max-height: calc(100% - 400px); overflow: auto; overscroll-behavior: contain; }
+.atlas-channels { margin-top: 16px; }
+.atlas-channels details { border-bottom: 1px solid #adc1c01a; padding: 7px 0; }
+.atlas-channels summary { display: flex; justify-content: space-between; cursor: pointer; font-size: 11px; }
+.atlas-channels p, .atlas-drivers p, .atlas-sources p { font-size: 10px; line-height: 1.6; margin-top: 6px; color: #acbfbb; overflow-wrap: anywhere; }
+.atlas-drivers { margin: 12px 0; }
+.atlas-overrides { border: 1px solid #ff9676; padding: 10px; margin: 12px 0; color: #ffb49a; font-size: 11px; }
+.atlas-overrides p { margin-top: 6px; line-height: 1.5; }
+.atlas-overrides time { font-variant-numeric: tabular-nums; }
+.atlas-tasks { margin-top: 12px; font-size: 10px; }
+.atlas-tasks > div { display: flex; gap: 12px; justify-content: space-between; padding: 6px 0; }
+.atlas-tasks dd { margin: 0; color: #e9d7b6; }
+.atlas-scale small { color: #9cabb4; font: 8px monospace; display: block; margin-top: 6px; }
+.atlas-scale i { background: linear-gradient(90deg,#c9ee8d,#dce18b,#f0c477,#f4ab76,#ff9676,#df656c); }
+.atlas-sources { margin-top: 12px; font-size: 10px; }
+.site-beacon.is-unknown { border-style: dashed; opacity: .7; }
+@media (max-width: 740px) {
+  .atlas-inspector, .weather-atlas.is-expanded .atlas-inspector { width: min(225px, calc(100% - 80px)); max-height: calc(100% - 440px); bottom: 210px; }
+  .atlas-inspector .atlas-metrics { display: grid; }
+  .atlas-channels { margin-top: 10px; }
+}
+
+.atlas-scale i[data-layer="temperature"] { background: linear-gradient(90deg,#739bb8,#a9c7bc,#e8d09b,#d98c68,#bd655c); }
+.site-beacon.has-low-confidence, .flat-beacon.has-low-confidence { border-style: dashed; opacity: .7; }

@@ -39,7 +39,7 @@ test("NWS adapter converts Fahrenheit and wind ranges, preserving missing humidi
 });
 test("national forecast screening scores heat/wind without inventing soil or custom model coverage", () => {
   const result = decide(site, undefined, [], [], [], now, undefined, screening);
-  assert.ok(result.index !== null && result.index >= 7);
+  assert.ok(result.index !== null && result.index >= 6 && result.index < 7);
   assert.equal(result.unknownCount, 5);
   assert.equal(result.channels.find(c => c.category === "soil")?.severity, null);
   assert.match(result.channels.find(c => c.category === "heat")!.source, /NOAA\/NWS/);
@@ -56,10 +56,10 @@ test("low official forecasts cannot clear independent crew or lightning holds", 
   const report: HazardReport = { id: "crew", siteId: site.id, category: "soil", description: "Access road blocked", tasks: ["mobilization"], latitude: site.latitude, longitude: site.longitude, author: "Crew", status: "open", createdAt: new Date(now).toISOString() };
   const strikes = [{ id: "strike", latitude: site.latitude, longitude: site.longitude, time: new Date(now).toISOString(), mode: "simulated" as const }];
   const result = decide(site, undefined, [report], strikes, [], now, undefined, low);
-  assert.equal(result.index, 10);
+  assert.ok(result.index! >= 9 && result.index! < 10);
   assert.equal(result.tasks.find(t => t.task === "mobilization")?.state, "HOLD");
   assert.equal(result.tasks.find(t => t.task === "installation")?.state, "HOLD");
-  assert.equal(decide(site, undefined, [{ ...report, status: "resolved" }], strikes, [], now, undefined, low).index, 10);
+  assert.ok(decide(site, undefined, [{ ...report, status: "resolved" }], strikes, [], now, undefined, low).index! < 10);
 });
 test("engine uses current official screening in demo without borrowing model forecasts, and expires it", () => {
   const directory = mkdtempSync(join(tmpdir(), "planit-nws-"));
@@ -71,7 +71,7 @@ test("engine uses current official screening in demo without borrowing model for
     const snapshot = engine.snapshot();
     assert.equal(snapshot.clockMode, "demo");
     assert.equal(snapshot.forecasts[site.id], undefined);
-    assert.ok(snapshot.decisions[site.id].index! >= 7);
+    assert.ok(snapshot.decisions[site.id].index! >= 6);
     store.put("weather-screening", site.id, { ...screening, fetchedAt: new Date(now - 4 * 3600000).toISOString() });
     assert.equal(engine.snapshot().decisions[site.id].index, null);
   } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
@@ -114,7 +114,7 @@ test("real-clock briefing includes the entire next local day of NOAA screening",
     const briefing = engine.snapshot().briefings[0];
     assert.equal(briefing.localDate, "2026-10-18");
     assert.equal(briefing.forecastMode, "live");
-    assert.ok(briefing.decision.index! >= 7);
+    assert.ok(briefing.decision.index! >= 6);
     assert.match(briefing.text, /24 hourly records.*NOAA\/NWS/);
   } finally { Date.now = originalNow; store.close(); rmSync(directory, { recursive: true, force: true }); }
 });

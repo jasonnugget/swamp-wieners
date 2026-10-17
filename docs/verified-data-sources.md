@@ -1,10 +1,25 @@
 # Verified environmental data sources
 
-Checked October 17, 2026. Use NOAA/NWS forecasts and observations for the national weather view, NOAA/USGS gauges for river conditions, and NIFC incidents for a wildfire layer. These sources provide evidence for specific hazards; they do not validate the custom model at the 235 plants outside its original training cohort.
+The endpoint research below was recorded on October 17, 2026. It is historical verification evidence, not a list of currently connected adapters. All 285 sites now use one normalized provider/scoring pipeline and the supervisor reads canonical risk frames. The fifty-site model cohort and its validation remain unchanged.
+
+## Current integration status
+
+| Source | Application status |
+| --- | --- |
+| Open-Meteo Forecast API | Shared batched weather/soil/CAPE provider for canonical current and projected frames |
+| NWS | Connected official alerts and deterministic hourly/marine-grid fallback; separate from the fixed-lead model feed |
+| USGS OGC API | Connected nearby-stage/trend/rolling-abnormality adapter with cached associations |
+| FEMA NFHL | Connected static point exposure, with an optional reviewed local-file strategy |
+| iNaturalist | Connected sparse public context; crew reports remain primary operational authority |
+| NASA FIRMS | Area-query adapter and mocked tests implemented; authenticated live access requires MAP_KEY and remains unverified |
+| Lightning | Swappable unavailable/recorded/demo interface; no licensed live network configured |
+| NOAA NWPS / NIFC WFIGS | Researched endpoints only; not connected operational providers |
+
+Later implementation checks reached USGS, FEMA, NWS and iNaturalist at a Louisiana catalog site. These checks are described in [environmental providers](environment-providers.md); they are distinct from the archived request hashes below. They do not establish national suitability or complete hazard detection.
 
 [Live verification evidence](source-verification.json) records 16 successful HTTP requests with request URLs, check times, full-response SHA-256 hashes, and response excerpts. Forecast requests were tested at five actual catalog plants in FL, MS, CA, AK, and HI. This is a sample check, not an audit of all 285 locations. Excerpts are historical snapshots and must not be loaded as current readings.
 
-## Sources to use first
+## Sources evaluated in the original endpoint audit
 
 | Data | Official source and access | Appropriate map use | Important limits |
 | --- | --- | --- | --- |
@@ -61,14 +76,14 @@ The query returned real incident coordinates in Texas and California. `ModifiedO
 | --- | --- | --- |
 | Animated observed rain | [NOAA radar OGC services](https://opengeo.ncep.noaa.gov/) linked by the NWS API documentation | Inspect capabilities, layer geography, frame times and browser texture loading. This audit checked the documentation, not working radar tiles. Radar reflects observed conditions; it is separate from future rain forecasts. |
 | Satellite soil moisture | [NASA SMAP SPL3SMP_E version 6](https://nsidc.org/data/spl3smp_e/versions/6), daily 9 km product | Earthdata access, quality flags and spatial sampling. Documentation checked; no authenticated download tested. Grid soil moisture does not establish equipment bearing capacity at a construction site. |
-| Satellite fire detections | [NASA FIRMS area API](https://firms.modaps.eosdis.nasa.gov/api/area/) | Free MAP_KEY registration and detection-quality handling. Documentation checked; no key requested or authenticated query tested. A thermal anomaly is not a confirmed wildfire. |
+| Satellite fire detections | [NASA FIRMS area API](https://firms.modaps.eosdis.nasa.gov/api/area/) | The regional adapter now handles CSV, quality filters, age and distance with mocked tests. MAP_KEY is still needed for authenticated connectivity; no authenticated query was verified. A thermal anomaly is not a confirmed wildfire. |
 | Lightning awareness | [NOAA GOES GLM](https://www.nesdis.noaa.gov/our-satellites/currently-flying/goes-east-west/geostationary-lightning-mapper-glm?page=1) | Satellite product ingestion, latency and coverage checks. GLM measures total lightning, including in-cloud flashes. Do not describe it as verified cloud-to-ground strike locations or assume coverage of all Alaska. Documentation checked; no product ingestion tested. |
 
 ## Integration boundaries
 
-The current atlas uses Open-Meteo model estimates and forecasts. NWS alerts already have an adapter. NWS hourly forecasts now supply separate deterministic heat/wind screenings for national catalog additions, automatically and on selection. NWPS, USGS and NIFC remain researched sources that are **not yet connected to the running app**.
+The supervisor atlas reads `/api/risk/atlas`, not these providers directly. Current source evidence is normalized before shared deterministic scoring. The slider selects backend-scored forecast frames, with future detections left unknown. Compatibility weather endpoints remain available without a map consumer.
 
-The next integrations are NIFC incident points and selected river hydrographs. Keep provider, observation/issue time, valid time, units, location and freshness on each record. Cache according to provider guidance; stale or failed requests remain visibly unavailable. A successful HTTP request only verifies that the endpoint responded at the recorded time.
+USGS is connected. NWPS forecast hydrographs and NIFC incident enrichment remain optional future work, not dependencies of the implemented pipeline. Keep source timestamps, units, freshness and provenance on every record. An old successful request proves connectivity only at its recorded time. Do not replay archived excerpts as live data.
 
 Heat index may be calculated from official forecast temperature and humidity using a documented method and labeled as a derived forecast. Do not fabricate quantile uncertainty by copying a deterministic forecast into the custom model's three quantile slots. Recalibration and held-out evaluation are needed before claiming national custom-model performance.
 

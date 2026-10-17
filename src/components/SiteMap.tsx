@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Compass,
   Crosshair,
@@ -16,15 +16,19 @@ import { TASK_LABELS } from "../../shared/policy";
 import { riskColor } from "./site-map/projection";
 import type { MapScene, SceneData } from "./site-map/scene";
 import FlatMap from "./site-map/FlatMap";
-import WeatherControls from "./site-map/WeatherControls";
-import { useWeatherAtlas } from "./site-map/useWeatherAtlas";
-import type { MapRegion, WeatherLayer, WeatherLocation } from "../../shared/weather";
+import RiskControls from "./site-map/RiskControls";
+import { useRiskAtlas } from "../lib/useRiskAtlas";
+import { atlasValue, atlasColor, atlasFraction, ATLAS_LAYERS, type RiskLayer } from "../../shared/atlas";
+import type { SiteRiskSnapshot } from "../../shared/risk";
+import type { MapRegion } from "../../shared/weather";
+const EMPTY_RISKS: Record<string, SiteRiskSnapshot> = {};
 import "../styles/site-map.css";
 import "../styles/weather-atlas.css";
 
 export default function SiteMap({
   sites,
   decisions,
+  risks = EMPTY_RISKS,
   selected,
   onSelect,
   reports = [],
@@ -34,6 +38,7 @@ export default function SiteMap({
 }: {
   sites: Site[];
   decisions: Record<string, Decision>;
+  risks?: Record<string, SiteRiskSnapshot>;
   selected: string;
   onSelect: (id: string) => void;
   reports?: HazardReport[];
@@ -58,19 +63,28 @@ export default function SiteMap({
   );
   const previousSelected = useRef(selected),
     callbacks = useRef({ onSelect, onPin });
-  const data = useRef<SceneData>({ sites, decisions, selected, reports, pin });
-  callbacks.current = { onSelect, onPin };
-  data.current = { sites, decisions, selected, reports, pin };
-  const active = sites.find((s) => s.id === (hovered ?? selected)) ?? sites[0],
-    decision = active ? decisions[active.id] : undefined;
-  const heldTasks = decision?.tasks.filter((t) => t.state === "HOLD") ?? [];
-  const [layer, setLayer] = useState<WeatherLayer>("temperature"),
+  const [layer, setLayer] = useState<RiskLayer>("risk"),
     [hour, setHour] = useState(0),
-    [region, setRegion] = useState<MapRegion>("mainland"),
-    [weatherLocation, setWeatherLocation] = useState<WeatherLocation>();
-  const selectedSite = sites.find((s) => s.id === selected) ?? sites[0];
-  const inspected = weatherLocation ?? selectedSite;
-  const weather = useWeatherAtlas(!onPin, inspected);
+    [region, setRegion] = useState<MapRegion>("mainland");
+  const atlas = useRiskAtlas(!onPin, hour, sites, risks);
+  const mapDecisions = useMemo(() => onPin ? decisions : Object.fromEntries((atlas.atlas?.sites ?? []).map(({ site, snapshot: r }) => [site.id, {
+    index: r.risk, tasks: r.tasks, unknownCount: r.channels.filter(c => c.score === null).length,
+    lightningUntil: r.activeOverrides.find(o => o.source === "lightning" && o.state === "HOLD")?.expiresAt ?? null,
+  }])), [onPin, decisions, atlas.atlas]);
+  const visuals = useMemo(() => {
+    if (onPin) return undefined;
+    const frames = new Map(atlas.atlas?.sites.map(p => [p.site.id, p.snapshot]) ?? []);
+    return Object.fromEntries(sites.map(site => {
+      const frame = frames.get(site.id), value = atlasValue(frame, layer);
+      return [site.id, { value, color: atlasColor(value, layer), fraction: value === null ? 0 : atlasFraction(value, layer), confidence: frame?.confidence ?? 0, unit: ATLAS_LAYERS[layer].unit, label: ATLAS_LAYERS[layer].name }];
+    }));
+  }, [onPin, sites, atlas.atlas, layer]);
+  const data = useRef<SceneData>({ sites, decisions: mapDecisions, selected, reports, pin, visuals, hour, layer });
+  callbacks.current = { onSelect, onPin };
+  data.current = { sites, decisions: mapDecisions, selected, reports, pin, visuals, hour, layer };
+  const active = sites.find((s) => s.id === (hovered ?? selected)) ?? sites[0],
+    decision = active ? mapDecisions[active.id] : undefined;
+  const heldTasks = decision?.tasks.filter((t) => t.state === "HOLD") ?? [];
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +98,6 @@ export default function SiteMap({
             data.current,
             {
               select(id) {
-                setWeatherLocation(undefined);
                 previousSelected.current = id;
                 const site = data.current.sites.find((s) => s.id === id);
                 if (site) scene.current?.focus(site);
@@ -106,7 +119,6 @@ export default function SiteMap({
               geographyError: () => {
                 if (!cancelled) setGeographyError(true);
               },
-              inspect: setWeatherLocation,
             },
           );
         } catch (error) {
@@ -132,19 +144,10 @@ export default function SiteMap({
   }, []);
   useEffect(() => {
     scene.current?.update(data.current);
-  }, [sites, decisions, selected, reports, pin, ready]);
-  useEffect(() => {
-    if (onPin) return;
-    const points = [...(weather.atlas?.points ?? [])];
-    const detail = weather.point;
-    if (detail && inspected && detail.latitude === inspected.latitude && detail.longitude === inspected.longitude && !points.some((p) => p.id === inspected.id))
-      points.push({ ...detail, id: inspected.id, name: inspected.name });
-    scene.current?.weather(points, layer, hour, inspected?.id);
-  }, [weather.atlas, weather.point, layer, hour, inspected?.id, inspected?.latitude, inspected?.longitude, inspected?.name, ready, onPin]);
+  }, [sites, mapDecisions, selected, reports, pin, visuals, hour, layer, ready]);
   useEffect(() => {
     if (previousSelected.current === selected) return;
     previousSelected.current = selected;
-    setWeatherLocation(undefined);
     const site = sites.find((s) => s.id === selected);
     if (site) {
       scene.current?.focus(site);
@@ -206,7 +209,7 @@ export default function SiteMap({
   }
   return (
     <div
-      className={`map-wrap command-map ${onPin ? "is-pinning" : "weather-atlas"} ${layer !== "risk" && !onPin ? "weather-active" : ""} ${expanded ? "is-expanded" : ""}`}
+      className={`map-wrap command-map ${onPin ? "is-pinning" : "weather-atlas"}  ${expanded ? "is-expanded" : ""}`}
       data-testid="site-map"
       aria-label={onPin ? "Hazard location map" : "Site risk map"}
     >
@@ -216,7 +219,8 @@ export default function SiteMap({
       {fallback && (
         <FlatMap
           sites={sites}
-          decisions={decisions}
+          decisions={mapDecisions}
+          visuals={visuals}
           selected={selected}
           onSelect={onSelect}
           reports={reports}
@@ -235,10 +239,10 @@ export default function SiteMap({
           <div className="scene-heading">
             <span className="scene-mode">
               <span />
-              {fallback ? "2D SITE MAP" : "PLANIT / WEATHER ATLAS"}
+              {fallback ? "2D SITE MAP" : "PLANIT / RISK ATLAS"}
             </span>
-            {standalone ? <h1>Weather, in perspective.</h1> : <h4>Weather, in perspective.</h4>}
-            <p>All 50 states. The next 72 hours. A clearer view of the work ahead.</p>
+            {standalone ? <h1>Site risk, in perspective.</h1> : <h4>Site risk, in perspective.</h4>}
+            <p>All 50 states. One risk pipeline. Current conditions and 72-hour screening.</p>
           </div>
           <div className="scene-top-actions">
             <button
@@ -332,21 +336,11 @@ export default function SiteMap({
           </button>
         )}
       </div>
-      {!onPin && <WeatherControls
-        weather={weather} layer={layer} hour={hour} region={region}
-        location={inspected} reducedMotion={reducedMotion}
-        onLayer={(next) => {
-          setLayer(next); setRotating(false); scene.current?.rotate(false);
-          if (next === "risk") { setHour(0); scene.current?.fit(); }
-          else if (layer === "risk") scene.current?.region(region);
-        }}
-        onHour={setHour}
-        onRegion={(next) => {
-          setRegion(next); setRotating(false); scene.current?.rotate(false); scene.current?.region(next);
-          const point = weather.atlas?.points.find((p) => p.id === (next === "alaska" ? "AK" : next === "hawaii" ? "HI" : "CO"));
-          if (point) setWeatherLocation(point);
-        }}
-        onLocation={(point) => { setWeatherLocation(point); scene.current?.focus(point); }}
+      {!onPin && <RiskControls
+        data={atlas} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
+        onLayer={setLayer} onHour={setHour}
+        onRegion={(next) => { setRegion(next); setRotating(false); scene.current?.rotate(false); scene.current?.region(next); }}
+        onSelect={onSelect}
       />}
       {!onPin && active && (
         <div
@@ -362,7 +356,7 @@ export default function SiteMap({
           </div>
           <div>
             <span>
-              {hovered ? "INSPECT SITE" : "WORKSPACE RISK"} · EIA {active.id}
+              {hovered ? "INSPECT SITE" : hour ? "FORECAST SITE RISK" : "CURRENT SITE RISK"} · EIA {active.id}
             </span>
             <strong>{active.name}</strong>
             <p>
@@ -407,7 +401,7 @@ export default function SiteMap({
       <div className="scene-disclosure">
         {onPin
           ? "Top-down · drag to pan · click to pin"
-          : "Drag to orbit · scroll to zoom · right-drag to pan · click land to inspect"}
+          : "Drag to orbit · scroll to zoom · right-drag to pan · select a plant for evidence"}
       </div>
       {(fallback || geographyError) && (
         <div className="scene-warning" role="status">

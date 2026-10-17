@@ -1,4 +1,4 @@
-import type { Alert, Forecast, ModelBundle, Site } from "../../shared/types";
+import type { Forecast, ModelBundle, Site } from "../../shared/types";
 import { features, heatIndex, predict } from "../../shared/model";
 import { localParts, nextDate } from "../../shared/clock";
 
@@ -85,47 +85,4 @@ export async function fetchWeather(
     hours,
   };
 }
-export async function fetchAlerts(site: Site): Promise<Alert[]> {
-  const r = await fetch(
-    `https://api.weather.gov/alerts/active?point=${site.latitude},${site.longitude}`,
-    {
-      headers: {
-        "User-Agent": "PlanIT-Control-Hackathon (local prototype)",
-        Accept: "application/geo+json",
-      },
-      signal: AbortSignal.timeout(20000),
-    },
-  );
-  if (!r.ok) throw new Error(`NWS HTTP ${r.status}`);
-  const data = (await r.json()) as {
-    features: {
-      id: string;
-      properties: {
-        event: string;
-        headline: string;
-        severity: string;
-        expires: string;
-      };
-    }[];
-  };
-  return data.features.map((f) => {
-    const p = f.properties,
-      event = p.event.toLowerCase();
-    const category: Alert["category"] = /flood/.test(event)
-      ? "flood"
-      : /fire|red flag/.test(event)
-        ? "wildfire"
-        : /heat/.test(event)
-          ? "heat"
-          : "weather";
-    return {
-      id: `${site.id}:${f.id}`,
-      siteId: site.id,
-      category,
-      title: p.headline || p.event,
-      severity: p.severity === "Extreme" ? 10 : p.severity === "Severe" ? 7 : 3,
-      expiresAt: p.expires,
-      mode: "live",
-    };
-  });
-}
+export { fetchAlerts } from "./nws";

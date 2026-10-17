@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { loadWeather, parseWeather } from "../../server/integrations/atlas-weather";
-import { readingAt, weatherValue, type WeatherLocation } from "../../shared/weather";
+import { type WeatherLocation } from "../../shared/weather";
 
 const location: WeatherLocation = { id: "test", name: "Test point", latitude: 39.74, longitude: -104.99 };
 const epoch = Date.parse("2026-10-17T06:15:00Z") / 1000;
@@ -24,10 +24,7 @@ test("weather keeps provider units, normalizes the current precipitation interva
   assert.equal(point.hours[0].rain, 1.5);
   assert.equal(point.hours[0].apparent, null);
   assert.equal(point.hours[1].temperature, null);
-  assert.equal(readingAt(point, 1)?.temperature, 66);
-  assert.equal(weatherValue(readingAt(point, 2), "temperature"), null);
-  assert.equal(readingAt(point, 72), undefined);
-  assert.equal(weatherValue(undefined, "wind"), null);
+  assert.equal(point.hours[0].temperature, 66);
 });
 test("weather cache deduplicates concurrent requests and marks old results stale on provider failure", async (t) => {
   let now = epoch * 1000, calls = 0, fail = false;
@@ -46,4 +43,26 @@ test("weather cache deduplicates concurrent requests and marks old results stale
   assert.equal(stale[0].stale, true);
   assert.equal(stale[0].fetchedAt, a[0].fetchedAt);
   assert.match(stale[0].error!, /offline/);
+});
+
+test("provider 429 shares a Retry-After cooldown across coordinate batches and recovers", async t => {
+  let now = epoch * 1000, calls = 0;
+  t.mock.method(Date, "now", () => now);
+  t.mock.method(globalThis, "fetch", async (input: Parameters<typeof fetch>[0]) => {
+    calls++;
+    const url = new URL(String(input));
+    assert.ok(url.searchParams.get("hourly")?.includes("soil_moisture_0_to_1cm"));
+    assert.ok(url.searchParams.get("hourly")?.includes("cape"));
+    assert.ok(url.searchParams.get("current")?.includes("relative_humidity_2m"));
+    assert.equal(url.searchParams.get("past_hours"), "168");
+    return calls === 1 ? new Response("rate limited", { status: 429, headers: { "Retry-After": "120" } })
+      : new Response(JSON.stringify([fixture(), fixture()]));
+  });
+  const locations = [{ ...location, id: "rate-a", latitude: 40 }, { ...location, id: "rate-b", latitude: 41 }];
+  assert.deepEqual(await loadWeather(locations), []);
+  assert.deepEqual(await loadWeather([{ ...location, latitude: 42 }]), []);
+  assert.equal(calls, 1);
+  now += 120000;
+  assert.equal((await loadWeather(locations)).length, 2);
+  assert.equal(calls, 2);
 });

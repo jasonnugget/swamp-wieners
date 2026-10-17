@@ -1,3 +1,4 @@
+import { riskAtlas } from "./pipeline/atlas";
 import express from "express";
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
@@ -5,9 +6,13 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { Store } from "./store";
 import { Engine } from "./engine";
+import { crewClassificationSchema } from "../shared/crew-risk";
 import { triage } from "./integrations/jev";
-import { fetchAlerts, fetchWeather } from "./integrations/feeds";
-import { loadWeather } from "./integrations/atlas-weather";
+import { fetchWeather } from "./integrations/feeds";
+import { loadWeather } from "./integrations/open-meteo";
+import { createProviders } from "./pipeline/providers";
+import { ProviderPoller } from "./pipeline/provider-poller";
+import { collect } from "./pipeline/collect";
 import { fetchNwsScreening } from "./integrations/nws-screening";
 import type { WeatherLocation, WeatherAtlas } from "../shared/weather";
 import { CATEGORIES, TASKS } from "../shared/policy";
@@ -38,6 +43,8 @@ const engine = new Engine(
   read<ModelBundle>("models/bundle.json"),
   read("data/scenario.json"),
 );
+const hazardProviders = createProviders(store, () => engine.now());
+const providerPoller = new ProviderPoller(store, engine.sites, hazardProviders, broadcast);
 const app = express();
 app.disable("x-powered-by");
 app.use(express.json({ limit: "6mb" }));
@@ -65,6 +72,11 @@ app.use("/api", (req, res, next) => {
 app.get("/api/health", (_req, res) =>
   res.json({ ok: true, version: engine.models.version }),
 );
+app.get("/api/sites/risks", (_req, res) => res.json(engine.snapshot().siteRisks));
+app.get("/api/sites/:id/risk", (req, res) => {
+  if (!engine.sites.some(s => s.id === req.params.id)) return res.status(404).json({ error: "Site not found" });
+  return res.json(engine.snapshot().siteRisks[req.params.id]);
+});
 app.get("/api/snapshot", (_req, res) => res.json(engine.snapshot()));
 const screeningPending = new Map<string, Promise<void>>();
 function refreshScreening(site: Site): Promise<void> {
@@ -108,6 +120,12 @@ app.get("/api/weather/point", async (req, res) => {
   if (longitude > -65 && longitude < 170) return res.status(400).json({ error: "Choose a point within the US map." });
   const points = await loadWeather([{ id: "inspect", name: "Selected location", latitude, longitude }]);
   return points[0] ? res.json(points[0]) : res.status(503).json({ error: "Weather unavailable at this location. Try another point or retry." });
+});
+app.get("/api/risk/atlas", (req, res) => {
+  const parsed = z.object({ hour: z.coerce.number().int().min(0).max(72).default(0) }).safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: "Risk frame hour must be an integer from 0 to 72." });
+  res.setHeader("Cache-Control", "no-store");
+  res.json(riskAtlas(engine.snapshot(), store, parsed.data.hour));
 });
 app.get("/api/events", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
@@ -239,17 +257,12 @@ app.post("/api/reports/:id/resolve", (req, res) => {
 app.post("/api/reports/:id/confirm-triage", (req, res) => {
   const report = store.get<HazardReport>("report", req.params.id);
   if (!report) return res.status(404).json({ error: "Report not found" });
-  const category = (report.triage?.answers?.category as { choice?: string })
-    ?.choice;
-  const task = (report.triage?.answers?.task as { choice?: string })?.choice;
-  if (!CATEGORIES.includes(category as never) || !TASKS.includes(task as never))
-    return res.status(400).json({ error: "No complete suggestion to confirm" });
-  const updated = {
-    ...report,
-    category: category as HazardReport["category"],
-    tasks: [
-      ...new Set([...report.tasks, task as HazardReport["tasks"][number]]),
-    ],
+  if (report.status !== "open") return res.status(409).json({ error: "Resolved reports cannot accept triage changes" });
+  const classification = crewClassificationSchema.safeParse(report.triage?.classification);
+  if (!classification.success || report.triage?.mode !== "live") return res.status(400).json({ error: "No complete semantic suggestion to confirm" });
+  const updated: HazardReport = {
+    ...report, category: classification.data.category,
+    triage: { ...report.triage, classification: classification.data, confirmedAt: report.triage.confirmedAt ?? new Date(engine.now()).toISOString() },
   };
   store.put("report", report.id, updated);
   broadcast();
@@ -311,20 +324,12 @@ async function updateFeeds(site: Site, weather = true) {
     weather && !site.catalogOnly
       ? fetchWeather(site, engine.models, now)
       : weather && site.catalogOnly ? refreshScreening(site).then(() => undefined) : Promise.resolve(undefined),
-    fetchAlerts(site),
+    providerPoller.refresh(site, "nws"),
   ]);
   if (results[0].status === "fulfilled" && results[0].value)
     store.put("forecast", site.id, results[0].value);
-  if (results[1].status === "fulfilled") {
-    for (const alert of store.all<{ id: string; siteId: string }>("alert"))
-      if (alert.siteId === site.id)
-        store.db
-          .prepare("DELETE FROM records WHERE kind=? AND id=?")
-          .run("alert", alert.id);
-    for (const alert of results[1].value) store.put("alert", alert.id, alert);
-  }
   results.forEach((r, i) => {
-    if (i === 0 && !weather) return;
+    if (i === 1 || !weather) return;
     store.put("feed", `${site.id}:${i === 0 ? "weather" : "nws"}`, {
       id: `${site.id}:${i === 0 ? "weather" : "nws"}`,
       checkedAt: new Date(now).toISOString(),
@@ -347,7 +352,8 @@ app.post("/api/sites/:id/refresh", async (req, res) => {
     return res.status(409).json({ error: "Refresh already running" });
   engine.setClock("real");
   broadcast();
-  await updateFeeds(site);
+  void providerPoller.refreshSite(site).catch(() => {});
+  await Promise.all([updateFeeds(site), refreshEnvironment([site])]);
   res.json(engine.snapshot());
 });
 app.use(
@@ -375,6 +381,39 @@ app.use(
     res.status(400).json({ error: "Request could not be processed" });
   },
 );
+const environmentPending = new Set<string>();
+async function refreshEnvironment(sites: Site[]) {
+  const batch = sites.filter(s => !environmentPending.has(s.id));
+  for (const s of batch) environmentPending.add(s.id);
+  try {
+    for (const result of await collect(batch)) {
+      // Preserve old persisted evidence on failure; normalization expires its readings.
+      if (result.point) store.put("environment-weather", result.site.id, result.point);
+      else {
+        const previous = store.get<import("../shared/weather").WeatherPoint>("environment-weather", result.site.id);
+        if (previous) store.put("environment-weather", result.site.id, { ...previous, stale: true, error: result.error });
+      }
+      store.put("feed", `${result.site.id}:environment`, {
+        id: `${result.site.id}:environment`, checkedAt: new Date().toISOString(),
+        ok: !!result.point && !result.point.stale, message: result.error ?? "Normalized environmental provider loaded",
+      });
+    }
+    broadcast();
+  } finally { for (const s of batch) environmentPending.delete(s.id); }
+}
+function fillEnvironment() {
+  if (process.env.DISABLE_ENVIRONMENT_COLLECTION === "1" || environmentPending.size) return;
+  const due = engine.sites.filter(s => Date.now() - Date.parse(
+    store.get<{ checkedAt: string }>("feed", `${s.id}:environment`)?.checkedAt ?? "1970-01-01") >= 900000);
+  // One multi-coordinate request at a time; never one weather request per plant.
+  void refreshEnvironment(due.slice(0, 10));
+}
+const providerTimer = setInterval(() => {
+  if (process.env.DISABLE_EXTERNAL_PROVIDERS !== "1") providerPoller.poll();
+}, 2000);
+if (process.env.DISABLE_EXTERNAL_PROVIDERS !== "1") providerPoller.poll();
+const environmentTimer = setInterval(fillEnvironment, 2000);
+fillEnvironment();
 const timer = setInterval(() => {
   if (engine.tick()) broadcast();
 }, 5000);
@@ -383,7 +422,7 @@ engine.tick();
 // Selected-site requests share these jobs and can jump ahead of background work.
 function fillNationalScreenings() {
   if (process.env.DISABLE_NWS_SCREENING === "1") return;
-  const due = engine.sites.filter(s => s.catalogOnly && !screeningPending.has(s.id) &&
+  const due = engine.sites.filter(s => !screeningPending.has(s.id) &&
     Date.now() - Date.parse(store.get<WeatherScreening>("weather-screening", s.id)?.fetchedAt ?? "1970-01-01") > 900000 &&
     Date.now() - Date.parse(store.get<{checkedAt: string}>("feed", `${s.id}:screening`)?.checkedAt ?? "1970-01-01") > 900000);
   for (const site of due.slice(0, Math.max(0, 3 - screeningPending.size))) void refreshScreening(site);
@@ -427,6 +466,8 @@ const server = app.listen(
     ),
 );
 function shutdown() {
+  clearInterval(providerTimer);
+  clearInterval(environmentTimer);
   clearInterval(screeningTimer);
   clearInterval(timer);
   clearInterval(feedTimer);

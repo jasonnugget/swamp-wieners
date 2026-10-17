@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import type { Decision, HazardReport, Site } from "../../../shared/types";
-import { REGION_BOUNDS, type MapRegion, type WeatherLayer, type WeatherLocation, type WeatherPoint } from "../../../shared/weather";
-import { createWeatherField } from "./weather-field";
+import { REGION_BOUNDS, type MapRegion } from "../../../shared/weather";
 import {
   LAND_TOP,
   projectUS as project,
@@ -16,7 +15,10 @@ import {
 
 export interface SceneData {
   sites: Site[];
-  decisions: Record<string, Decision>;
+  decisions: Record<string, Pick<Decision, "index" | "tasks" | "lightningUntil">>;
+  visuals?: Record<string, { value: number | null; fraction: number; confidence: number; color: string; label: string; unit: string }>;
+  hour?: number;
+  layer?: string;
   selected: string;
   reports: HazardReport[];
   pin?: { latitude: number; longitude: number };
@@ -26,7 +28,6 @@ export interface MapScene {
   fit(): void;
   focus(site: Pick<Site, "latitude" | "longitude">): void;
   region(region: MapRegion): void;
-  weather(points: WeatherPoint[], layer: WeatherLayer, hour: number, selectedId?: string): void;
   topDown(value: boolean): void;
   rotate(value: boolean): void;
   zoom(factor: number): void;
@@ -61,7 +62,6 @@ export function createMapScene(
     interact(): void;
     ready(): void;
     geographyError(): void;
-    inspect(location: WeatherLocation): void;
   },
 ): MapScene {
   const renderer = new THREE.WebGLRenderer({
@@ -133,7 +133,6 @@ export function createMapScene(
   scene.add(land, beacons, reports);
   const siteLabels = document.createElement("div");
   labels.appendChild(siteLabels);
-  const weatherField = createWeatherField(scene, labels, (point) => callbacks.inspect(point));
   const abort = new AbortController();
   let disposed = false,
     top = !!callbacks.pin,
@@ -342,8 +341,44 @@ export function createMapScene(
     anchors.push({ element, position, priority });
     return element;
   }
+  const records = new Map<string, { pillar: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshStandardMaterial>; head: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>; halo: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>; element: HTMLButtonElement; anchor: { position: THREE.Vector3; priority: number }; key: string }>();
+  let topology = "";
+  function refreshBeacons() {
+    pulses.length = 0;
+    for (const site of data.sites) {
+      const record = records.get(site.id); if (!record) continue;
+      const decision = data.decisions[site.id], visual = data.visuals?.[site.id];
+      const value = visual ? visual.value : decision?.index ?? null, color = visual?.color ?? riskColor(value), selected = site.id === data.selected;
+      const key = JSON.stringify([value, color, selected, visual?.label, visual?.confidence, decision?.tasks.some(t => t.state === "HOLD")]);
+      if (selected || decision?.tasks.some(t => t.state === "HOLD")) pulses.push({ mesh: record.halo, base: selected ? 0.8 : 0.35 });
+      if (record.key === key) continue;
+      record.key = key;
+      const height = callbacks.pin ? 0.004 : 0.15 + (visual ? visual.fraction * 0.55 : (value ?? 0) * 0.055);
+      record.pillar.position.y = LAND_TOP + height / 2; record.pillar.scale.y = height;
+      record.pillar.material.color.set(color); record.pillar.material.emissive.set(color);
+      record.pillar.material.emissiveIntensity = selected ? 1 : 0.45;
+      record.pillar.material.opacity = value === null ? 0.4 : visual && visual.confidence < 0.5 ? 0.55 : 0.85;
+      record.head.position.y = LAND_TOP + height; record.head.scale.setScalar(selected ? 1.25 : 0.7); record.head.material.color.set(color);
+      record.halo.material.color.set(color); record.halo.material.opacity = selected ? 0.8 : 0.35;
+      record.anchor.position.copy(record.head.position).add(new THREE.Vector3(0, callbacks.pin ? 0.003 : 0.12, 0)); record.anchor.priority = selected ? 100 : 10;
+      record.element.textContent = value?.toFixed(1) ?? "?";
+      record.element.className = `site-beacon ${selected ? "is-selected" : ""} ${value === null ? "is-unknown" : ""} ${visual && visual.confidence < 0.5 ? "has-low-confidence" : ""}`;
+      record.element.style.setProperty("--beacon-color", color);
+      record.element.dataset.confidence = visual ? String(visual.confidence) : "";
+      record.element.dataset.value = value === null ? "unknown" : String(value);
+      record.element.setAttribute("aria-label", `${site.name}, ${visual?.label ?? "risk"} ${value ?? "unknown"}`);
+      record.element.setAttribute("aria-pressed", String(selected)); record.element.title = `${site.name} · ${value ?? "unknown"} ${visual?.unit ?? "/10"}`;
+    }
+  }
   function update(next: SceneData) {
     data = next;
+    canvas.dataset.riskLayer = data.layer ?? "risk";
+    canvas.dataset.riskHour = String(data.hour ?? 0);
+    const signature = JSON.stringify([data.sites.map(s => [s.id, s.latitude, s.longitude, s.name]), data.sites.map(s => data.decisions[s.id]?.lightningUntil), data.reports, data.pin]);
+    if (signature === topology) { refreshBeacons(); return; }
+    topology = signature;
+    records.clear();
+    canvas.dataset.beaconBuilds = String(Number(canvas.dataset.beaconBuilds ?? 0) + 1);
     disposeGroup(beacons);
     disposeGroup(reports);
     siteLabels.replaceChildren();
@@ -431,6 +466,7 @@ export function createMapScene(
         controls.autoRotate = false;
         callbacks.select(site.id);
       };
+      records.set(site.id, { pillar, head, halo, element, anchor: anchors[anchors.length - 1], key: "" });
       element.onmouseenter = () => callbacks.hover(site.id);
       element.onmouseleave = () => callbacks.hover(null);
       element.onfocus = () => callbacks.hover(site.id);
@@ -492,6 +528,7 @@ export function createMapScene(
       element.setAttribute("aria-label", `Crew report: ${report.description}`);
       element.onclick = () => callbacks.select(report.siteId);
     }
+    refreshBeacons();
     if (data.pin) {
       const p = project(data.pin.latitude, data.pin.longitude);
       const element = label(
@@ -542,18 +579,10 @@ export function createMapScene(
     if (distance > 5 || event.button !== 0) return;
     setPointer(event);
     if (!callbacks.pin) {
-      const weatherPoint = weatherField.pick(raycaster);
-      if (weatherPoint) { callbacks.inspect(weatherPoint); return; }
       const hit = raycaster.intersectObjects(pickTargets)[0];
       if (hit?.object.userData.siteId) {
         callbacks.select(hit.object.userData.siteId);
         return;
-      }
-      const landHit = raycaster.intersectObjects(land.children).find((h) => h.object.userData.state);
-      if (landHit) {
-        const position = unproject(landHit.point.x, landHit.point.z);
-        const longitude = ((position.longitude + 180) % 360 + 360) % 360 - 180;
-        callbacks.inspect({ id: "inspect", name: landHit.object.userData.state, latitude: position.latitude, longitude });
       }
       return;
     }
@@ -615,7 +644,6 @@ export function createMapScene(
         mesh.scale.setScalar(1 + t * 1.6);
         (mesh.material as THREE.MeshBasicMaterial).opacity = base * (1 - t);
       });
-    weatherField.draw(camera, container.clientWidth, container.clientHeight, now, !reduced.matches);
     renderer.render(scene, camera);
     const width = container.clientWidth,
       height = container.clientHeight;
@@ -652,13 +680,6 @@ export function createMapScene(
   return {
     update,
     region,
-    weather(points, layer, hour, selectedId) {
-      beacons.visible = layer === "risk";
-      weatherField.update(points, layer, hour, selectedId);
-      canvas.dataset.weatherLayer = layer;
-      canvas.dataset.weatherHour = String(hour);
-      canvas.dataset.weatherPoints = String(points.length);
-    },
     fit,
     focus,
     resize,
@@ -704,7 +725,6 @@ export function createMapScene(
       observer.disconnect();
       visibility.disconnect();
       controls.dispose();
-      weatherField.dispose();
       canvas.removeEventListener("pointerdown", start);
       canvas.removeEventListener("pointerup", end);
       canvas.removeEventListener("pointercancel", cancel);

@@ -2,7 +2,7 @@
 
 `scene.ts` owns the Three.js renderer, extruded state geometry, camera controls, projected HTML markers, and pointer raycasting. `FlatMap.tsx` retains selection and pinning when WebGL is unavailable. `projection.ts` defines a reversible local Mercator projection and geographic bounds. `../SiteMap.tsx` connects the scene to React props and accessible controls.
 
-State extrusion is schematic. Beacon height represents the supplied hazard index, not terrain elevation. Keep real site/report coordinates, unknown risk labels, and selected-site callbacks intact. A lightning boundary is geodesic and represents ten miles; decorative beacon halos are not distance buffers.
+State extrusion is schematic. Beacon height represents the selected canonical measurement/risk scale, not terrain elevation. The report-pinning view retains its period-specific decision context. Keep real site/report coordinates, unknown risk labels, and selected-site callbacks intact. A lightning boundary is geodesic and represents ten miles; decorative beacon halos are not distance buffers.
 
 The report form uses a top-down camera. Ground clicks intersect the same projected plane used by the scene and convert back to latitude/longitude. Dragging and multi-touch gestures must not submit a pin. Risk markers select sites without changing report coordinates.
 
@@ -10,15 +10,17 @@ Use bundled geography and local packages so the production view works offline. D
 
 Vite explicitly prebundles Three.js and OrbitControls in `vite.config.ts` for the lazy scene import. If dependencies change while a development server is running, restart it to avoid stale optimized-module URLs. Module loading errors and renderer initialization errors have separate fallback messages; the browser console preserves the underlying error.
 
-## National weather atlas
+## Authoritative risk atlas
 
-`WeatherControls.tsx` owns the inspector, five layers, region shortcuts, search, and 72-hour timeline. `useWeatherAtlas.ts` loads national samples and point forecasts in parallel, refreshes every fifteen minutes while visible, and marks the saved national cache stale after a failed request. `weather-field.ts` renders sampled-value columns, wind vectors, precipitation particles, and schematic cloud volumes. Animation stays outside React. Dispose all field resources on a layer change or unmount. Styling lives in `../../styles/weather-atlas.css`.
+`RiskControls.tsx` presents eleven layers, site inspection, evidence sources, search, region shortcuts and the 72-hour risk slider. `src/lib/useRiskAtlas.ts` fetches `/api/risk/atlas?hour=0..72` in one national batch. The slider requests a backend risk frame, not a separate weather object. Layers select raw observation fields or scored channels from that same snapshot. Temperature is Fahrenheit; heat/soil/flood/fire/lightning/wildlife/weather layers are 0–10 risk. Gray markers and question marks indicate unknown data. Known low-confidence values retain their scale color with a dashed, translucent marker. Wind prefers gusts and labels a sustained-wind fallback explicitly.
 
-The atlas loads `/data/us-states.geojson` for all fifty states, including Alaska and Hawaii. Region cameras use real Mercator coordinates; Aleutian longitudes are unwrapped across the antimeridian. Click land to inspect weather at the raycast location. Overview samples represent one actual location per state, not statewide averages or radar. Weather column height represents the selected variable; plant beacon height retains the workspace hazard index. Missing readings never become zero.
+The panel includes composite risk, coverage, confidence, structured drivers, expandable channel evidence, task decisions and independent overrides. A live lightning hold has a local one-second countdown; reaching zero waits for backend confirmation. This timer does not rerender the scene. Public, forecast, static and live source metadata remain visible. A failed atlas refresh labels retained evidence stale; offline current data can use the saved canonical workspace.
 
-Provider forecasts use actual system/provider time independently of the safety replay and frozen ML models. Scrubbing weather does not change work holds. The local font and geometry are precached for offline use; cached weather remains explicitly stale. Verify layer changes, forecasts, point inspection, reduced motion, and mobile controls with `weather-atlas.spec.ts`, plus the existing map/pinning tests.
+The atlas covers every catalog plant, including sites without custom models. Geography remains bundled for all fifty states. Alaska and Hawaii use their actual coordinates; outgoing report pins retain standard longitude normalization. Arbitrary land clicks do not request unrelated weather. Site markers and region/search controls select catalog plants.
 
-Plant beacons use the national EIA catalog, currently 285 sites across fifty states. Catalog-only plants have unknown safety risk; weather inspection remains available at their actual coordinates. Fit plants includes Alaska and Hawaii. US display coordinates unwrap Aleutian longitudes; outgoing report pins normalize back to the standard longitude range.
+Scene geometry persists across value, selection and layer updates. Each beacon caches its display inputs; unchanged beacons receive no material/text mutations. Report-pin topology or lightning-boundary changes rebuild dynamic objects; land, renderer and camera persist. Forecast gestures debounce and cancel superseded national reads. Layer switches perform no network calls. The old weather hook, inspector and sampled weather field were removed; compatibility weather APIs remain on the server.
+
+Current risk uses actual system time. Future frames are backend forecast screening with explicit limitations: unavailable future gauge, fire, strike and wildlife evidence stays unknown, while unresolved crew controls are assumed to persist. Historical replay is labeled separately in the other working views.
 
 The website mounts the national atlas only in `/?view=atlas`. `SiteMap` accepts `standalone` to use a page-level heading there; report pinning retains its compact embedded presentation. The atlas fills the viewport below the site navigation and selection strip. Showcase mode can cover those controls too, and Escape restores the normal atlas view.
 

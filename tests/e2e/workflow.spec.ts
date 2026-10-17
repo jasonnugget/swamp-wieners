@@ -163,7 +163,7 @@ test("atlas and mobile report are usable without horizontal overflow", async ({
   await page.screenshot({ path: "test-results/dashboard.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
-    page.getByRole("heading", { name: "Weather, in perspective." }),
+    page.getByRole("heading", { name: "Site risk, in perspective." }),
   ).toBeVisible();
   expect(
     await page.evaluate(

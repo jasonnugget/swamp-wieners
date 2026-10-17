@@ -11,7 +11,10 @@ import type {
   TaskState,
   WeatherScreening,
 } from "./types";
-export const POLICY_VERSION = "demo-policy-2";
+import { scoreHeat, scoreWind, scoreWeather, scoreSoil, scoreFlood, scoreLightning, calculateCompositeRisk, mergeEvidence, alertFloor } from "./risk-scoring";
+import { crewEvidence, crewTaskEffects } from "./crew-risk";
+import { RISK_CONFIG } from "./risk-config";
+export const POLICY_VERSION = "continuous-policy-4";
 export const TASKS: Task[] = ["mobilization", "installation", "preparation"];
 export const CATEGORIES: Category[] = [
   "weather",
@@ -63,17 +66,6 @@ export function lightningUntil(
     .filter((t) => t > now);
   return times.length ? new Date(Math.max(...times)).toISOString() : null;
 }
-export function interpolate(value: number, points: number[], scores: number[]) {
-  if (value <= points[0]) return scores[0];
-  for (let i = 1; i < points.length; i++)
-    if (value <= points[i])
-      return (
-        scores[i - 1] +
-        ((scores[i] - scores[i - 1]) * (value - points[i - 1])) /
-          (points[i] - points[i - 1])
-      );
-  return scores[scores.length - 1];
-}
 const rank: Record<TaskState, number> = {
   AVAILABLE: 0,
   UNKNOWN: 1,
@@ -87,17 +79,18 @@ export function decide(
   strikes: Strike[],
   alerts: Alert[],
   now: number,
-  soilThresholds: number[] = [0.2, 0.3, 0.4],
+  soilThresholds?: number[],
   screening?: WeatherScreening,
   screeningNow = now,
   screeningHorizonHours = 24,
+  environmentalChannels?: HazardChannel[],
 ): Decision {
   const active = reports.filter(
-    (r) => r.siteId === site.id && r.status === "open",
+    (r) => r.siteId === site.id && r.status === "open" && Date.parse(r.createdAt) <= now,
   );
   const until = lightningUntil(site, strikes, now);
   const known =
-    !!forecast?.hours.length &&
+    forecast?.siteId === site.id && !!forecast?.hours.length &&
     forecast.hours.every(
       (h) =>
         h.heat.length === 3 &&
@@ -119,9 +112,9 @@ export function decide(
     ? Math.max(...forecast!.hours.map((h) => h.soil[2]))
     : null;
   const heatScore =
-    heat === null ? null : interpolate(heat, [80, 90, 103, 125], [0, 3, 7, 10]);
+    scoreHeat(heat);
   const soilScore =
-    soil === null ? null : interpolate(soil, soilThresholds, [0, 7, 10]);
+    scoreSoil({ moistureSurface: soil, moistureRoot: null, historicalPercentile: null }, soilThresholds);
   const taskChannels: HazardChannel[] = [];
   const freshScreening = screening?.siteId === site.id &&
     screeningNow >= Date.parse(screening.fetchedAt) &&
@@ -142,7 +135,7 @@ export function decide(
         a.category === category &&
         Date.parse(a.expiresAt) > now,
     );
-    const report = active.find((r) => r.category === category);
+    const matchingReports = active.filter(r => r.category === category);
     const base: HazardChannel = {
       category,
       severity: null,
@@ -155,7 +148,7 @@ export function decide(
     if (category === "heat" && heat !== null)
       Object.assign(base, {
         severity: heatScore,
-        status: heatScore! >= 7 ? "RESTRICTED" : "AVAILABLE",
+        status: heat >= RISK_CONFIG.policy.heatRestrictF ? "RESTRICTED" : "AVAILABLE",
         title: `${Math.round(heat)}°F upper estimate`,
         detail:
           "Peak forecast heat index. Prototype heat policy; review site controls.",
@@ -165,7 +158,7 @@ export function decide(
     if (category === "soil" && soil !== null)
       Object.assign(base, {
         severity: soilScore,
-        status: soil >= soilThresholds[1] ? "RESTRICTED" : "AVAILABLE",
+        status: (soilThresholds ? soil >= soilThresholds[1] : soilScore! >= RISK_CONFIG.policy.restrictScore) ? "RESTRICTED" : "AVAILABLE",
         title: `${soil.toFixed(3)} m³/m³`,
         detail:
           "Upper soil-moisture estimate. High wetness requires ground inspection.",
@@ -174,9 +167,10 @@ export function decide(
       });
     if (category === "weather" && known) {
       const wind = Math.max(...forecast!.hours.map((h) => h.wind));
+      const severity = scoreWeather({ windMph: wind / 1.609344, gustMph: null, precipitation1hMm: Math.max(...forecast!.hours.map(h => h.precipitation)) });
       Object.assign(base, {
-        severity: wind >= 50 ? 7 : wind >= 30 ? 3 : 0,
-        status: wind >= 50 ? "RESTRICTED" : "AVAILABLE",
+        severity,
+        status: wind / 1.609344 >= RISK_CONFIG.policy.windRestrictMph || severity! >= RISK_CONFIG.policy.restrictScore ? "RESTRICTED" : "AVAILABLE",
         title: `${Math.round(wind)} km/h peak wind`,
         detail: "Wind screening; rainfall and temperature shown in forecast.",
         mode: forecast!.mode,
@@ -187,44 +181,45 @@ export function decide(
       const value = category === "heat" ? officialHeat : officialWind;
       if (value !== null) {
         const severity = category === "heat"
-          ? interpolate(value, [80, 90, 103, 125], [0, 3, 7, 10])
-          : value >= 50 ? 7 : value >= 30 ? 3 : 0;
+          ? scoreHeat(value)!
+          : scoreWind(value / 1.609344)!;
         Object.assign(base, {
-          severity, status: severity >= 7 ? "RESTRICTED" : "AVAILABLE",
+          severity, status: (category === "heat" ? value >= RISK_CONFIG.policy.heatRestrictF : value / 1.609344 >= RISK_CONFIG.policy.windRestrictMph) ? "RESTRICTED" : "AVAILABLE",
           title: category === "heat" ? `${Math.round(value)}°F forecast heat index` : `${Math.round(value)} km/h peak wind`,
           detail: `${screeningHorizonHours === 24 ? "Next 24 hours" : "Selected briefing period"} from NOAA/NWS. ${category === "heat" ? "Heat index derived from forecast temperature and humidity." : "Wind screening from hourly forecasts."} Other hazards require separate verification. Issued ${screening!.issuedAt}.`,
           mode: "live", source: "NOAA/NWS · forecast screening (not custom ML)",
         });
       }
     }
+    if (environmentalChannels) Object.assign(base, environmentalChannels.find(c => c.category === category));
     if (category === "lightning")
       Object.assign(
         base,
         until
           ? {
-              severity: 10,
+              severity: environmentalChannels ? base.severity : scoreLightning({ nearestStrikeMiles: Math.min(...strikes.filter(s => Date.parse(s.time) <= now && now - Date.parse(s.time) < 1800000).map(s => distanceMiles(site, s))), latestStrikeAt: null, strikes10mi30m: null, forecastPotential: null }),
               status: "HOLD",
               title: "Stop outdoor work",
               detail:
                 "Strike within 10 miles. Wait 30 minutes from the latest strike.",
-              mode: "simulated",
-              source: "Demonstration strike replay",
+              mode: environmentalChannels ? "live" : "simulated",
+              source: environmentalChannels ? "Detected lightning events" : "Demonstration strike replay",
             }
           : {
-              detail: "Replay ready. No live strike detector connected.",
-              mode: "simulated",
-              source: "Demonstration strike replay",
+              detail: environmentalChannels ? "No active detected-strike hold. Live detector coverage remains unknown." : "Replay ready. No live strike detector connected.",
+              mode: environmentalChannels ? "live" : "simulated",
+              source: environmentalChannels ? "Detected lightning events" : "Demonstration strike replay",
             },
       );
-    if (category === "flood" && site.riverScreening && known) {
+    if (!environmentalChannels && category === "flood" && site.riverScreening && known) {
       const rain = forecast!.hours.reduce((sum, h) => sum + h.precipitation, 0);
-      const antecedent = forecast!.antecedentRain24 ?? 0;
-      if (rain >= 25 || antecedent >= 25)
+      const antecedent = forecast!.antecedentRain24;
+      if (rain >= RISK_CONFIG.policy.rainRestrictMm || (antecedent !== undefined && antecedent >= RISK_CONFIG.policy.rainRestrictMm))
         Object.assign(base, {
-          severity: 7,
+          severity: scoreFlood({ weather: { precipitation1hMm: null, precipitation24hMm: Math.max(rain, antecedent ?? rain), precipitation7dMm: null }, flood: { stagePercentile: null, stageTrend: null, floodplain: null, floodAlert: null } }),
           status: "RESTRICTED",
           title: "River-site rainfall screen",
-          detail: `${antecedent.toFixed(1)} mm estimated prior-day rain; ${rain.toFixed(1)} mm next-day forecast. Inspect access; this is not a river-stage forecast.`,
+          detail: `${antecedent?.toFixed(1) ?? "unknown"} mm estimated prior-day rain; ${rain.toFixed(1)} mm next-day forecast. Inspect access; this is not a river-stage forecast.`,
           mode: forecast!.mode,
           source: "Rainfall + curated river-site flag",
         });
@@ -232,8 +227,8 @@ export function decide(
     if (matching.length) {
       const worst = matching.sort((a, b) => b.severity - a.severity)[0];
       Object.assign(base, {
-        severity: Math.max(base.severity ?? 0, worst.severity),
-        status: worst.severity >= 10 ? "HOLD" : "RESTRICTED",
+        severity: environmentalChannels ? base.severity : Math.max(base.severity ?? 0, ...matching.map(alertFloor)),
+        status: base.status === "HOLD" || worst.severity >= 10 ? "HOLD" : "RESTRICTED",
         title: worst.title,
         detail: "Official alert. Review the source and local response plan.",
         mode: worst.mode,
@@ -241,15 +236,11 @@ export function decide(
       });
     }
     taskChannels.push({ ...base });
-    if (report)
-      Object.assign(base, {
-        severity: Math.max(base.severity ?? 0, 10),
-        status: "HOLD",
-        title: "Unresolved crew report",
-        detail: report.description,
-        mode: "crew",
-        source: `Crew · ${report.author}`,
-      });
+    if (matchingReports.length) {
+      if (!environmentalChannels) base.severity = mergeEvidence(base.severity, Math.max(...matchingReports.map(r => crewEvidence(r, now).score)));
+      // Report task holds are applied below, independently of channel severity/status.
+      Object.assign(base, { title: "Unresolved crew evidence", detail: matchingReports.map(r => r.description).join(" "), mode: "crew", source: "Crew reports" });
+    }
     return base;
   });
   const tasks = TASKS.map((task) => {
@@ -267,19 +258,13 @@ export function decide(
       }
     }
     for (const report of active)
-      if (report.tasks.includes(task))
-        apply(
-          "HOLD",
-          `Crew report ${report.id.slice(0, 8)}: ${report.description}`,
-        );
+      for (const effect of crewTaskEffects(report, now))
+        if (effect.tasks.includes(task)) apply(effect.state, `Crew report ${report.id.slice(0, 8)}: ${report.description}`);
     return { task, state, reasons };
   });
-  const scores = channels
-    .map((c) => c.severity)
-    .filter((n): n is number => n !== null);
   return {
     siteId: site.id,
-    index: scores.length ? Math.round(Math.max(...scores) * 10) / 10 : null,
+    index: calculateCompositeRisk(channels.map(c => ({ score: c.severity }))),
     policyVersion: POLICY_VERSION,
     tasks,
     channels,

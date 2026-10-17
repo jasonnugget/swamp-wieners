@@ -1,3 +1,4 @@
+import { rankSites } from "../../shared/atlas";
 import { lazy, Suspense, useCallback, useEffect, useState, type MouseEvent } from "react";
 import {
   ArrowDown,
@@ -173,13 +174,7 @@ export default function App() {
       snapshot.sites.find((s) => s.id === selected) ?? snapshot.sites[0],
     decision = snapshot.decisions[site.id],
     forecast = snapshot.forecasts[site.id];
-  const ranked = [...snapshot.sites].sort(
-    (a, b) =>
-      (snapshot.decisions[b.id].index ?? -1) -
-        (snapshot.decisions[a.id].index ?? -1) ||
-      snapshot.decisions[b.id].tasks.filter((t) => t.state === "HOLD").length -
-        snapshot.decisions[a.id].tasks.filter((t) => t.state === "HOLD").length,
-  );
+  const ranked = rankSites(snapshot.sites, snapshot.siteRisks);
   const filtered = ranked.filter((s) =>
     `${s.name} ${s.state} ${s.county}`
       .toLowerCase()
@@ -272,7 +267,7 @@ export default function App() {
             </div>
             <span className="source-pill">
               <span className="live-dot" />
-              {!forecast ? (decision.channels.some(c => c.source.startsWith("NOAA/NWS")) ? "NOAA forecast screening · partial coverage" : "NOAA forecast loading or unavailable") : forecast.mode === "historical"
+              {page === "atlas" ? "Canonical site risk · live environmental evidence" : !forecast ? (decision.channels.some(c => c.source.startsWith("NOAA/NWS")) ? "NOAA forecast screening · partial coverage" : "NOAA forecast loading or unavailable") : forecast.mode === "historical"
                 ? "Historical forecast replay"
                 : "Live forecast"}
             </span>
@@ -390,7 +385,7 @@ export default function App() {
           {(page === "atlas" || page === "intelligence") && (
             <>
               {page === "atlas" && <section className="atlas-workspace" aria-label="Fullscreen 3D atlas">
-                <SiteMap standalone sites={snapshot.sites} decisions={snapshot.decisions} selected={site.id} onSelect={setSelected} reports={snapshot.reports} />
+                <SiteMap standalone sites={snapshot.sites} decisions={snapshot.decisions} risks={snapshot.siteRisks} selected={site.id} onSelect={setSelected} reports={snapshot.reports} />
               </section>}
               {page === "intelligence" && <>
               <div className="network-summary">
@@ -482,10 +477,10 @@ export default function App() {
                           <strong>{s.name}</strong>
                           <small>
                             {s.county}, {s.state} ·{" "}
-                            {snapshot.decisions[s.id].unknownCount} unknown
+                            {snapshot.siteRisks[s.id]?.observation.coverage.percent.toFixed(0) ?? 0}% coverage · {((snapshot.siteRisks[s.id]?.confidence ?? 0) * 100).toFixed(0)}% confidence
                           </small>
                         </span>
-                        <Badge value={snapshot.decisions[s.id].index} />
+                        <Badge value={snapshot.siteRisks[s.id]?.risk} />
                       </button>
                     ))}
                     {!filtered.length && (

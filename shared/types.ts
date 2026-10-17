@@ -135,6 +135,8 @@ export interface HazardReport {
     mode: "live" | "unavailable";
     model?: string;
     answers?: Record<string, unknown>;
+    classification?: import("./crew-risk").CrewClassification;
+    confirmedAt?: string;
     error?: string;
   };
 }
@@ -150,6 +152,7 @@ export interface Alert {
   siteId: string;
   category: Category;
   title: string;
+  event?: string;
   severity: number;
   expiresAt: string;
   mode: DataMode;
@@ -183,6 +186,7 @@ export interface Briefing {
   text: string;
 }
 export interface Snapshot {
+  siteRisks: Record<string, import("./risk").SiteRiskSnapshot>;
   weatherScreenings?: Record<string, WeatherScreening>;
   teams: CrewTeam[];
   now: string;

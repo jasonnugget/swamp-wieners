@@ -19,7 +19,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "npm run build && DISABLE_NWS_SCREENING=1 PORT=4173 DATA_DIR=runtime/e2e npm start",
+    command: "npm run build && DISABLE_EXTERNAL_PROVIDERS=1 DISABLE_NWS_SCREENING=1 DISABLE_ENVIRONMENT_COLLECTION=1 PORT=4173 DATA_DIR=runtime/e2e npm start",
     url: "http://127.0.0.1:4173/api/health",
     reuseExistingServer: false,
     timeout: 120000,

@@ -5,13 +5,13 @@
 - **Targets:** [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api), ERA5-Land; Stock Island uses ERA5 because its coastal ERA5-Land cell has no data. Reanalysis is modeled gridded environmental information, not on-site measurement.
 - **Official alerts:** [NWS](https://www.weather.gov/documentation/services-web-alerts). Fire-weather alerts are distinguished from confirmed wildfire. NWS does not supply live strike detections here.
 - **Map outlines:** [PublicaMundi US states GeoJSON](https://github.com/PublicaMundi/MappingAPI/blob/master/data/geojson/us-states.json), bundled for offline use.
-- **Lightning:** simulated events through a persistent replay adapter. There is no live lightning provider configured.
-- **Wildlife:** crew sightings; no automated wildlife prediction.
-- **Flood screening:** four manually selected Mississippi corridor demonstration sites and heavy-rain screening, plus official NWS alerts when connected. The selections do not establish verified river proximity, floodplain membership, or a river-stage forecast.
+- **Lightning:** a swappable provider with explicit unavailable, recorded-live and demo modes. No licensed live network is configured by default; forecast potential never counts as a detected strike.
+- **Wildlife:** crew sightings plus sparse, filtered iNaturalist public context; no automated wildlife probability claim.
+- **Flood screening:** legacy corridor replay screens plus USGS nearby-stage proxies, FEMA mapped exposure and official NWS alerts in the live pipeline. Legacy corridor flags do not establish flood exposure. FEMA supplies mapped static membership where available; nearest-gauge association does not verify hydrologic connectivity or predict inundation.
 
-The index is the maximum of available model, official forecast screening, and active hazard/report severity. Heat severity interpolates 80/90/103/125°F to 0/3/7/10 using the model upper estimate or a separately labeled deterministic NOAA forecast where custom forecasts are unavailable. Soil severity uses training-period 50th/90th/95th moisture percentiles. The 90th percentile requires ground inspection. Crew and lightning holds score 10. Unknown inputs never become zero. Resolving a crew report does not clear another hazard.
+Policy `continuous-policy-4` uses shared continuous channel scores and dominant-plus-compounding site aggregation under `continuous-risk-4`. Heat, wind, soil percentiles, flood factors/alert floors, lightning forecast/detection, wildfire and wildlife have separate deterministic screens. Crew evidence is classified semantically; ordinary reports no longer force severity 10. Numerical risk remains independent of crew-selected holds, official alert controls and the ten-mile/thirty-minute lightning rule. See [complete thresholds and formulas](risk-scoring.md).
 
-Policy `demo-policy-2` adds separate NOAA/NWS heat and wind screening for national catalog plants. It uses future hourly periods over the next 24 hours, expires fetches after three hours and forecast issue times after 24 hours, and keeps the other five hazard channels unknown unless independent evidence exists. Wind uses 30/50 km/h thresholds for severity 3/7. Marine plants use official raw forecast grid intervals because land hourly products are unavailable there. These screenings use system time, including when the original cohort is displayed as a historical replay. They do not fabricate ML quantiles or claim national model validation. Real-clock briefings select the next local day's available periods. See [verified sources](verified-data-sources.md).
+NOAA hourly forecasts retain their freshness checks and explicit source labels. Marine plants use raw forecast grid intervals when land hourly products are unavailable. Model forecasts, current estimates and historical replay remain distinguishable. Real-clock briefings select the next local day's available periods. No chronological split, held-out exclusion, training preprocessing or frozen-model evaluation changed.
 
 These are prototype screening policies. Heat index does not capture the full effects of direct sun, workload, clothing, or acclimatization. Soil moisture does not establish bearing capacity or predict truck immobilization. The UI preserves source mode, uncertainty, unknown coverage, and evidence so supervisors can review each decision.
 
@@ -19,4 +19,12 @@ The offline mode caches assets and the last server snapshot. Reports cannot sync
 
 ## Artifact ownership
 
-Read [public/data](../public/data/README.md) for bundled artifact shapes and [data](../data/README.md) for local training intermediates. Source provenance is bundled in [provenance.json](../public/data/provenance.json). Shared contracts are defined in [types.ts](../shared/types.ts).
+Read [public/data](../public/data/README.md) for bundled artifact shapes and [data](../data/README.md) for local training intermediates. Source provenance is bundled in [provenance.json](../public/data/provenance.json). Workspace contracts are in [types.ts](../shared/types.ts), canonical observations/snapshots in [risk.ts](../shared/risk.ts), source metadata in [providers.ts](../shared/providers.ts), and map frames in [atlas.ts](../shared/atlas.ts).
+
+## Live normalized policy
+
+All 285 plants use the same collection and scoring pipeline. Live snapshots expose versioned scoring, structured drivers, field coverage and confidence, plus independent task overrides. Replay and newly generated briefings use the same numerical formulas over their own periods. Existing stored briefings retain their original policy version. See [the pipeline](environment-pipeline.md).
+
+See [environmental providers](environment-providers.md) for source modes, freshness, credentials and limitations. USGS rolling relative stage is not a long-term flood probability; FEMA exposure is not current inundation; FIRMS thermal anomalies are not confirmed wildfire perimeters.
+
+The supervisor map and priority list consume canonical current risk; raw and risk layers select fields from the same frame. The 72-hour slider asks the backend for one national forecast frame. Unknown future detections are not filled with current readings, and projected task states are not work authorization. See [atlas contracts](api.md#authoritative-supervisor-atlas).

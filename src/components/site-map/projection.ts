@@ -34,15 +34,7 @@ export function normalizeLongitude(longitude: number) {
   return ((longitude + 180) % 360 + 360) % 360 - 180;
 }
 
-export function riskColor(risk: number | null | undefined) {
-  return risk == null
-    ? "#9cabb4"
-    : risk >= 8
-      ? "#ff9676"
-      : risk >= 5
-        ? "#f0c477"
-        : "#c9ee8d";
-}
+export { atlasColor as riskColor } from "../../../shared/atlas";
 
 export const REGION = { west: -188, east: -65, south: 18, north: 72 };
 export const LAND_TOP = 0.16;

@@ -13,6 +13,9 @@ import type {
 } from "../shared/types";
 import { decide, TASK_LABELS } from "../shared/policy";
 import { localParts, nextDate } from "../shared/clock";
+import type { WeatherPoint } from "../shared/weather";
+import type { StoredProviderRecord } from "./pipeline/providers";
+import { siteRisk } from "./pipeline";
 import { Store } from "./store";
 
 export class Engine {
@@ -49,7 +52,7 @@ export class Engine {
   snapshot(): Snapshot {
     const now = this.now(),
       reports = this.store.all<HazardReport>("report"),
-      strikes = this.store.all<Strike>("strike"),
+      strikes = this.store.all<Strike>("strike").filter(s => this.clockMode() === "demo" ? s.mode !== "live" : s.mode === "live"),
       alerts = this.store
         .all<Alert>("alert")
         .filter((a) =>
@@ -57,7 +60,19 @@ export class Engine {
         ),
       forecasts = this.forecasts(),
       weatherScreenings = Object.fromEntries(this.store.all<WeatherScreening>("weather-screening").map(s => [s.siteId, s]));
+    const points = Object.fromEntries(this.store.all<WeatherPoint>("environment-weather").map(p => [p.id, p]));
+    const providerRecords = this.store.all<StoredProviderRecord>("environment-provider");
+    const liveNow = Date.now();
+    const liveAlerts = this.store.all<Alert>("alert");
+    const liveStrikes = this.store.all<Strike>("strike");
+    const risks = Object.fromEntries(this.sites.map(site => {
+      const checked = this.store.get<{ ok: boolean; checkedAt: string }>("feed", `${site.id}:nws`);
+      const collection = this.store.get<{ ok: boolean; message: string }>("feed", `${site.id}:environment`);
+      return [site.id, siteRisk(site, points[site.id], liveNow, reports, liveStrikes,
+        liveAlerts, !!this.bundledForecasts[site.id], weatherScreenings[site.id], checked?.ok ? checked.checkedAt : undefined, collection && !collection.ok ? collection.message : undefined, { forecast: this.clockMode() === "real" ? forecasts[site.id] : undefined, soilThresholds: site.heldOut ? undefined : this.models.soilThresholds[site.id] }, providerRecords.filter(r => r.siteId === site.id))];
+    }));
     return {
+      siteRisks: Object.fromEntries(Object.entries(risks).map(([id, r]) => [id, r.snapshot])),
       now: new Date(now).toISOString(),
       clockMode: this.clockMode(),
       sites: this.sites,
@@ -71,7 +86,7 @@ export class Engine {
       decisions: Object.fromEntries(
         this.sites.map((s) => [
           s.id,
-          decide(
+          this.clockMode() === "real" ? risks[s.id].decision : decide(
             s,
             forecasts[s.id],
             reports,

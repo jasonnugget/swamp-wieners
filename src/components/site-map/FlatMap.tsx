@@ -13,6 +13,7 @@ import {
 export default function FlatMap({
   sites,
   decisions,
+  visuals,
   selected,
   onSelect,
   reports,
@@ -20,7 +21,8 @@ export default function FlatMap({
   pin,
 }: {
   sites: Site[];
-  decisions: Record<string, Decision>;
+  decisions: Record<string, Pick<Decision, "index" | "tasks" | "lightningUntil">>;
+  visuals?: import("./scene").SceneData["visuals"];
   selected: string;
   onSelect(id: string): void;
   reports: HazardReport[];
@@ -102,17 +104,17 @@ export default function FlatMap({
         <button
           type="button"
           key={s.id}
-          className={`flat-beacon ${s.id === selected ? "is-selected" : ""}`}
+          className={`flat-beacon ${s.id === selected ? "is-selected" : ""} ${visuals && visuals[s.id]?.confidence < 0.5 ? "has-low-confidence" : ""}`}
           style={
             {
               ...position(s.latitude, s.longitude),
-              "--beacon-color": riskColor(decisions[s.id]?.index),
+              "--beacon-color": visuals?.[s.id]?.color ?? riskColor(decisions[s.id]?.index),
             } as React.CSSProperties
           }
-          aria-label={`${s.name}, risk ${decisions[s.id]?.index ?? "unknown"}`}
+          aria-label={`${s.name}, ${visuals?.[s.id]?.label ?? "risk"} ${visuals ? visuals[s.id]?.value ?? "unknown" : decisions[s.id]?.index ?? "unknown"}`}
           onClick={() => onSelect(s.id)}
         >
-          {decisions[s.id]?.index?.toFixed(0) ?? "?"}
+          {(visuals ? visuals[s.id]?.value : decisions[s.id]?.index)?.toFixed(1) ?? "?"}
         </button>
       ))}
       {reports

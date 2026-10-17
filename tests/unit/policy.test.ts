@@ -85,7 +85,7 @@ test("a lower model estimate cannot clear a crew hold; resolution preserves othe
   };
   const d = decide(site, forecast, [report], [], [], now);
   assert.equal(d.tasks.find((t) => t.task === "mobilization")!.state, "HOLD");
-  assert.equal(d.index, 10);
+  assert.ok(d.index! >= 4 && d.index! < 10);
   assert.equal(
     d.tasks.find((t) => t.task === "preparation")!.state,
     "AVAILABLE",

@@ -14,7 +14,7 @@ test("3D map selects real sites, orbits, zooms, and expands for a showcase", asy
   const map = page.getByTestId("site-map");
   const canvas = map.locator(".three-map-canvas");
   await expect(canvas).toHaveAttribute("data-geography", "ready");
-  await page.getByRole("button", { name: /Site risk/ }).click();
+  await page.getByRole("button", { name: "Site risk", exact: true }).click();
   await expect(map.locator(".site-beacon")).toHaveCount(285);
   await map.locator('[data-site-id="55433"]').focus();
   await map.locator('[data-site-id="55433"]').press("Enter");
@@ -156,10 +156,10 @@ test("without WebGL, the flat fallback still selects sites and places hazard pin
   await expect(page.getByTestId("flat-map")).toBeVisible();
   await expect(page.locator(".scene-warning")).toContainText("3D graphics unavailable");
   await page
-    .getByRole("button", { name: /Bayou Cove Peaking Power, risk/ })
+    .getByRole("button", { name: /Bayou Cove Peaking Power, Site risk/ })
     .focus();
   await page
-    .getByRole("button", { name: /Bayou Cove Peaking Power, risk/ })
+    .getByRole("button", { name: /Bayou Cove Peaking Power, Site risk/ })
     .press("Enter");
   await expect(page.getByLabel("Active site")).toHaveValue("55433");
   await page
