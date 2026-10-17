@@ -32,6 +32,20 @@ If the server uses its demonstration clock, the app labels it. Switch the worksp
 
 Choose a plant and your reporting name in **Crew**. Pick an existing team to use its assigned plants and roster. Team setup remains in the website's Crew reports view. Tap **Snap a hazard**, take or choose a photo, mark the location, select affected work, and share. The app confirms sharing only after the server accepts it. Other open apps and the supervisor receive live invalidations; pull to refresh is also available.
 
+## Visual design and browser preview
+
+The crew app uses the supervisor theme’s paper, olive and copper palette, with bundled Outfit fonts and light Phosphor icons. Home centers the capture action, the field map fills its tab, and site memory keeps searchable observations in a flat list. Report categories expand horizontally; native entrance and scroll motion respect Reduce Motion. Decorative contour lines are artwork, not terrain or hazard readings.
+
+For a presentation preview, run from `mobile/`:
+
+```bash
+npm run preview:web
+```
+
+This is a layout preview, not a replacement for the iPhone app. Its map is explicitly labeled **Coordinate preview** and positions actual site/report coordinates on an illustrative grid. iPhone continues to use native Apple Maps. Camera capture, on-device photo storage, permissions and native map gestures must be checked on iOS. The API does not currently allow the preview’s separate browser origin through CORS; use iOS for the connected reporting workflow. Do not disable browser security or widen backend access just to preview the design.
+
+See the [mobile UI audit](../docs/mobile-ui-audit.md) for screenshots, references, checks and device limitations. The crew workspace supplies reports, sites and teams; it does not supply the supervisor’s environmental risk snapshots. This UI does not invent scores or forecast widgets.
+
 ## After an SDK upgrade
 
 Stop the old mobile development server with Ctrl+C, then run from the repository root:
