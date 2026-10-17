@@ -15,8 +15,9 @@ test("the evidence panel exposes all 34 fields, provenance, sources and usable m
   const canvas = page.locator(".weather-atlas .three-map-canvas");
   await expect(canvas).toHaveAttribute("data-geography", "ready", { timeout: 30000 });
   const mapBounds = (await canvas.boundingBox())!, panelBounds = (await panel.boundingBox())!;
-  expect(mapBounds.width).toBeGreaterThan(700);
-  expect(mapBounds.x + mapBounds.width).toBeLessThanOrEqual(panelBounds.x + 1);
+  expect(mapBounds).toEqual({ x: 0, y: 0, width: 1440, height: 1000 });
+  expect(panelBounds.x).toBeGreaterThan(1000);
+  expect(panelBounds.y).toBeGreaterThan(80);
   await panel.getByRole("button", { name: "Conditions", exact: true }).click();
   await expect(panel.locator(".observation-field")).toHaveCount(34);
   const field = (path: string) => panel.locator(`[data-observation-field="${path}"]`);
@@ -42,6 +43,14 @@ test("the evidence panel exposes all 34 fields, provenance, sources and usable m
   expect(errors).toEqual([]);
 });
 test("canonical atlas renders all risk ranges, unknowns, hazard layers, timeline, holds and stale state", async ({ page }) => {
+  // Cache reuse is checked between invalidations. Keep the workspace's 15s
+  // background poll from racing this long fixture workflow; the real crew/SSE
+  // test below independently verifies cache invalidation and updated evidence.
+  await page.addInitScript(() => {
+    const schedule = window.setInterval.bind(window);
+    window.setInterval = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) =>
+      schedule(handler, timeout === 15000 ? 600000 : timeout, ...args)) as typeof window.setInterval;
+  });
   const errors: string[] = [], obsolete: string[] = [], requestedHours: number[] = [];
   const futureSites: string[] = [];
   let strikeAge: number | undefined;

@@ -3,7 +3,7 @@
 **Iteration:** editorial website with a dedicated fullscreen atlas  
 **Audit date:** October 17, 2026  
 **Challenge:** user-supplied text from `PlanIT_Control_SwampHacks_Brief.docx`, PlanIT Control / Sperry Tech  
-**Scope:** current implementation summary plus the original visual-design audit. The original browser captures and manual UX findings below predate the canonical risk-atlas migration. Current supervisor screenshots and interaction checks are recorded in the [UI audit](ui-audit.md).
+**Scope:** current implementation summary plus the original visual-design audit. The original browser captures and manual UX findings below predate the canonical risk-atlas migration. Current supervisor screenshots and interaction checks are recorded in the [immersive atlas audit](immersive-atlas.md); the [panel-layout audit](ui-audit.md) preserves the intermediate design.
 
 ## The problem behind the interface
 
@@ -15,7 +15,7 @@ PlanIT Control organizes that work around real power plant locations used as dem
 
 ## Visual identity and current supervisor layout
 
-The user identified this frontend as the strongest iteration so far. The homepage retains its artwork, typography, navigation, and motion. The current supervisor redesign replaces overlapping map controls with a dedicated canvas and a paper evidence panel. Overview, Conditions, and Sources views expose risk, all 34 normalized fields, provider health, model coverage, and plant metadata. On mobile, the panel follows the map rather than covering it. The later backend/map work preserves this visual identity while replacing the independent weather path with canonical risk frames, evidence inspection and confidence-aware ranking.
+The user identified this frontend as the strongest iteration so far. The homepage retains its artwork, typography, navigation, and motion. The intermediate supervisor redesign introduced a dedicated canvas and paper evidence panel; the subsequent immersive iteration puts a dark, collapsible evidence drawer and floating controls over a full-screen map. Overview, Conditions, and Sources views expose risk, all 34 normalized fields, provider health, model coverage, and plant metadata. On mobile, the drawer starts closed and opens over the map when requested. The later backend/map work preserves this visual identity while replacing the independent weather path with canonical risk frames, evidence inspection and confidence-aware ranking.
 
 The website opens with an editorial page. A generative field-line sculpture accompanies a two-line headline, **“The field. In perspective.”** Satoshi typography, warm paper surfaces, copper accents, straight edges, and substantial spacing establish the visual language. The homepage avoids a grid of dashboard statistics or rounded feature cards.
 

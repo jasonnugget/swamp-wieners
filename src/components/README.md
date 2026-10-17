@@ -13,4 +13,4 @@ The map uses bundled state outlines with schematic Three.js extrusion and beacon
 
 Run `npm run build` and the [browser tests](../../tests/e2e/README.md) after map or rendering changes. Window calculations are covered under `tests/unit/`.
 
-The atlas’s `ObservationDetails` and `SourceDetails` are also reused by Site intelligence. They expose the complete normalized record and its provenance; formatting lives in `site-map/observations.ts`. The map canvas and desktop evidence panel occupy separate layout regions, while mobile inspection uses normal page scrolling.
+The atlas’s `ObservationDetails` and `SourceDetails` are also reused by Site intelligence. They expose the complete normalized record and its provenance; formatting lives in `site-map/observations.ts`. The map canvas fills the viewport behind floating controls. A collapsible evidence drawer overlays the scene and scrolls independently; phones start with it closed.

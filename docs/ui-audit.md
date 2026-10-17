@@ -1,6 +1,6 @@
 # Supervisor UI audit
 
-Audited October 17, 2026, against the production build. This iteration keeps the existing paper, charcoal and Satoshi visual identity while giving the national map and its evidence separate space.
+Historical panel-layout audit from October 17, 2026. The [immersive atlas audit](immersive-atlas.md) covers the subsequent full-screen redesign. This iteration keeps the existing paper, charcoal and Satoshi visual identity while giving the national map and its evidence separate space.
 
 ## What changed
 

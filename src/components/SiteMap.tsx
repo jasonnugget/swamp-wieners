@@ -2,21 +2,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Compass,
   Crosshair,
-  Layers3,
-  Maximize2,
-  Minimize2,
+  Stack as Layers3,
+  ArrowsOut as Maximize2,
+  ArrowsIn as Minimize2,
   Minus,
   Pause,
   Play,
   Plus,
-  RotateCcw,
-} from "lucide-react";
+  ArrowCounterClockwise as RotateCcw,
+  IconContext,
+} from "@phosphor-icons/react";
 import type { Decision, HazardReport, Site } from "../../shared/types";
 import { TASK_LABELS } from "../../shared/policy";
 import { riskColor } from "./site-map/projection";
 import type { MapScene, SceneData } from "./site-map/scene";
 import FlatMap from "./site-map/FlatMap";
 import RiskControls from "./site-map/RiskControls";
+import { AtlasEntrance } from "./site-map/AtlasMotion";
 import { useRiskAtlas } from "../lib/useRiskAtlas";
 import { atlasValue, atlasColor, atlasFraction, ATLAS_LAYERS, type RiskLayer } from "../../shared/atlas";
 import type { SiteRiskSnapshot } from "../../shared/risk";
@@ -46,7 +48,8 @@ export default function SiteMap({
   pin?: { latitude: number; longitude: number };
   standalone?: boolean;
 }) {
-  const container = useRef<HTMLDivElement>(null),
+  const root = useRef<HTMLDivElement>(null),
+    container = useRef<HTMLDivElement>(null),
     labels = useRef<HTMLDivElement>(null),
     showcaseButton = useRef<HTMLButtonElement>(null),
     scene = useRef<MapScene | null>(null);
@@ -54,6 +57,7 @@ export default function SiteMap({
     [fallback, setFallback] = useState(false),
     [moduleError, setModuleError] = useState(false),
     [geographyError, setGeographyError] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(() => window.innerWidth > 760);
   const [expanded, setExpanded] = useState(false),
     [rotating, setRotating] = useState(false),
     [top, setTop] = useState(!!onPin),
@@ -107,6 +111,7 @@ export default function SiteMap({
                 setRotating(false);
                 scene.current?.rotate(false);
                 callbacks.current.onSelect(id);
+                setInspectorOpen(true);
               },
               ...(callbacks.current.onPin
                 ? {
@@ -151,6 +156,7 @@ export default function SiteMap({
   useEffect(() => {
     if (previousSelected.current === selected) return;
     previousSelected.current = selected;
+    if (!onPin) setInspectorOpen(true);
     const site = sites.find((s) => s.id === selected);
     if (site) {
       setFocusedSite(site.id);
@@ -192,6 +198,7 @@ export default function SiteMap({
 
   function inspectSite(id: string) {
     setFocusedSite(id);
+    setInspectorOpen(true);
     onSelect(id);
   }
   function leaveSite() {
@@ -235,11 +242,14 @@ export default function SiteMap({
     scene.current?.rotate(value);
   }
   return (
+    <IconContext.Provider value={{ weight: "light" }}>
     <div
+      ref={root}
       className={`map-wrap command-map ${onPin ? "is-pinning" : "weather-atlas"}  ${expanded ? "is-expanded" : ""}`}
       data-testid="site-map"
       aria-label={onPin ? "Hazard location map" : "Site risk map"}
     >
+      {!onPin && <AtlasEntrance root={root} enabled={ready}/>}
       <div className={onPin ? "pin-viewport" : "atlas-map-region"}>
       <div className="scene-vignette" />
       <div ref={container} className="site-map scene-surface" />
@@ -271,7 +281,7 @@ export default function SiteMap({
               {fallback ? "2D SITE MAP" : "PLANIT / RISK ATLAS"}
             </span>
             {standalone ? <h1>Site risk, in perspective.</h1> : <h4>Site risk, in perspective.</h4>}
-            <p>Current conditions nationwide. Select a site for 72-hour screening.</p>
+            <p>See the conditions. Select a site for its outlook.</p>
           </div>
           <div className="scene-top-actions">
             <button
@@ -370,10 +380,14 @@ export default function SiteMap({
         onLayer={setLayer} onHour={setHour}
         onRegion={selectRegion}
         onSelect={inspectSite}
+        inspectorOpen={inspectorOpen} onInspector={open => { if (open) inspectSite(selected); else setInspectorOpen(false); }}
       />}
       {!onPin && active && (
         <div
           className="scene-site-card"
+          role="button" tabIndex={0} aria-label="Inspect selected site"
+          onClick={() => inspectSite(selected)}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inspectSite(selected); } }}
           style={
             {
               "--active-risk": riskColor(decision?.index),
@@ -442,6 +456,7 @@ export default function SiteMap({
         </div>
       )}
     </div>
+    </IconContext.Provider>
   );
 }
 function MapBeacon() {
