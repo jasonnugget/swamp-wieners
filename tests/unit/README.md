@@ -4,6 +4,7 @@
 | --- | --- |
 | `policy.test.ts` | Lightning timing/distance, independent holds, unknown/stale forecasts, flood screening, and heat index |
 | `nws-screening.test.ts` | NOAA unit conversion and missing data, partial national scores, freshness expiry, independent holds, and engine demo-clock separation |
+| `dev-readiness.test.ts` | API startup retries, valid health responses, connection refusal and bounded hung requests |
 | `engine.test.ts` | Site-local briefing timing, carry-forward reports, duplicate prevention across restart, and timezone boundaries |
 | `data.test.ts` | National plant catalog, preserved fifty-site model cohort, geographic holdouts, chronological samples, feature availability, and Python/JS inference parity |
 | `map-projection.test.ts` | Geographic projection round trips and distinct unknown-risk styling |

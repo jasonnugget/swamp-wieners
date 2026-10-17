@@ -4,11 +4,12 @@
 | --- | --- |
 | `index.ts` | Environment loading, HTTP validation/routes, SSE, uploads, feed dispatcher, and shutdown |
 | `engine.ts` | Clock selection, forecast selection, snapshot assembly, and next-day briefing creation |
+| `dev-readiness.ts` | Bounded API health wait used by the Vite development server |
 | `store.ts` | SQLite JSON-record store and duplicate-safe insertion |
 | [integrations](integrations/README.md) | Environmental providers, fixed-lead model features and JEV |
 | [pipeline](pipeline/README.md) | Collection, normalization, enrichment, scoring, provider scheduling and atlas frames |
 
-Run `npm start` from the repository root after building. The server resolves public assets relative to that root. `npm run dev` starts it alongside Vite. Runtime records default to `runtime/`; Server settings and optional credentials come from the environment or `.env`; see [.env.example](../.env.example) and [provider operations](../docs/environment-providers.md).
+Run `npm start` from the repository root after building. The server resolves public assets relative to that root. `npm run dev` starts the API and Vite together; Vite waits for a healthy API response before listening. Startup timeout errors identify the API target and leave the backend logs visible. Runtime records default to `runtime/`. Server settings and optional credentials come from the environment or `.env`; see [.env.example](../.env.example) and [provider operations](../docs/environment-providers.md).
 
 Persist reports before triage. Preserve independent hazard holds and audit history. Keep demo and real clock behavior distinct. Briefings are immutable snapshots keyed by site and next local date; duplicate-safe insertion prevents repeat delivery after restart. The process must remain active for timers and streaming updates.
 

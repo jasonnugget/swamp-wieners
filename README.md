@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. The API listens on port 3001. For the production build:
+Open http://localhost:5173. The API listens on port 3001. Vite waits for `/api/health` before accepting browser requests, preventing proxy connection errors during initial startup. If readiness fails within thirty seconds, check the API process output. For the production build:
 
 ```bash
 npm run build

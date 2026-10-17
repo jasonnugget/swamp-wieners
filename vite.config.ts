@@ -1,11 +1,20 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { waitForApi } from "./server/dev-readiness";
+const apiTarget = "http://127.0.0.1:3001";
 export default defineConfig({
   optimizeDeps: {
     include: ["three", "three/addons/controls/OrbitControls.js"],
   },
   plugins: [
     react(),
+    {
+      name: "api-readiness",
+      async configureServer() {
+        console.info("Waiting for PlanIT API before starting Vite…");
+        await waitForApi(`${apiTarget}/api/health`);
+      },
+    },
     {
       name: "offline-asset-manifest",
       generateBundle(_options, bundle) {
@@ -19,8 +28,8 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/api": "http://127.0.0.1:3001",
-      "/uploads": "http://127.0.0.1:3001",
+      "/api": apiTarget,
+      "/uploads": apiTarget,
     },
   },
   build: { chunkSizeWarningLimit: 1700 },

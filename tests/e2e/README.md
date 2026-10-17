@@ -22,3 +22,5 @@ WebGPU/SwiftShader flags allow headless execution on the test machine. A backend
 The scene-module failure test blocks service workers so interception reaches the import. It distinguishes a missing chunk from unavailable graphics. Production tests do not exercise Vite's optimized-dependency cache; after development dependency changes, also verify the running Vite scene has no HTTP 504 dependency errors.
 
 Screenshots/traces go to ignored `test-results/`. Keep fixtures in maintained directories; do not commit test databases or uploads. Preserve offline checks after lazy-import, Three.js, static-URL or service-worker changes. The latest full implementation run passed 19 tests; see [verification context](../README.md) for the run boundary.
+
+`cache-recovery.spec.ts` seeds pre-canonical and pre-structured-evidence snapshots, verifies a recoverable loading/error screen during an outage, then retries successfully without clearing the crew profile. It also forces browser storage quota errors and verifies fresh API state still opens the homepage. The offline workflow covers the versioned cache on a prepared production build.
