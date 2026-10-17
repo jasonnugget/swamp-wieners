@@ -1,6 +1,6 @@
 # PlanIT Control
 
-Field safety intelligence for 50 actual power plants in Florida, Louisiana, and Mississippi. Two custom environmental models connect historical weather to work restrictions, while crew reports become persistent site knowledge for the next shift.
+Field safety intelligence for 285 actual power plants across all 50 US states. Two custom environmental models support the original fifty-site historical cohort; live atlas weather and crew reporting extend nationwide. Reports become persistent site knowledge for the next shift.
 
 ## Run locally
 
@@ -24,7 +24,7 @@ Copy `.env.example` to `.env` to configure optional Jev access. Set `TYPESAFE_AP
 
 ## What is implemented
 
-- Fifty EIA plant locations, an interactive Three.js supervisor map with risk beacons and an expanded showcase, seven visible hazard channels, and an evidence-backed 0–10 index.
+- 285 EIA plant locations across all fifty states, an interactive Three.js supervisor map with risk beacons and an expanded showcase, seven visible hazard channels, and an evidence-backed 0–10 index. Missing safety coverage stays unknown.
 - Equipment mobilization, outdoor installation, and sheltered preparation restrictions. Missing coverage stays unknown.
 - Photo reports with map pins, immediate task holds, streaming updates to other screens, manual confirmation of Jev suggestions, and resolutions that preserve history.
 - Lightning replay with the 10-mile rule and a 30-minute countdown reset by the latest qualifying strike. Strike timestamps persist in SQLite.
@@ -57,3 +57,7 @@ npm run test:e2e
 ```
 
 Browser tests use installed Google Chrome. They cover the report handoff between screens, actual photo upload, lightning reset, briefing generation, resolution history, browser model inference and training, offline inference, and mobile layout. Screenshots are written to ignored `test-results/`.
+
+The 3D map includes a national weather atlas with all fifty states, current Open-Meteo model estimates, a 72-hour forecast timeline, four weather layers, and point inspection. No weather API key is required for the provider's free noncommercial endpoint. Source timestamps and stale-cache status are visible; live weather visualization is independent of the historical safety demonstration. See [API details](docs/api.md) and [map context](src/components/site-map/README.md).
+
+Plant coverage is 285 operating EIA plants across all fifty states, with at least five per state. The original fifty historical/model sites are preserved. National additions automatically load NOAA/NWS hourly forecasts and show a partial heat/wind risk score, with source and freshness checks; they do not claim custom-model coverage. Other hazards remain unknown until independent evidence is available. Initial national loading runs in the background; selecting a plant prioritizes its forecast. Regenerate the catalog with `npm run data:catalog`.

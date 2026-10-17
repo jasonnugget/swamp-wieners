@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Decision, HazardReport, Site } from "../../../shared/types";
 import {
-  project,
+  projectUS as project,
+  normalizeLongitude,
   REGION,
   riskColor,
   statePolygons,
@@ -29,7 +30,7 @@ export default function FlatMap({
   const [states, setStates] = useState<StateGeometry>();
   useEffect(() => {
     const abort = new AbortController();
-    void fetch("/data/states.geojson", { signal: abort.signal })
+    void fetch("/data/us-states.geojson", { signal: abort.signal })
       .then((r) => r.json())
       .then(setStates)
       .catch(() => {});
@@ -69,7 +70,7 @@ export default function FlatMap({
             northwest.z +
               ((event.clientY - bounds.top) / bounds.height) * height,
           );
-          onPin(p.latitude, p.longitude);
+          onPin(p.latitude, normalizeLongitude(p.longitude));
         }}
       >
         {states?.features.map((state, index) => (
@@ -82,7 +83,7 @@ export default function FlatMap({
                     (ring) =>
                       ring
                         .map(([longitude, latitude], i) => {
-                          const p = project(latitude, longitude);
+                          const p = project(latitude, longitude > 0 ? longitude - 360 : longitude);
                           return `${i ? "L" : "M"}${p.x},${p.z}`;
                         })
                         .join(" ") + "Z",

@@ -1,0 +1,78 @@
+import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import type { WeatherLocation, WeatherPoint } from "../../shared/weather";
+
+test.use({ actionTimeout: 15000 });
+const locations = JSON.parse(readFileSync("public/data/weather-stations.json", "utf8")) as WeatherLocation[];
+function point(location: WeatherLocation): WeatherPoint {
+  const start = Math.floor(Date.now() / 3600000) * 3600000;
+  const base = { temperature: 68, apparent: 66, rain: 0.4, wind: 12, direction: 270, clouds: 42, code: 3 };
+  return { ...location, fetchedAt: new Date().toISOString(), current: { ...base, time: new Date(start).toISOString() }, hours: Array.from({ length: 74 }, (_, i) => ({ ...base, temperature: 68 + i / 3, rain: i / 10, time: new Date(start + i * 3600000).toISOString() })) };
+}
+
+test("national weather atlas inspects locations, changes layers, scrubs forecasts, and survives a feed failure", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.route("**/api/weather/atlas", (route) => route.fulfill({ json: { source: "Open-Meteo", points: locations.map(point), unavailable: [] } }));
+  await page.route("**/api/weather/point?**", (route) => {
+    const url = new URL(route.request().url());
+    return route.fulfill({ json: point({ id: "inspect", name: "Selected location", latitude: Number(url.searchParams.get("latitude")), longitude: Number(url.searchParams.get("longitude")) }) });
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/?view=atlas");
+  await page.getByRole("button", { name: "Open showcase mode" }).click();
+  const canvas = page.locator(".weather-atlas .three-map-canvas");
+  await expect(canvas).toHaveAttribute("data-states", "50");
+  await expect(canvas).toHaveAttribute("data-weather-layer", "temperature");
+  await expect(page.locator(".atlas-coverage")).toContainText("50/50");
+  await expect(page.locator(".atlas-value")).toContainText("68");
+  await page.getByRole("button", { name: "Alaska", exact: true }).click();
+  await expect(canvas).toHaveAttribute("data-region", "alaska");
+  await expect(page.locator(".atlas-inspector .atlas-location-title")).toHaveText("Fairbanks, AK");
+  await page.getByRole("button", { name: "Hawaii", exact: true }).click();
+  await expect(canvas).toHaveAttribute("data-region", "hawaii");
+  await expect(page.locator(".atlas-inspector .atlas-location-title")).toHaveText("Honolulu, HI");
+  await page.getByRole("button", { name: "Lower 48", exact: true }).click();
+  await page.getByRole("button", { name: /Precipitation/ }).click();
+  await expect(canvas).toHaveAttribute("data-weather-layer", "rain");
+  await page.getByLabel("Forecast hour").fill("24");
+  await expect(canvas).toHaveAttribute("data-weather-hour", "24");
+  await expect(page.locator(".atlas-inspector-top")).toContainText("+24 HOURS");
+  await expect(page.locator(".atlas-value")).toContainText("2.4");
+  await page.getByRole("button", { name: /Wind$/, exact: false }).click();
+  await expect(canvas).toHaveAttribute("data-weather-layer", "wind");
+  await page.getByRole("button", { name: /Cloud cover/ }).click();
+  await expect(canvas).toHaveAttribute("data-weather-layer", "clouds");
+  await page.getByRole("button", { name: /Temperature/ }).click();
+  await page.getByLabel("Find a weather sample").fill("Sacramento");
+  await page.locator(".atlas-search-results").getByRole("button", { name: /Sacramento, CA/ }).click();
+  await expect(page.locator(".atlas-inspector .atlas-location-title")).toHaveText("Sacramento, CA");
+  await page.getByRole("button", { name: "Back to now" }).click();
+  await page.getByRole("button", { name: "Lower 48", exact: true }).click();
+  await page.waitForTimeout(800);
+  const box = (await canvas.boundingBox())!;
+  const denver = (await page.getByRole("button", { name: "Inspect weather at Denver, CO", exact: true }).boundingBox())!;
+  const requested = page.waitForRequest((request) => request.url().includes("/api/weather/point?"));
+  await canvas.click({ position: { x: denver.x - box.x + denver.width + 30, y: denver.y - box.y + 50 } });
+  const picked = new URL((await requested).url());
+  expect(Number(picked.searchParams.get("latitude"))).toBeGreaterThan(18);
+  expect(Number(picked.searchParams.get("longitude"))).toBeLessThan(-65);
+  await expect(page.locator(".atlas-inspector .atlas-location-title")).not.toHaveText("Denver, CO");
+  await page.screenshot({ path: "test-results/national-weather-atlas.png" });
+  await page.getByRole("button", { name: "Play weather forecast" }).click();
+  await expect.poll(() => page.getByLabel("Forecast hour").inputValue()).not.toBe("0");
+  await page.getByRole("button", { name: "Pause weather forecast" }).click();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.getByRole("button", { name: "Play weather forecast" })).toBeDisabled();
+  await page.route("**/api/weather/atlas", (route) => route.fulfill({ status: 503, json: { error: "Provider unavailable" } }));
+  await page.getByRole("button", { name: "Refresh weather" }).click();
+  await expect(page.locator(".atlas-error")).toContainText("Provider unavailable");
+  await expect(page.locator(".atlas-coverage")).toContainText("CACHED / STALE");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Lower 48", exact: true }).click();
+  await page.waitForTimeout(800);
+  await expect(page.getByLabel("Forecast hour")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: "test-results/national-weather-mobile.png" });
+  expect(errors).toEqual([]);
+});

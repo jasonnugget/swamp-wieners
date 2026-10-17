@@ -1,20 +1,17 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState, type MouseEvent } from "react";
 import {
   ArrowDown,
   ArrowRight,
   ArrowUpRight,
-  Bell,
   ChevronDown,
-  ChevronRight,
   ClipboardList,
   Clock3,
   Download,
   Flame,
-  FlaskConical,
   Gauge,
-  LayoutDashboard,
   MapPin,
-  Plus,
+  Menu,
+  X,
   Radio,
   RefreshCw,
   Search,
@@ -33,15 +30,11 @@ import { cacheAssets, loadSnapshot, readCachedSnapshot, request } from "../lib/a
 import SiteMap from "../components/SiteMap";
 import ForecastChart from "../components/ForecastChart";
 import WorkWindows from "../components/WorkWindows";
+import LoadingScreen from "./LoadingScreen";
+import HomePage from "./HomePage";
+import { pageHref, pageLabels, readPage, type Page } from "./navigation";
 import Reports, { ReportForm } from "../features/reports/Reports";
 const ModelLab = lazy(() => import("../features/model-lab/ModelLab"));
-type Page = "dashboard" | "lab" | "reports" | "briefings";
-const navigation = [
-  { id: "dashboard" as Page, label: "Overview", icon: LayoutDashboard },
-  { id: "lab" as Page, label: "Model Lab", icon: FlaskConical },
-  { id: "reports" as Page, label: "Crew reports", icon: MapPin },
-  { id: "briefings" as Page, label: "Safety briefings", icon: ClipboardList },
-];
 const icons: Record<Category, typeof Wind> = {
   weather: Wind,
   heat: Thermometer,
@@ -64,10 +57,12 @@ function Badge({ value }: { value: number | null | undefined }) {
 export default function App() {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(readCachedSnapshot),
     [bundle, setBundle] = useState<ModelBundle>(),
+    [introComplete, setIntroComplete] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches),
     [selected, setSelected] = useState(
       localStorage.getItem("planit-site") ?? "",
     ),
-    [page, setPage] = useState<Page>("dashboard"),
+    [page, setPage] = useState<Page>(readPage),
+    [menuOpen, setMenuOpen] = useState(false),
     [offline, setOffline] = useState(false),
     [error, setError] = useState(""),
     [reportOpen, setReportOpen] = useState(false),
@@ -75,6 +70,41 @@ export default function App() {
     [query, setQuery] = useState(""),
     [demoOpen, setDemoOpen] = useState(false),
     [notice, setNotice] = useState("");
+  function navigate(next: Page) {
+    if (next !== page) history.pushState(null, "", pageHref(next));
+    setPage(next);
+    setMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+    requestAnimationFrame(() => document.getElementById("workspace-content")?.focus({ preventScroll: true }));
+  }
+  function navigateLink(event: MouseEvent<HTMLAnchorElement>, next: Page) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    navigate(next);
+  }
+  useEffect(() => {
+    const pop = () => { setPage(readPage()); setMenuOpen(false); };
+    window.addEventListener("popstate", pop);
+    return () => window.removeEventListener("popstate", pop);
+  }, []);
+  useEffect(() => {
+    document.title = `${pageLabels[page]} | PlanIT Control`;
+  }, [page]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        document.querySelector<HTMLButtonElement>(".menu-control")?.focus();
+      }
+    };
+    document.addEventListener("keydown", close);
+    return () => document.removeEventListener("keydown", close);
+  }, [menuOpen]);
+  useEffect(() => {
+    const timer = setTimeout(() => setIntroComplete(true), 1600);
+    return () => clearTimeout(timer);
+  }, []);
   const reload = useCallback(async () => {
     try {
       const result = await loadSnapshot();
@@ -85,6 +115,14 @@ export default function App() {
       setError(String(e));
     }
   }, []);
+  useEffect(() => {
+    if (!selected || !snapshot?.sites.find(s => s.id === selected)?.catalogOnly || offline) return;
+    const controller = new AbortController();
+    void fetch(`/api/sites/${encodeURIComponent(selected)}/screening`, { signal: controller.signal })
+      .then(r => { if (r.ok) return reload(); })
+      .catch(() => { /* Missing official forecasts stay unknown; automatic refresh retries. */ });
+    return () => controller.abort();
+  }, [selected, snapshot?.sites.length, offline, reload]);
   useEffect(() => {
     void reload();
     fetch("/models/bundle.json")
@@ -129,28 +167,8 @@ export default function App() {
       setBusy(false);
     }
   }
-  if (!snapshot || !bundle)
-    return (
-      <div className="loading-screen">
-        <div className="brand-mark">
-          <Zap size={28} fill="currentColor" />
-        </div>
-        <h1>
-          PlanIT<span>Control</span>
-        </h1>
-        <p>Connecting field intelligence…</p>
-        {error && (
-          <>
-            <p className="error" role="alert">
-              {error}
-            </p>
-            <button className="primary" onClick={() => location.reload()}>
-              Retry connection
-            </button>
-          </>
-        )}
-      </div>
-    );
+  if (!snapshot || !bundle || !introComplete)
+    return <LoadingScreen snapshotReady={!!snapshot} modelReady={!!bundle} error={error} onEnter={snapshot && bundle ? () => setIntroComplete(true) : undefined} />;
   const site =
       snapshot.sites.find((s) => s.id === selected) ?? snapshot.sites[0],
     decision = snapshot.decisions[site.id],
@@ -171,8 +189,10 @@ export default function App() {
     holds = Object.values(snapshot.decisions).filter((d) =>
       d.tasks.some((t) => t.state === "HOLD"),
     ).length;
+  const officialHeat = decision.channels.find(c => c.category === "heat" && c.source.startsWith("NOAA/NWS"));
+  const officialHours = officialHeat ? (snapshot.weatherScreenings?.[site.id]?.hours ?? []).filter(h => Date.parse(h.time) >= Date.now() - 3600000 && Date.parse(h.time) < Date.now() + 24 * 3600000).flatMap(h => h.heatIndex === null ? [] : [h.heatIndex]) : [];
   const weather = forecast?.hours ?? [],
-    peak = weather.length ? Math.max(...weather.map((h) => h.heat[2])) : null,
+    peak = weather.length ? Math.max(...weather.map((h) => h.heat[2])) : officialHours.length ? Math.max(...officialHours) : null,
     briefings = snapshot.briefings.filter((b) => b.siteId === site.id);
   const date = new Intl.DateTimeFormat("en-US", {
     timeZone: site.timezone,
@@ -181,140 +201,29 @@ export default function App() {
     year: "numeric",
   }).format(new Date(snapshot.now));
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <a
-          className="brand"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            setPage("dashboard");
-          }}
-        >
-          <span className="brand-mark">
-            <Zap size={24} fill="currentColor" />
-          </span>
-          <span>
-            PlanIT<span className="brand-sub">CONTROL</span>
-          </span>
-        </a>
-        <div className="workspace">
-          <span className="workspace-icon">S</span>
-          <div>
-            Sperry field operations<small>Southeast region</small>
-          </div>
-          <ChevronDown size={14} />
-        </div>
-        <span className="nav-label">WORKSPACE</span>
-        <nav>
-          {navigation.map((item) => (
-            <button
-              key={item.id}
-              className={page === item.id ? "active" : ""}
-              onClick={() => setPage(item.id)}
-            >
-              <item.icon size={18} />
-              {item.label}
-              {item.id === "reports" && openReports.length > 0 && (
-                <span className="nav-count">{openReports.length}</span>
-              )}
-              {item.id === "lab" && <span className="new-tag">ML</span>}
-            </button>
-          ))}
+    <div className={`app-shell view-${page}`}>
+      <a className="skip-link" href="#workspace-content">Skip to workspace</a>
+      <header className="site-header">
+        <a className="site-wordmark" href={pageHref("home")} onClick={e => navigateLink(e, "home")} aria-label="PlanIT home">PlanIT<span className="wordmark-cross" aria-hidden="true">+</span></a>
+        <nav id="site-navigation" className={menuOpen ? "site-navigation is-open" : "site-navigation"} aria-label="Workspace navigation">
+          {(Object.keys(pageLabels) as Page[]).map(item => <a key={item} href={pageHref(item)} onClick={e => navigateLink(e, item)} aria-current={page === item ? "page" : undefined}>{pageLabels[item]}{item === "reports" && openReports.length > 0 && <span className="report-count">{openReports.length}</span>}</a>)}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="field-note">
-            <span className="small-icon">
-              <ShieldCheck size={18} />
-            </span>
-            <strong>Built for the next shift.</strong>
-            <p>Every condition. Every report. One clearer work decision.</p>
-            <span>
-              <i />
-              50 real power plants
-            </span>
-          </div>
-          <button
-            className="demo-toggle"
-            onClick={() => setDemoOpen(!demoOpen)}
-          >
-            <Radio size={16} />
-            Demo controls
-            <ChevronRight size={14} />
-          </button>
-          <div className="profile">
-            <span>SC</span>
-            <div>
-              Site supervisor<small>Hackathon workspace</small>
-            </div>
-            <span className="profile-dot" />
-          </div>
+        <div className="site-header-actions">
+          <button className="header-report" onClick={() => setReportOpen(true)}>Report hazard<ArrowUpRight size={17} aria-hidden="true" /></button>
+          <button className="demo-control" aria-label="Demo controls" aria-expanded={demoOpen} onClick={() => setDemoOpen(!demoOpen)}><Radio size={17} aria-hidden="true" /></button>
+          <button className="menu-control" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="site-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}</button>
         </div>
-      </aside>
+      </header>
       <div className="main-shell">
-        <header className="topbar">
-          <div className="breadcrumb">
-            Workspace
-            <ChevronRight size={13} />
-            <strong>{navigation.find((n) => n.id === page)?.label}</strong>
-          </div>
-          <div className="topbar-right">
-            <span className="connection">
-              {offline ? <WifiOff size={13} /> : <span className="live-dot" />}
-              {offline
-                ? "Cached workspace"
-                : snapshot.clockMode === "demo"
-                  ? "Historical demo"
-                  : "Connected"}
-            </span>
-            <span className="top-divider" />
-            <span className="top-date">{date}</span>
-            <button
-              className="notification-button"
-              aria-label="View alerts"
-              onClick={() => {
-                setPage("dashboard");
-                document
-                  .getElementById("hazard-channels")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              <Bell size={18} />
-              {holds > 0 && <i />}
-            </button>
-          </div>
-        </header>
-        <main>
-          <div className="page-heading">
-            <div>
-              <span className="eyebrow">FIELD INTELLIGENCE, IN FOCUS</span>
-              <h1>
-                {page === "dashboard"
-                  ? "A clearer picture. A safer shift."
-                  : page === "lab"
-                    ? "Know what your model knows."
-                    : page === "reports"
-                      ? "Local knowledge that stays."
-                      : "Tomorrow starts with today."}
-              </h1>
-              <p>
-                {page === "dashboard"
-                  ? "Environmental signals and crew knowledge, brought together before work begins."
-                  : page === "lab"
-                    ? "Train locally. Test honestly. Keep every prediction connected to evidence."
-                    : page === "reports"
-                      ? "Give the next crew the context that never makes it into a weather forecast."
-                      : "Site conditions, work restrictions, and unresolved reports in one handoff."}
-              </p>
-            </div>
-            <button className="primary" onClick={() => setReportOpen(true)}>
-              <Plus size={16} />
-              Report hazard
-            </button>
-          </div>
+        <main id="workspace-content" className="overflow-x-hidden w-full max-w-full" tabIndex={-1}>
+          {page === "home" && <HomePage onNavigate={navigateLink} />}
+          {page !== "home" && page !== "atlas" && <div className="page-heading">
+            <div><p className="section-caption">PlanIT / {pageLabels[page]}</p><h1>{page === "intelligence" ? "The work ahead." : page === "lab" ? "Know what your model knows." : page === "reports" ? "Local knowledge that stays." : "Tomorrow starts with today."}</h1><p>{page === "intelligence" ? "Review hazards, unknown coverage, and task restrictions before equipment mobilizes." : page === "lab" ? "Explore heat and ground-wetness estimates. Test local calibration without changing operational decisions." : page === "reports" ? "Pin what the crew sees, document affected tasks, and preserve the report for the next shift." : "Next-day conditions, task restrictions, and unresolved reports, prepared at 6 PM site-local time."}</p></div>
+            <span className="workspace-connection">{offline ? "Cached workspace" : snapshot.clockMode === "demo" ? "Historical demo" : "Connected"}<span>{date}</span></span>
+          </div>}
           {error && (
             <div className="error-banner" role="alert">
-              <TriangleAlert size={16} />
+              <TriangleAlert aria-hidden="true" size={16} />
               {error}
               <button className="text-button" onClick={() => setError("")}>
                 Dismiss
@@ -323,18 +232,20 @@ export default function App() {
           )}
           {offline && (
             <div className="offline-banner">
-              <WifiOff size={16} />
+              <WifiOff aria-hidden="true" size={16} />
               Showing the last saved workspace. Browser inference and training
               remain available with cached assets. Reconnect to share reports.
             </div>
           )}
-          <div className="site-context">
+          {page !== "home" && <div className="site-context">
             <div className="site-selector">
-              <MapPin size={18} />
+              <MapPin aria-hidden="true" size={18} />
               <div>
                 <span>ACTIVE SITE</span>
                 <select
                   aria-label="Active site"
+                  name="active-site"
+                  autoComplete="off"
                   value={site.id}
                   onChange={(e) => {
                     if (!busy) setSelected(e.target.value);
@@ -348,7 +259,7 @@ export default function App() {
                   ))}
                 </select>
               </div>
-              <ChevronDown size={14} />
+              <ChevronDown aria-hidden="true" size={14} />
             </div>
             <div className="site-meta">
               <span>
@@ -361,15 +272,15 @@ export default function App() {
             </div>
             <span className="source-pill">
               <span className="live-dot" />
-              {forecast.mode === "historical"
+              {!forecast ? (decision.channels.some(c => c.source.startsWith("NOAA/NWS")) ? "NOAA forecast screening · partial coverage" : "NOAA forecast loading or unavailable") : forecast.mode === "historical"
                 ? "Historical forecast replay"
                 : "Live forecast"}
             </span>
-          </div>
+          </div>}
           {demoOpen && (
-            <section className="demo-panel">
+            <section className="demo-panel" aria-label="Demonstration controls">
               <div>
-                <Radio size={16} />
+                <Radio aria-hidden="true" size={16} />
                 <strong>Demonstration controls</strong>
                 <span>
                   Clock:{" "}
@@ -380,6 +291,10 @@ export default function App() {
                   }).format(new Date(snapshot.now))}{" "}
                   · {site.timezone}
                 </span>
+                <button className="icon-button" aria-label="Close demo controls" onClick={() => {
+                  setDemoOpen(false);
+                  document.querySelector<HTMLButtonElement>(".demo-control")?.focus();
+                }}><X size={17} aria-hidden="true" /></button>
               </div>
               <div>
                 <button
@@ -393,7 +308,7 @@ export default function App() {
                     )
                   }
                 >
-                  <Zap size={14} />
+                  <Zap aria-hidden="true" size={14} />
                   Strike within 6 mi
                 </button>
                 <button
@@ -453,13 +368,14 @@ export default function App() {
                 <button
                   className="text-button"
                   disabled={busy}
-                  onClick={() =>
-                    action(
+                  onClick={() => {
+                    if (!window.confirm("Reset demonstration reports, alerts, and briefings? Crew teams will be kept.")) return;
+                    void action(
                       "/demo/reset",
                       {},
                       "Demo reset. Demonstration reports, alerts, and briefings cleared.",
-                    )
-                  }
+                    );
+                  }}
                 >
                   Reset demo
                 </button>
@@ -471,99 +387,82 @@ export default function App() {
               </p>
             </section>
           )}
-          {page === "dashboard" && (
+          {(page === "atlas" || page === "intelligence") && (
             <>
-              <div className="metric-grid">
-                <div className="metric">
-                  <span>
-                    <MapPin size={14} />
-                    Sites monitored
-                  </span>
-                  <strong>
-                    {snapshot.sites.length}
-                    <small>sites</small>
-                  </strong>
-                  <p>
-                    <span className="tiny-green" />
-                    Actual EIA plant locations
-                  </p>
-                </div>
-                <div className="metric">
-                  <span>
-                    <TriangleAlert size={14} />
-                    Sites with active holds
-                  </span>
-                  <strong>
-                    {holds}
-                    <small>/ {snapshot.sites.length}</small>
-                  </strong>
-                  <p>
-                    {holds
-                      ? "Crew or lightning restrictions in effect"
-                      : "No active hard holds in this replay"}
-                  </p>
-                </div>
-                <div className="metric">
-                  <span>
-                    <Thermometer size={14} />
-                    Site peak heat index
-                  </span>
-                  <strong>
-                    {peak === null ? "—" : Math.round(peak)}
-                    <small>°F</small>
-                  </strong>
-                  <p>HeatCast upper forecast estimate</p>
-                </div>
-                <div className="metric">
-                  <span>
-                    <ClipboardList size={14} />
-                    Crew reports to carry
-                  </span>
-                  <strong>
-                    {openReports.length}
-                    <small>open</small>
-                  </strong>
-                  <p>Unresolved knowledge for the next shift</p>
-                </div>
-              </div>
-              <div className="overview-grid">
-                <section className="panel map-panel">
-                  <div className="panel-heading">
-                    <div>
-                      <span className="eyebrow">SUPERVISOR VIEW</span>
-                      <h3>One region. Every site.</h3>
-                    </div>
-                    <span className="subtle-pill">
-                      <span className="live-dot" />
-                      {snapshot.sites.length} sites
+              {page === "atlas" && <section className="atlas-workspace" aria-label="Fullscreen 3D atlas">
+                <SiteMap standalone sites={snapshot.sites} decisions={snapshot.decisions} selected={site.id} onSelect={setSelected} reports={snapshot.reports} />
+              </section>}
+              {page === "intelligence" && <>
+              <div className="network-summary">
+                <div className="metric-grid">
+                  <div className="metric">
+                    <span>
+                      <MapPin aria-hidden="true" size={14} />
+                      Sites monitored
                     </span>
+                    <strong>
+                      {snapshot.sites.length}
+                      <small>sites</small>
+                    </strong>
+                    <p>
+                      <span className="tiny-green" />
+                      Actual EIA plant locations
+                    </p>
                   </div>
-                  <SiteMap
-                    sites={snapshot.sites}
-                    decisions={snapshot.decisions}
-                    selected={site.id}
-                    onSelect={setSelected}
-                    reports={snapshot.reports}
-                  />
-                  <div className="map-footer">
-                    <ShieldCheck size={14} />
-                    Ranked by the highest active hazard. Unknown coverage stays
-                    visible.<span>0–10 hazard index</span>
+                  <div className="metric">
+                    <span>
+                      <TriangleAlert aria-hidden="true" size={14} />
+                      Sites with active holds
+                    </span>
+                    <strong>
+                      {holds}
+                      <small>/ {snapshot.sites.length}</small>
+                    </strong>
+                    <p>
+                      {holds
+                        ? "Crew or lightning restrictions in effect"
+                        : "No active hard holds in this replay"}
+                    </p>
                   </div>
-                </section>
+                  <div className="metric">
+                    <span>
+                      <Thermometer aria-hidden="true" size={14} />
+                      Site peak heat index
+                    </span>
+                    <strong>
+                      {peak === null ? "—" : Math.round(peak)}
+                      <small>°F</small>
+                    </strong>
+                    <p>{officialHeat ? "NOAA forecast · next 24 hours" : "HeatCast upper forecast estimate"}</p>
+                  </div>
+                  <div className="metric">
+                    <span>
+                      <ClipboardList aria-hidden="true" size={14} />
+                      Crew reports to carry
+                    </span>
+                    <strong>
+                      {openReports.length}
+                      <small>open</small>
+                    </strong>
+                    <p>Unresolved knowledge for the next shift</p>
+                  </div>
+                </div>
                 <section className="panel priorities-panel">
                   <div className="panel-heading">
                     <div>
                       <span className="eyebrow">WHERE TO FOCUS</span>
-                      <h3>Site priorities</h3>
+                      <h2 className="workspace-section-title">Site priorities</h2>
                     </div>
-                    <ArrowDown size={17} />
+                    <ArrowDown aria-hidden="true" size={17} />
                   </div>
                   <label className="search">
-                    <Search size={15} />
+                    <Search aria-hidden="true" size={15} />
                     <input
+                      type="search"
                       aria-label="Search sites"
-                      placeholder="Find a site or county"
+                      placeholder="Find a site or county…"
+                      name="site-search"
+                      autoComplete="off"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                     />
@@ -594,7 +493,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="priority-footer">
-                    {filtered.length} of 50 sites
+                    {filtered.length} of {snapshot.sites.length} sites
                     <span>EIA-860M · Aug 2026</span>
                   </div>
                 </section>
@@ -604,25 +503,25 @@ export default function App() {
                   <div className="panel-heading">
                     <div>
                       <span className="eyebrow">PLAN BEFORE THE SHIFT</span>
-                      <h3>Tomorrow’s heat window</h3>
+                      <h2 className="workspace-section-title">Tomorrow’s heat window</h2>
                     </div>
                     <button
                       className="text-link"
-                      onClick={() => setPage("lab")}
+                      onClick={() => navigate("lab")}
                     >
                       Inspect in Model Lab
-                      <ArrowUpRight size={14} />
+                      <ArrowUpRight aria-hidden="true" size={14} />
                     </button>
                   </div>
                   <ForecastChart hours={weather} timezone={site.timezone} />
-                  <WorkWindows
+                  {bundle.soilThresholds[site.id] && <WorkWindows
                     hours={weather}
                     timezone={site.timezone}
                     soilThreshold={bundle.soilThresholds[site.id][1]}
-                  />
+                  />}
                   <div className="forecast-footer">
                     <span>
-                      <Clock3 size={14} />
+                      <Clock3 aria-hidden="true" size={14} />
                       {weather[0] &&
                         new Date(weather[0].time).toLocaleDateString("en-US", {
                           month: "short",
@@ -630,7 +529,7 @@ export default function App() {
                           year: "numeric",
                           timeZone: "UTC",
                         })}{" "}
-                      · {forecast.mode} · {site.timezone}
+                      · {forecast?.mode ?? "unavailable"} · {site.timezone}
                     </span>
                     <button
                       className="text-button"
@@ -643,7 +542,7 @@ export default function App() {
                         )
                       }
                     >
-                      <RefreshCw size={13} className={busy ? "spin" : ""} />
+                      <RefreshCw aria-hidden="true" size={13} className={busy ? "spin" : ""} />
                       Connect live sources
                     </button>
                   </div>
@@ -663,7 +562,7 @@ export default function App() {
                   <div className="panel-heading">
                     <div>
                       <span className="eyebrow">THE WORK DECISION</span>
-                      <h3>What can the crew do?</h3>
+                      <h2 className="workspace-section-title">What can the crew do?</h2>
                     </div>
                     <Badge value={decision.index} />
                   </div>
@@ -689,7 +588,7 @@ export default function App() {
                   ))}
                   {decision.lightningUntil && (
                     <div className="lightning-countdown">
-                      <Zap size={17} />
+                      <Zap aria-hidden="true" size={17} />
                       <div>
                         <strong>Lightning all-clear countdown</strong>
                         <p>
@@ -713,7 +612,7 @@ export default function App() {
                 <div className="panel-heading">
                   <div>
                     <span className="eyebrow">ONE COMBINED RISK PICTURE</span>
-                    <h3>Seven hazards. Clear evidence.</h3>
+                    <h2 className="workspace-section-title">Seven hazards. Clear evidence.</h2>
                   </div>
                   <span className="muted">
                     {decision.unknownCount} channels need verification
@@ -746,13 +645,13 @@ export default function App() {
               </section>
               <div className="handoff-callout">
                 <span className="callout-icon">
-                  <Sparkles size={23} />
+                  <Sparkles aria-hidden="true" size={23} />
                 </span>
                 <div>
                   <span className="eyebrow">
                     KNOWLEDGE THAT OUTLASTS A SHIFT
                   </span>
-                  <h3>A crew’s report becomes the next crew’s context.</h3>
+                  <h2 className="workspace-section-title">A crew’s report becomes the next crew’s context.</h2>
                   <p>
                     Report it now. Change the work decision. Carry it into the 6
                     PM briefing.
@@ -760,15 +659,21 @@ export default function App() {
                 </div>
                 <button
                   className="secondary"
-                  onClick={() => setPage("reports")}
+                  onClick={() => navigate("reports")}
                 >
                   Open site memory
-                  <ArrowRight size={15} />
+                  <ArrowRight aria-hidden="true" size={15} />
                 </button>
               </div>
+              </>}
             </>
           )}
-          {page === "lab" && (
+          {page === "lab" && (site.catalogOnly || !forecast ? (
+            <section className="panel empty-state">
+              <h2>No historical model coverage at this plant</h2>
+              <p>The original 50 plants retain their historical training and evaluation data. Use the weather atlas for current conditions and forecasts at this location.</p>
+            </section>
+          ) : (
             <Suspense
               fallback={
                 <section className="panel empty-state">
@@ -783,7 +688,7 @@ export default function App() {
                 forecast={forecast}
               />
             </Suspense>
-          )}
+          ))}
           {page === "reports" && (
             <Reports
               site={site}
@@ -804,7 +709,7 @@ export default function App() {
                   </p>
                 </div>
                 <span className="backend">
-                  <Clock3 size={15} />
+                  <Clock3 aria-hidden="true" size={15} />
                   6:00 PM local
                 </span>
               </div>
@@ -820,9 +725,9 @@ export default function App() {
                             {b.forecastMode.toUpperCase()} · GENERATED BY THE
                             SCHEDULER
                           </span>
-                          <h3>
+                          <h2 className="workspace-section-title">
                             {site.name} · {b.localDate}
-                          </h3>
+                          </h2>
                         </div>
                         <Badge value={b.decision.index} />
                       </div>
@@ -846,7 +751,7 @@ export default function App() {
                             setTimeout(() => URL.revokeObjectURL(url), 1000);
                           }}
                         >
-                          <Download size={14} />
+                          <Download aria-hidden="true" size={14} />
                           Download briefing
                         </button>
                       </div>
@@ -854,8 +759,8 @@ export default function App() {
                   ))
               ) : (
                 <section className="panel empty-state">
-                  <ClipboardList size={32} />
-                  <h3>The next briefing runs at 6 PM</h3>
+                  <ClipboardList aria-hidden="true" size={32} />
+                  <h2 className="workspace-section-title">The next briefing runs at 6 PM</h2>
                   <p>
                     Use the demo clock to execute the real scheduler and see the
                     handoff.
@@ -865,13 +770,13 @@ export default function App() {
                     onClick={() => setDemoOpen(true)}
                   >
                     Open demo controls
-                    <Clock3 size={15} />
+                    <Clock3 aria-hidden="true" size={15} />
                   </button>
                 </section>
               )}
             </>
           )}
-          <footer className="page-footer">
+          {page !== "home" && page !== "atlas" && <footer className="page-footer">
             <span>
               PlanIT Control<span>FIELD INTELLIGENCE</span>
             </span>
@@ -881,9 +786,9 @@ export default function App() {
             </p>
             <a href="/data/provenance.json" target="_blank" rel="noreferrer">
               Sources & provenance
-              <ArrowUpRight size={12} />
+              <ArrowUpRight aria-hidden="true" size={12} />
             </a>
-          </footer>
+          </footer>}
         </main>
       </div>
       {reportOpen && (
@@ -891,7 +796,8 @@ export default function App() {
           site={site}
           snapshot={snapshot}
           onClose={() => setReportOpen(false)}
-          onSaved={() => {
+          onSaved={(siteId) => {
+            setSelected(siteId);
             void reload();
             setNotice(
               "Report shared. Selected tasks are on hold until reviewed.",
@@ -901,7 +807,7 @@ export default function App() {
       )}
       {notice && (
         <div className="toast" role="status">
-          <ShieldCheck size={17} />
+          <ShieldCheck aria-hidden="true" size={17} />
           {notice}
         </div>
       )}

@@ -11,13 +11,13 @@ test("report changes another screen, survives the briefing, resolves with histor
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/?view=intelligence");
   await expect(
-    page.getByRole("heading", { name: "A clearer picture. A safer shift." }),
+    page.getByRole("heading", { name: "The work ahead." }),
   ).toBeVisible();
   await expect(page.getByLabel("Active site")).toHaveValue("621");
   const second = await context.newPage();
-  await second.goto("/");
+  await second.goto("/?view=intelligence");
   await expect(
     second.getByRole("heading", { name: "What can the crew do?" }),
   ).toBeVisible();
@@ -59,12 +59,12 @@ test("report changes another screen, survives the briefing, resolves with histor
   ).toBeVisible();
   await page.getByRole("button", { name: "Run to 6 PM" }).click();
   await page
-    .getByRole("button", { name: "Safety briefings", exact: true })
+    .getByRole("link", { name: "Safety briefings", exact: true })
     .click();
   await expect(page.locator(".briefing-card")).toContainText(
     "Standing water blocks the equipment access road.",
   );
-  await page.getByRole("button", { name: /Crew reports/ }).click();
+  await page.getByRole("navigation").getByRole("link", { name: /Crew reports/ }).click();
   await page.getByRole("button", { name: "Review and resolve" }).click();
   await page
     .getByLabel("What did you verify?")
@@ -88,7 +88,7 @@ test("models run and calibration trains real weights in browser, including offli
   await page.goto("/");
   await page
     .locator("nav")
-    .getByRole("button", { name: /Model Lab/ })
+    .getByRole("link", { name: /Model Lab/ })
     .click();
   await expect(
     page.getByRole("button", { name: "Learn this site" }),
@@ -119,21 +119,11 @@ test("models run and calibration trains real weights in browser, including offli
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator(".three-map-canvas")).toHaveAttribute(
-    "data-ready",
-    "true",
-  );
-  await expect(page.locator(".three-map-canvas")).toHaveAttribute(
-    "data-geography",
-    "ready",
-  );
-  await expect(
-    page.getByRole("heading", { name: "A clearer picture. A safer shift." }),
-  ).toBeVisible();
-  await page
-    .locator("nav")
-    .getByRole("button", { name: /Model Lab/ })
-    .click();
+  await expect(page).toHaveURL(/view=lab/);
+  await page.getByRole("navigation").getByRole("link", { name: "3D Atlas", exact: true }).click();
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute("data-geography", "ready");
+  await page.getByRole("navigation").getByRole("link", { name: "Model Lab", exact: true }).click();
   await expect(
     page.getByText("Trained and saved on this device"),
   ).toBeVisible();
@@ -147,7 +137,7 @@ test("models run and calibration trains real weights in browser, including offli
   await context.setOffline(false);
 });
 
-test("dashboard and mobile report are usable without horizontal overflow", async ({
+test("atlas and mobile report are usable without horizontal overflow", async ({
   page,
 }) => {
   const mapErrors: string[] = [];
@@ -159,7 +149,7 @@ test("dashboard and mobile report are usable without horizontal overflow", async
       mapErrors.push(msg.text());
   });
   await page.setViewportSize({ width: 1440, height: 1100 });
-  await page.goto("/");
+  await page.goto("/?view=atlas");
   await expect(page.locator(".three-map-canvas")).toHaveAttribute(
     "data-ready",
     "true",
@@ -173,7 +163,7 @@ test("dashboard and mobile report are usable without horizontal overflow", async
   await page.screenshot({ path: "test-results/dashboard.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(
-    page.getByRole("heading", { name: "A clearer picture. A safer shift." }),
+    page.getByRole("heading", { name: "Weather, in perspective." }),
   ).toBeVisible();
   expect(
     await page.evaluate(

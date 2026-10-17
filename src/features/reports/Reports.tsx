@@ -15,9 +15,11 @@ import {
 } from "../../../shared/policy";
 import { request } from "../../lib/api";
 import SiteMap from "../../components/SiteMap";
+import CrewTeams from "./CrewTeams";
+import { readCrewProfile, saveCrewProfile } from "./crew-profile";
 
 export function ReportForm({
-  site,
+  site: initialSite,
   snapshot,
   onClose,
   onSaved,
@@ -25,15 +27,29 @@ export function ReportForm({
   site: Site;
   snapshot: Snapshot;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (siteId: string) => void;
 }) {
+  const [initial] = useState(() => {
+    const profile = readCrewProfile();
+    const team = snapshot.teams?.find((t) => t.id === profile.teamId);
+    return {
+      teamId: team?.id ?? "",
+      siteId: team && !team.siteIds.includes(initialSite.id) ? team.siteIds[0] : initialSite.id,
+      author: team ? (team.members.includes(profile.author ?? "") ? profile.author! : team.members[0]) : profile.author ?? "Field crew",
+    };
+  });
+  const [teamId, setTeamId] = useState(initial.teamId),
+    [siteId, setSiteId] = useState(initial.siteId);
+  const team = snapshot.teams?.find((t) => t.id === teamId);
+  const plants = team ? snapshot.sites.filter((s) => team.siteIds.includes(s.id)) : snapshot.sites;
+  const site = snapshot.sites.find((s) => s.id === siteId) ?? initialSite;
   const draftKey = `planit-draft-${site.id}`;
   const [description, setDescription] = useState(
       () => localStorage.getItem(draftKey) ?? "",
     ),
     [category, setCategory] = useState<Category>("soil"),
     [tasks, setTasks] = useState<Task[]>(["mobilization"]),
-    [author, setAuthor] = useState("Field crew"),
+    [author, setAuthor] = useState(initial.author),
     [photo, setPhoto] = useState<string>(),
     [pin, setPin] = useState({
       latitude: site.latitude,
@@ -44,6 +60,25 @@ export function ReportForm({
   useEffect(() => {
     localStorage.setItem(draftKey, description);
   }, [description, draftKey]);
+  useEffect(() => {
+    saveCrewProfile(teamId, author);
+  }, [teamId, author]);
+  function changePlant(id: string) {
+    const plant = snapshot.sites.find((s) => s.id === id);
+    if (!plant) return;
+    setSiteId(id);
+    setPin({ latitude: plant.latitude, longitude: plant.longitude });
+    setDescription(localStorage.getItem(`planit-draft-${id}`) ?? "");
+    setPhoto(undefined);
+  }
+  function changeTeam(id: string) {
+    const next = snapshot.teams?.find((t) => t.id === id);
+    setTeamId(id);
+    if (next) {
+      if (!next.members.includes(author)) setAuthor(next.members[0]);
+      if (!next.siteIds.includes(site.id)) changePlant(next.siteIds[0]);
+    }
+  }
   async function upload(file?: File) {
     if (!file) return;
     if (
@@ -71,11 +106,12 @@ export function ReportForm({
         category,
         tasks,
         author,
+        teamId: teamId || undefined,
         ...pin,
         photo,
       });
       localStorage.removeItem(draftKey);
-      onSaved();
+      onSaved(site.id);
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -114,6 +150,20 @@ export function ReportForm({
         </div>
         <form onSubmit={submit}>
           <div className="form-grid">
+            <label>Crew team
+              <select value={teamId} onChange={(e) => changeTeam(e.target.value)}>
+                <option value="">Unassigned crew</option>
+                {(snapshot.teams ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </label>
+            <label>Report plant
+              <select value={site.id} onChange={(e) => changePlant(e.target.value)}>
+                {plants.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.state}</option>)}
+              </select>
+            </label>
+          </div>
+          <p className="note">{team ? `${team.name} · ${plants.length} assigned plants. ` : "Set up teams in Crew reports to reuse plant assignments. "}Your team and name are remembered on this device.</p>
+          <div className="form-grid">
             <label>
               Hazard type
               <select
@@ -129,12 +179,14 @@ export function ReportForm({
             </label>
             <label>
               Your name
-              <input
+              {team ? <select aria-label="Your name" required value={author} onChange={(e) => setAuthor(e.target.value)}>
+                {team.members.map((member) => <option key={member} value={member}>{member}</option>)}
+              </select> : <input
                 required
                 maxLength={80}
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
-              />
+              />}
             </label>
           </div>
           <label>
@@ -196,6 +248,7 @@ export function ReportForm({
           </div>
           <div className="pin-map">
             <SiteMap
+              key={site.id}
               sites={[site]}
               decisions={snapshot.decisions}
               selected={site.id}
@@ -290,6 +343,7 @@ export default function Reports({
           Report hazard
         </button>
       </div>
+      <CrewTeams snapshot={snapshot} onChange={onChange} />
       <div className="filter-tabs">
         <button
           className={filter === "open" ? "active" : ""}
@@ -323,7 +377,7 @@ export default function Reports({
                   {report.status === "open" ? "UNRESOLVED" : "RESOLVED"}
                 </span>
                 <span className="muted">
-                  {CATEGORY_LABELS[report.category]} · {report.author}
+                  {CATEGORY_LABELS[report.category]} · {report.author}{report.teamName ? ` · ${report.teamName}` : ""}
                 </span>
                 <time>{new Date(report.createdAt).toLocaleString()}</time>
               </div>

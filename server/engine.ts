@@ -2,12 +2,14 @@ import { randomUUID } from "node:crypto";
 import type {
   Alert,
   Briefing,
+  CrewTeam,
   Forecast,
   HazardReport,
   ModelBundle,
   Site,
   Snapshot,
   Strike,
+  WeatherScreening,
 } from "../shared/types";
 import { decide, TASK_LABELS } from "../shared/policy";
 import { localParts, nextDate } from "../shared/clock";
@@ -53,12 +55,15 @@ export class Engine {
         .filter((a) =>
           this.clockMode() === "demo" ? a.mode !== "live" : a.mode === "live",
         ),
-      forecasts = this.forecasts();
+      forecasts = this.forecasts(),
+      weatherScreenings = Object.fromEntries(this.store.all<WeatherScreening>("weather-screening").map(s => [s.siteId, s]));
     return {
       now: new Date(now).toISOString(),
       clockMode: this.clockMode(),
       sites: this.sites,
+      teams: this.store.all<CrewTeam>("team"),
       forecasts,
+      weatherScreenings,
       reports,
       strikes,
       alerts,
@@ -74,6 +79,8 @@ export class Engine {
             alerts,
             now,
             this.models.soilThresholds[s.id],
+            weatherScreenings[s.id],
+            Date.now(),
           ),
         ]),
       ),
@@ -111,6 +118,8 @@ export class Engine {
       const validForecast = nextHours.length
         ? { ...forecast, hours: nextHours }
         : undefined;
+      const screening = this.clockMode() === "real" ? snap.weatherScreenings?.[site.id] : undefined;
+      const nextScreening = screening ? { ...screening, hours: screening.hours.filter(h => localParts(Date.parse(h.time), site.timezone).date === localDate) } : undefined;
       const decision = decide(
         site,
         validForecast,
@@ -119,13 +128,16 @@ export class Engine {
         snap.alerts,
         this.now(),
         this.models.soilThresholds[site.id],
+        nextScreening,
+        this.now(),
+        48,
       );
       const briefing: Briefing = {
         id,
         siteId: site.id,
         localDate,
         generatedAt: snap.now,
-        forecastMode: forecast?.mode ?? "historical",
+        forecastMode: forecast?.mode ?? (nextScreening ? "live" : "historical"),
         decision,
         reportIds: reports.map((r) => r.id),
         text: [
@@ -137,7 +149,7 @@ export class Engine {
           ...reports.map(
             (r) => `Carry forward: ${r.description} (${r.author}, ${r.id}).`,
           ),
-          `Forecast coverage: ${nextHours.length} hourly records. Source: ${forecast?.mode ?? "unavailable"}. Policy: ${decision.policyVersion}.`,
+          `Forecast coverage: ${nextScreening?.hours.length ?? nextHours.length} hourly records. Source: ${nextScreening ? "NOAA/NWS forecast screening" : forecast?.mode ?? "unavailable"}. Policy: ${decision.policyVersion}.`,
         ].join("\n"),
       };
       changed = this.store.insert("briefing", id, briefing) || changed;

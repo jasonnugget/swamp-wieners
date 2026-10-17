@@ -5,7 +5,7 @@
 ```text
 src/
   main.tsx                 React entrypoint
-  app/                     Workspace composition, navigation, and selected site
+  app/                     Editorial homepage, linked working views, and selected site
   components/              Shared Three.js map, chart, and work-window views
   features/
     model-lab/             Browser inference, local training, and evaluation UI
@@ -70,3 +70,11 @@ These directories are ignored. Their context belongs here or in their maintained
 The regional view extrudes bundled state polygons on a local Mercator plane. Risk beacons use the supplied hazard index for height and color; the extrusion is schematic, not terrain. Selected sites synchronize with the rest of the workspace. Orbit, zoom, focus, overhead, and expanded showcase controls affect presentation only.
 
 Report maps use a top-down camera and raycast ground clicks back to latitude/longitude. Panning does not submit a pin. Open crew reports remain visible, and active lightning holds draw a geodesic ten-mile boundary. A flat interactive fallback preserves selection and pinning if WebGL cannot initialize. Renderer resources are disposed on unmount; animation respects reduced motion and pauses offscreen.
+
+The 3D national weather atlas has a separate live-data path: `SiteMap` loads `/api/weather/atlas` and `/api/weather/point` in parallel through `useWeatherAtlas`, while `atlas-weather.ts` queries the free Open-Meteo Forecast API with a bounded fifteen-minute cache. Overview geometry covers all fifty states and weather samples cover one named point per state; land raycasting supports arbitrary point inspection. Layer/timeline state changes only the visualization, not the safety engine or its historical forecast inputs. Provider times and stale-cache labels stay visible.
+
+The national site catalog has 285 plants while the frozen historical model cohort remains fifty plants. `scripts/expand_sites.py` preserves that cohort in `model-sites.json`, adds geographically distributed operating plants nationwide, and records catalog provenance. New sites have `catalogOnly: true`, no borrowed forecasts, unknown safety coverage, and normal report storage. Site weather inspection uses the independent atlas provider.
+
+## Website navigation
+
+The default view is an editorial homepage with decorative canvas artwork and scoped GSAP scroll effects. Query-string links select the dedicated fullscreen atlas, Site intelligence, Model Lab, Crew reports, and Safety briefings. Browser history and reload retain the chosen view. Site intelligence owns the evidence panels and ranking; the homepage does not mount a weather atlas. Home animation is unrelated to operational weather and model state.

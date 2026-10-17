@@ -65,7 +65,7 @@ def metrics(pred,y,base,threshold):
 def main():
     data=np.load(ROOT/'data/training.npz',allow_pickle=True)
     x,y,b,t,ids=[data[k] for k in ['x','y','baseline','time','site']]
-    sites=json.loads((ROOT/'public/data/sites.json').read_text())
+    sites=json.loads((ROOT/'public/data/model-sites.json').read_text())
     held=np.isin(ids,[s['id'] for s in sites if s['heldOut']]);dates=t.astype(str)
     masks=dict(train=(dates<'2025-01-01')&~held,validation=(dates>='2025-01-01')&(dates<'2025-07-01')&~held,calibration=(dates>='2025-07-01')&(dates<'2026-01-01')&~held,test=(dates>='2026-01-01')&~held,unseen=(dates>='2026-01-01')&held)
     mean=x[masks['train']].mean(axis=0);std=x[masks['train']].std(axis=0);std=np.maximum(std,.001)

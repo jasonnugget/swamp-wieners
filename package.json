@@ -13,15 +13,18 @@
     "test": "tsx --test tests/unit/*.test.ts",
     "test:e2e": "playwright test",
     "data:prepare": ".venv/bin/python scripts/prepare_data.py",
+    "data:catalog": ".venv/bin/python scripts/expand_sites.py",
     "ml:train": "OPENBLAS_NUM_THREADS=2 .venv/bin/python scripts/train.py"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@tensorflow/tfjs-backend-cpu": "^4.22.0",
     "@tensorflow/tfjs-backend-webgl": "^4.22.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
     "@tensorflow/tfjs-core": "^4.22.0",
     "@tensorflow/tfjs-layers": "^4.22.0",
     "express": "^5.1.0",
+    "gsap": "^3.15.0",
     "lucide-react": "^0.468.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

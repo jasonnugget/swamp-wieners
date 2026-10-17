@@ -16,7 +16,11 @@ import { TASK_LABELS } from "../../shared/policy";
 import { riskColor } from "./site-map/projection";
 import type { MapScene, SceneData } from "./site-map/scene";
 import FlatMap from "./site-map/FlatMap";
+import WeatherControls from "./site-map/WeatherControls";
+import { useWeatherAtlas } from "./site-map/useWeatherAtlas";
+import type { MapRegion, WeatherLayer, WeatherLocation } from "../../shared/weather";
 import "../styles/site-map.css";
+import "../styles/weather-atlas.css";
 
 export default function SiteMap({
   sites,
@@ -26,6 +30,7 @@ export default function SiteMap({
   reports = [],
   onPin,
   pin,
+  standalone = false,
 }: {
   sites: Site[];
   decisions: Record<string, Decision>;
@@ -34,6 +39,7 @@ export default function SiteMap({
   reports?: HazardReport[];
   onPin?: (latitude: number, longitude: number) => void;
   pin?: { latitude: number; longitude: number };
+  standalone?: boolean;
 }) {
   const container = useRef<HTMLDivElement>(null),
     labels = useRef<HTMLDivElement>(null),
@@ -58,6 +64,13 @@ export default function SiteMap({
   const active = sites.find((s) => s.id === (hovered ?? selected)) ?? sites[0],
     decision = active ? decisions[active.id] : undefined;
   const heldTasks = decision?.tasks.filter((t) => t.state === "HOLD") ?? [];
+  const [layer, setLayer] = useState<WeatherLayer>("temperature"),
+    [hour, setHour] = useState(0),
+    [region, setRegion] = useState<MapRegion>("mainland"),
+    [weatherLocation, setWeatherLocation] = useState<WeatherLocation>();
+  const selectedSite = sites.find((s) => s.id === selected) ?? sites[0];
+  const inspected = weatherLocation ?? selectedSite;
+  const weather = useWeatherAtlas(!onPin, inspected);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +84,7 @@ export default function SiteMap({
             data.current,
             {
               select(id) {
+                setWeatherLocation(undefined);
                 previousSelected.current = id;
                 const site = data.current.sites.find((s) => s.id === id);
                 if (site) scene.current?.focus(site);
@@ -92,6 +106,7 @@ export default function SiteMap({
               geographyError: () => {
                 if (!cancelled) setGeographyError(true);
               },
+              inspect: setWeatherLocation,
             },
           );
         } catch (error) {
@@ -119,8 +134,17 @@ export default function SiteMap({
     scene.current?.update(data.current);
   }, [sites, decisions, selected, reports, pin, ready]);
   useEffect(() => {
+    if (onPin) return;
+    const points = [...(weather.atlas?.points ?? [])];
+    const detail = weather.point;
+    if (detail && inspected && detail.latitude === inspected.latitude && detail.longitude === inspected.longitude && !points.some((p) => p.id === inspected.id))
+      points.push({ ...detail, id: inspected.id, name: inspected.name });
+    scene.current?.weather(points, layer, hour, inspected?.id);
+  }, [weather.atlas, weather.point, layer, hour, inspected?.id, inspected?.latitude, inspected?.longitude, inspected?.name, ready, onPin]);
+  useEffect(() => {
     if (previousSelected.current === selected) return;
     previousSelected.current = selected;
+    setWeatherLocation(undefined);
     const site = sites.find((s) => s.id === selected);
     if (site) {
       scene.current?.focus(site);
@@ -182,7 +206,7 @@ export default function SiteMap({
   }
   return (
     <div
-      className={`map-wrap command-map ${onPin ? "is-pinning" : ""} ${expanded ? "is-expanded" : ""}`}
+      className={`map-wrap command-map ${onPin ? "is-pinning" : "weather-atlas"} ${layer !== "risk" && !onPin ? "weather-active" : ""} ${expanded ? "is-expanded" : ""}`}
       data-testid="site-map"
       aria-label={onPin ? "Hazard location map" : "Site risk map"}
     >
@@ -202,8 +226,8 @@ export default function SiteMap({
       )}
       {!ready && (
         <div className="scene-loading">
-          <Layers3 size={24} />
-          <span>Building your regional view…</span>
+          <Layers3 aria-hidden="true" size={24} />
+          <span>Building your national view…</span>
         </div>
       )}
       {!onPin && (
@@ -211,10 +235,10 @@ export default function SiteMap({
           <div className="scene-heading">
             <span className="scene-mode">
               <span />
-              {fallback ? "2D SITE MAP" : "FIELD INTELLIGENCE · 3D VIEW"}
+              {fallback ? "2D SITE MAP" : "PLANIT / WEATHER ATLAS"}
             </span>
-            <h4>Southeast command view</h4>
-            <p>{sites.length} actual plants · one connected risk picture</p>
+            {standalone ? <h1>Weather, in perspective.</h1> : <h4>Weather, in perspective.</h4>}
+            <p>All 50 states. The next 72 hours. A clearer view of the work ahead.</p>
           </div>
           <div className="scene-top-actions">
             <button
@@ -224,8 +248,8 @@ export default function SiteMap({
               aria-label="Fit all sites"
               title="Fit the region"
             >
-              <RotateCcw size={13} />
-              <span>Fit region</span>
+              <RotateCcw aria-hidden="true" size={13} />
+              <span>Fit plants</span>
             </button>
             <button
               ref={showcaseButton}
@@ -238,7 +262,7 @@ export default function SiteMap({
                 expanded ? "Exit showcase · Esc" : "Expand for presentation"
               }
             >
-              {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              {expanded ? <Minimize2 aria-hidden="true" size={14} /> : <Maximize2 aria-hidden="true" size={14} />}
               <span>{expanded ? "Exit showcase" : "Showcase"}</span>
             </button>
           </div>
@@ -255,7 +279,7 @@ export default function SiteMap({
               aria-pressed={top}
               title="Toggle overhead / perspective"
             >
-              <Layers3 size={15} />
+              <Layers3 aria-hidden="true" size={15} />
             </button>
             <button
               type="button"
@@ -271,7 +295,7 @@ export default function SiteMap({
                   : "Slow presentation orbit"
               }
             >
-              {rotating ? <Pause size={15} /> : <Play size={15} />}
+              {rotating ? <Pause aria-hidden="true" size={15} /> : <Play aria-hidden="true" size={15} />}
             </button>
             <span />
           </>
@@ -283,7 +307,7 @@ export default function SiteMap({
           title="Zoom in"
           onClick={() => scene.current?.zoom(0.75)}
         >
-          <Plus size={16} />
+          <Plus aria-hidden="true" size={16} />
         </button>
         <button
           type="button"
@@ -292,7 +316,7 @@ export default function SiteMap({
           title="Zoom out"
           onClick={() => scene.current?.zoom(1.33)}
         >
-          <Minus size={16} />
+          <Minus aria-hidden="true" size={16} />
         </button>
         {!onPin && (
           <button
@@ -304,10 +328,26 @@ export default function SiteMap({
               if (active) scene.current?.focus(active);
             }}
           >
-            <Crosshair size={15} />
+            <Crosshair aria-hidden="true" size={15} />
           </button>
         )}
       </div>
+      {!onPin && <WeatherControls
+        weather={weather} layer={layer} hour={hour} region={region}
+        location={inspected} reducedMotion={reducedMotion}
+        onLayer={(next) => {
+          setLayer(next); setRotating(false); scene.current?.rotate(false);
+          if (next === "risk") { setHour(0); scene.current?.fit(); }
+          else if (layer === "risk") scene.current?.region(region);
+        }}
+        onHour={setHour}
+        onRegion={(next) => {
+          setRegion(next); setRotating(false); scene.current?.rotate(false); scene.current?.region(next);
+          const point = weather.atlas?.points.find((p) => p.id === (next === "alaska" ? "AK" : next === "hawaii" ? "HI" : "CO"));
+          if (point) setWeatherLocation(point);
+        }}
+        onLocation={(point) => { setWeatherLocation(point); scene.current?.focus(point); }}
+      />}
       {!onPin && active && (
         <div
           className="scene-site-card"
@@ -322,7 +362,7 @@ export default function SiteMap({
           </div>
           <div>
             <span>
-              {hovered ? "INSPECT SITE" : "SELECTED SITE"} · EIA {active.id}
+              {hovered ? "INSPECT SITE" : "WORKSPACE RISK"} · EIA {active.id}
             </span>
             <strong>{active.name}</strong>
             <p>
@@ -338,7 +378,7 @@ export default function SiteMap({
           </div>
         </div>
       )}
-      {!onPin && (
+      {!onPin && layer === "risk" && (
         <div className="scene-bottom">
           <div className="scene-legend">
             <span>
@@ -359,7 +399,7 @@ export default function SiteMap({
             </span>
           </div>
           <span className="scene-help">
-            <Compass size={12} />
+            <Compass aria-hidden="true" size={12} />
             Drag to orbit · scroll to zoom
           </span>
         </div>
@@ -367,7 +407,7 @@ export default function SiteMap({
       <div className="scene-disclosure">
         {onPin
           ? "Top-down · drag to pan · click to pin"
-          : "Height = risk · schematic state relief · bundled geography"}
+          : "Drag to orbit · scroll to zoom · right-drag to pan · click land to inspect"}
       </div>
       {(fallback || geographyError) && (
         <div className="scene-warning" role="status">
@@ -376,20 +416,6 @@ export default function SiteMap({
               ? "3D map files could not load. Reload to retry. Selection and pinning remain available in 2D."
               : "3D graphics unavailable. Selection and pinning remain available in 2D."
             : "State outlines unavailable. Site coordinates and risk markers remain active."}
-        </div>
-      )}
-      {expanded && (
-        <div className="scene-showcase-caption">
-          <span>PLANIT CONTROL</span>
-          <strong>
-            Know the ground.
-            <br />
-            Plan the next shift.
-          </strong>
-          <p>
-            Forecast signals, active restrictions, and crew knowledge at every
-            location.
-          </p>
         </div>
       )}
     </div>

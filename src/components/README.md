@@ -2,7 +2,8 @@
 
 | File | Purpose |
 | --- | --- |
-| `SiteMap.tsx` | Three.js regional view, risk beacons, showcase controls, and report pinning |
+| `FieldSculpture.tsx` | Decorative animated field-line artwork for the homepage; never operational evidence |
+| `SiteMap.tsx` | Three.js national weather atlas, risk beacons, showcase controls, and report pinning |
 | `ForecastChart.tsx` | Model median, uncertainty band, baseline, and optional reanalysis outcomes |
 | `WorkWindows.tsx` | Task-specific model screening windows from shared calculations |
 

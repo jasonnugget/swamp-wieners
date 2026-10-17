@@ -10,11 +10,12 @@ test("3D map selects real sites, orbits, zooms, and expands for a showcase", asy
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 1050 });
-  await page.goto("/");
+  await page.goto("/?view=atlas");
   const map = page.getByTestId("site-map");
   const canvas = map.locator(".three-map-canvas");
   await expect(canvas).toHaveAttribute("data-geography", "ready");
-  await expect(map.locator(".site-beacon")).toHaveCount(50);
+  await page.getByRole("button", { name: /Site risk/ }).click();
+  await expect(map.locator(".site-beacon")).toHaveCount(285);
   await map.locator('[data-site-id="55433"]').focus();
   await map.locator('[data-site-id="55433"]').press("Enter");
   await expect(page.getByLabel("Active site")).toHaveValue("55433");
@@ -76,7 +77,7 @@ test("3D report map raycasts a pin to real coordinates and ignores pan and pinch
   request,
   context,
 }) => {
-  await page.goto("/");
+  await page.goto("/?view=atlas");
   await page
     .getByRole("button", { name: "Report hazard", exact: true })
     .first()
@@ -151,7 +152,7 @@ test("without WebGL, the flat fallback still selects sites and places hazard pin
       return Reflect.apply(getContext, this, [type, ...args]);
     } as typeof getContext;
   });
-  await page.goto("/");
+  await page.goto("/?view=atlas");
   await expect(page.getByTestId("flat-map")).toBeVisible();
   await expect(page.locator(".scene-warning")).toContainText("3D graphics unavailable");
   await page
@@ -174,10 +175,15 @@ test("without WebGL, the flat fallback still selects sites and places hazard pin
   await expect(modal.locator(".coordinates")).not.toHaveText(original!);
 });
 
-test("a scene module loading failure is distinguished from unavailable graphics", async ({ page }) => {
-  await page.route(/\/assets\/scene-[^/]+\.js$/, (route) => route.abort());
-  await page.goto("/");
-  await expect(page.getByTestId("flat-map")).toBeVisible();
-  await expect(page.locator(".scene-warning")).toContainText("3D map files could not load");
-  await expect(page.locator(".scene-warning")).not.toContainText("graphics unavailable");
+test.describe("scene module failures", () => {
+  // Route interception must reach the import instead of a service-worker cache.
+  test.use({ serviceWorkers: "block" });
+
+  test("a scene module loading failure is distinguished from unavailable graphics", async ({ page }) => {
+    await page.route(/\/assets\/scene-[^/]+\.js$/, (route) => route.abort());
+    await page.goto("/?view=atlas");
+    await expect(page.getByTestId("flat-map")).toBeVisible();
+    await expect(page.locator(".scene-warning")).toContainText("3D map files could not load");
+    await expect(page.locator(".scene-warning")).not.toContainText("graphics unavailable");
+  });
 });

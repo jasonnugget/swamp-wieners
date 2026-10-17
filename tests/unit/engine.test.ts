@@ -50,7 +50,7 @@ test("six PM briefing runs per timezone, includes unresolved reports, and surviv
     assert.equal(engine.tick(), false);
     assert.equal(engine.snapshot().briefings.length, a.length);
     engine.setClock("demo", "2026-08-01T23:00:00Z");
-    assert.equal(engine.snapshot().briefings.length, 50);
+    assert.equal(engine.snapshot().briefings.length, sites.filter((s) => localParts(engine.now(), s.timezone).hour >= 18).length);
   } finally {
     store.close();
     rmSync(directory, { recursive: true, force: true });

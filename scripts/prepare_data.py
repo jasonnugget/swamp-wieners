@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import requests
+from expand_sites import expand_sites
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'data/raw'
@@ -135,6 +136,7 @@ def site_data(site):
 
 if __name__=='__main__':
     sites=make_sites()
+    expand_sites(sites)
     # Sequential requests respect the free API; cached downloads make retries cheap.
     rows=[site_data(s) for s in sites]
     x,y,b,t,ids=[np.concatenate([r[i] for r in rows]) for i in range(5)]

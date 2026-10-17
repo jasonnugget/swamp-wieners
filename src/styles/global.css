@@ -1,9 +1,9 @@
 @font-face {
-  font-family: "DM Sans";
+  font-family: "Instrument Sans";
   font-style: normal;
-  font-weight: 100 1000;
+  font-weight: 400 700;
   font-display: swap;
-  src: url("/fonts/dm-sans.woff2") format("woff2");
+  src: url("/fonts/InstrumentSans-Variable.ttf") format("truetype");
 }
 @font-face {
   font-family: "Manrope";
@@ -13,7 +13,7 @@
   src: url("/fonts/manrope.woff2") format("woff2");
 }
 :root {
-  font-family: "DM Sans", sans-serif;
+  font-family: "Instrument Sans", sans-serif;
   color: #27352b;
   background: #f6f7f2;
   font-synthesis: none;
@@ -83,7 +83,7 @@ p {
 h1,
 h2,
 h3 {
-  font-family: Manrope, "DM Sans", sans-serif;
+  font-family: Manrope, "Instrument Sans", sans-serif;
 }
 h1 {
   font-size: 30px;
@@ -144,7 +144,7 @@ small {
 }
 .brand-sub {
   display: block;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Instrument Sans", sans-serif;
   font-size: 9px;
   letter-spacing: 4px;
   font-weight: 500;
@@ -583,7 +583,7 @@ main {
   font-size: 11px;
   letter-spacing: 0;
   color: #a0ab95;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Instrument Sans", sans-serif;
   font-weight: 400;
   margin-left: 7px;
 }
@@ -1027,7 +1027,7 @@ main {
   white-space: nowrap;
 }
 .page-footer > span > span {
-  font-family: "DM Sans", sans-serif;
+  font-family: "Instrument Sans", sans-serif;
   font-size: 6px;
   letter-spacing: 1.3px;
   display: block;
@@ -1542,7 +1542,7 @@ main {
   color: #a2ad96;
 }
 .report-card > h3 {
-  font-family: "DM Sans", sans-serif;
+  font-family: "Instrument Sans", sans-serif;
   font-weight: 500;
   font-size: 16px;
   line-height: 1.7;
@@ -1637,7 +1637,7 @@ main {
 .briefing-card pre {
   white-space: pre-wrap;
   line-height: 2;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Instrument Sans", sans-serif;
   font-size: 12px;
   padding: 10px 23px 25px;
   color: #819371;

@@ -36,3 +36,5 @@ Downloads are cached under ignored `data/raw/`; rerunning resumes cached work. A
 - Portable model contracts and CPU reference inference: [shared](../shared/README.md).
 - Browser model loading, backend probing, and local calibration: [Model Lab](../src/features/model-lab/README.md).
 - Frozen artifacts and evaluation: [public/models](../public/models/README.md).
+
+The site catalog expansion adds 235 plants for national visualization and crew reporting. These additions are marked `catalogOnly` and have no historical ML validation or bundled safety forecasts. The original fifty-site cohort is preserved in `model-sites.json`; model weights, samples, evaluation metrics, exclusions, and historical forecasts are unchanged. Model Lab is unavailable for catalog-only plants. Use the independent weather atlas for current provider forecasts there.

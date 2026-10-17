@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import type { Decision, HazardReport, Site } from "../../../shared/types";
+import { REGION_BOUNDS, type MapRegion, type WeatherLayer, type WeatherLocation, type WeatherPoint } from "../../../shared/weather";
+import { createWeatherField } from "./weather-field";
 import {
   LAND_TOP,
-  project,
+  projectUS as project,
+  normalizeLongitude,
   REGION,
   riskColor,
   statePolygons,
@@ -21,7 +24,9 @@ export interface SceneData {
 export interface MapScene {
   update(data: SceneData): void;
   fit(): void;
-  focus(site: Site): void;
+  focus(site: Pick<Site, "latitude" | "longitude">): void;
+  region(region: MapRegion): void;
+  weather(points: WeatherPoint[], layer: WeatherLayer, hour: number, selectedId?: string): void;
   topDown(value: boolean): void;
   rotate(value: boolean): void;
   zoom(factor: number): void;
@@ -56,6 +61,7 @@ export function createMapScene(
     interact(): void;
     ready(): void;
     geographyError(): void;
+    inspect(location: WeatherLocation): void;
   },
 ): MapScene {
   const renderer = new THREE.WebGLRenderer({
@@ -64,7 +70,7 @@ export function createMapScene(
     powerPreference: "low-power",
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
-  renderer.setClearColor("#101e23");
+  renderer.setClearColor("#11191d");
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.25;
@@ -79,13 +85,13 @@ export function createMapScene(
   canvas.tabIndex = 0;
   container.appendChild(canvas);
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2("#101e23", 0.018);
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 140);
+  scene.fog = new THREE.FogExp2("#11191d", 0.003);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.02, 1000);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
   controls.dampingFactor = 0.085;
   controls.minDistance = callbacks.pin ? 0.06 : 1.6;
-  controls.maxDistance = 38;
+  controls.maxDistance = 500;
   controls.minPolarAngle = 0.01;
   controls.maxPolarAngle = Math.PI / 2.25;
   controls.screenSpacePanning = false;
@@ -97,18 +103,18 @@ export function createMapScene(
     controls.touches.ONE = THREE.TOUCH.PAN;
   }
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-  scene.add(new THREE.HemisphereLight("#d7f8e8", "#102128", 2.6));
-  const sun = new THREE.DirectionalLight("#d1e9bd", 3.2);
+  scene.add(new THREE.HemisphereLight("#e7ebed", "#151d25", 2.3));
+  const sun = new THREE.DirectionalLight("#e4e3db", 2.7);
   sun.position.set(-3, 9, 5);
   scene.add(sun);
-  const rim = new THREE.DirectionalLight("#5babad", 1.5);
+  const rim = new THREE.DirectionalLight("#91a4b2", 1.3);
   rim.position.set(5, 4, -5);
   scene.add(rim);
 
   const ocean = new THREE.Mesh(
-    new THREE.PlaneGeometry(100, 100),
+    new THREE.PlaneGeometry(650, 650),
     new THREE.MeshStandardMaterial({
-      color: "#12272d",
+      color: "#172329",
       roughness: 0.85,
       metalness: 0.15,
     }),
@@ -116,7 +122,7 @@ export function createMapScene(
   ocean.rotation.x = -Math.PI / 2;
   ocean.position.y = -0.17;
   scene.add(ocean);
-  const grid = new THREE.GridHelper(52, 104, "#2a6265", "#204247");
+  const grid = new THREE.GridHelper(250, 125, "#415356", "#2b3d41");
   grid.position.y = -0.16;
   (grid.material as THREE.Material).transparent = true;
   (grid.material as THREE.Material).opacity = 0.35;
@@ -125,12 +131,17 @@ export function createMapScene(
     beacons = new THREE.Group(),
     reports = new THREE.Group();
   scene.add(land, beacons, reports);
+  const siteLabels = document.createElement("div");
+  labels.appendChild(siteLabels);
+  const weatherField = createWeatherField(scene, labels, (point) => callbacks.inspect(point));
   const abort = new AbortController();
   let disposed = false,
     top = !!callbacks.pin,
     rotating = false,
     inView = true;
+  let overview: MapRegion | undefined = callbacks.pin ? undefined : "mainland";
   const interact = () => {
+    overview = undefined;
     rotating = false;
     move = undefined;
     callbacks.interact();
@@ -173,6 +184,7 @@ export function createMapScene(
     };
   }
   function fit(immediate = false) {
+    overview = undefined;
     const box = new THREE.Box3();
     data.sites.forEach((s) => {
       const p = project(s.latitude, s.longitude);
@@ -202,8 +214,21 @@ export function createMapScene(
       controls.update();
     } else animateTo(center, center.clone().add(offset));
   }
-  function focus(site: Site) {
-    const p = project(site.latitude, site.longitude),
+  function region(value: MapRegion, immediate = false) {
+    overview = value;
+    const bounds = REGION_BOUNDS[value];
+    const a = project(bounds.north, bounds.west), b = project(bounds.south, bounds.east);
+    const center = new THREE.Vector3((a.x + b.x) / 2, LAND_TOP, (a.z + b.z) / 2);
+    const available = 0.83;
+    const distance = Math.max((b.x - a.x) / Math.max(camera.aspect * available, 0.25), b.z - a.z) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.3;
+    const offset = top ? new THREE.Vector3(0, distance, 0.001) : new THREE.Vector3(0, distance * 0.92, distance * 0.65);
+    if (immediate) { controls.target.copy(center); camera.position.copy(center).add(offset); controls.update(); }
+    else animateTo(center, center.clone().add(offset));
+    canvas.dataset.region = value;
+  }
+  function focus(site: Pick<Site, "latitude" | "longitude">) {
+    overview = undefined;
+    const p = project(site.latitude, site.longitude > 0 ? site.longitude - 360 : site.longitude),
       target = new THREE.Vector3(p.x, LAND_TOP, p.z);
     const distance = callbacks.pin
       ? 0.24
@@ -223,8 +248,10 @@ export function createMapScene(
     const { width, height } = container.getBoundingClientRect();
     if (!width || !height) return;
     camera.aspect = width / height;
+    if (!callbacks.pin) camera.setViewOffset(width, height, width > 900 ? 130 : width > 740 ? 90 : 0, -20, width, height);
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
+    if (overview) region(overview, true);
   }
   resize();
   if (callbacks.pin && data.sites[0]) {
@@ -232,7 +259,7 @@ export function createMapScene(
     controls.target.set(p.x, LAND_TOP, p.z);
     camera.position.set(p.x, LAND_TOP + 0.24, p.z + 0.0001);
     controls.update();
-  } else fit(true);
+  } else region("mainland", true);
   const observer = new ResizeObserver(resize);
   observer.observe(container);
   const visibility = new IntersectionObserver((entries) => {
@@ -240,7 +267,7 @@ export function createMapScene(
   });
   visibility.observe(container);
 
-  void fetch("/data/states.geojson", { signal: abort.signal })
+  void fetch("/data/us-states.geojson", { signal: abort.signal })
     .then((r) => {
       if (!r.ok) throw new Error("Geography unavailable");
       return r.json() as Promise<StateGeometry>;
@@ -253,7 +280,7 @@ export function createMapScene(
           polygon.forEach((ring, index) => {
             const path = index === 0 ? shape : new THREE.Path();
             ring.forEach(([longitude, latitude], i) => {
-              const p = project(latitude, longitude);
+              const p = project(latitude, longitude > 0 ? longitude - 360 : longitude);
               if (i === 0) path.moveTo(p.x, -p.z);
               else path.lineTo(p.x, -p.z);
             });
@@ -273,7 +300,7 @@ export function createMapScene(
           geometry.translate(0, LAND_TOP - 0.25, 0);
           const mesh = new THREE.Mesh(geometry, [
             new THREE.MeshStandardMaterial({
-              color: focal ? "#456853" : "#263d38",
+              color: focal ? "#4b5c5b" : "#3e4b50",
               roughness: 0.8,
               metalness: 0.15,
             }),
@@ -283,6 +310,7 @@ export function createMapScene(
             }),
           ]);
           land.add(mesh);
+          mesh.userData.state = state.properties.name;
           const edges = new THREE.LineSegments(
             new THREE.EdgesGeometry(geometry, 30),
             new THREE.LineBasicMaterial({
@@ -294,6 +322,7 @@ export function createMapScene(
           land.add(edges);
         }
       canvas.dataset.geography = "ready";
+      canvas.dataset.states = String(states.features.length);
     })
     .catch((error) => {
       if (error.name !== "AbortError" && !disposed) callbacks.geographyError();
@@ -309,7 +338,7 @@ export function createMapScene(
     element.type = "button";
     element.className = className;
     element.textContent = text;
-    labels.appendChild(element);
+    siteLabels.appendChild(element);
     anchors.push({ element, position, priority });
     return element;
   }
@@ -317,7 +346,7 @@ export function createMapScene(
     data = next;
     disposeGroup(beacons);
     disposeGroup(reports);
-    labels.replaceChildren();
+    siteLabels.replaceChildren();
     anchors.length = 0;
     pulses.length = 0;
     pickTargets.length = 0;
@@ -513,9 +542,19 @@ export function createMapScene(
     if (distance > 5 || event.button !== 0) return;
     setPointer(event);
     if (!callbacks.pin) {
+      const weatherPoint = weatherField.pick(raycaster);
+      if (weatherPoint) { callbacks.inspect(weatherPoint); return; }
       const hit = raycaster.intersectObjects(pickTargets)[0];
-      if (hit?.object.userData.siteId)
+      if (hit?.object.userData.siteId) {
         callbacks.select(hit.object.userData.siteId);
+        return;
+      }
+      const landHit = raycaster.intersectObjects(land.children).find((h) => h.object.userData.state);
+      if (landHit) {
+        const position = unproject(landHit.point.x, landHit.point.z);
+        const longitude = ((position.longitude + 180) % 360 + 360) % 360 - 180;
+        callbacks.inspect({ id: "inspect", name: landHit.object.userData.state, latitude: position.latitude, longitude });
+      }
       return;
     }
     const hit = raycaster.ray.intersectPlane(ground, new THREE.Vector3());
@@ -528,7 +567,7 @@ export function createMapScene(
       p.longitude > REGION.east
     )
       return;
-    callbacks.pin(p.latitude, p.longitude);
+    callbacks.pin(p.latitude, normalizeLongitude(p.longitude));
   };
   const cancel = (event: PointerEvent) => {
     contacts.delete(event.pointerId);
@@ -576,6 +615,7 @@ export function createMapScene(
         mesh.scale.setScalar(1 + t * 1.6);
         (mesh.material as THREE.MeshBasicMaterial).opacity = base * (1 - t);
       });
+    weatherField.draw(camera, container.clientWidth, container.clientHeight, now, !reduced.matches);
     renderer.render(scene, camera);
     const width = container.clientWidth,
       height = container.clientHeight;
@@ -611,6 +651,14 @@ export function createMapScene(
   frame = requestAnimationFrame(tick);
   return {
     update,
+    region,
+    weather(points, layer, hour, selectedId) {
+      beacons.visible = layer === "risk";
+      weatherField.update(points, layer, hour, selectedId);
+      canvas.dataset.weatherLayer = layer;
+      canvas.dataset.weatherHour = String(hour);
+      canvas.dataset.weatherPoints = String(points.length);
+    },
     fit,
     focus,
     resize,
@@ -656,6 +704,7 @@ export function createMapScene(
       observer.disconnect();
       visibility.disconnect();
       controls.dispose();
+      weatherField.dispose();
       canvas.removeEventListener("pointerdown", start);
       canvas.removeEventListener("pointerup", end);
       canvas.removeEventListener("pointercancel", cancel);

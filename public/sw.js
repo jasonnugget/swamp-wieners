@@ -1,4 +1,4 @@
-const CACHE = "planit-field-v3";
+const CACHE = "planit-field-v9";
 const CORE = [
   "/",
   "/favicon.svg",
@@ -7,11 +7,19 @@ const CORE = [
   "/data/samples.json",
   "/data/scenario.json",
   "/data/states.geojson",
+  "/data/us-states.geojson",
+  "/data/weather-stations.json",
   "/data/provenance.json",
   "/models/bundle.json",
   "/models/evaluation.json",
   "/fonts/dm-sans.woff2",
   "/fonts/manrope.woff2",
+  "/fonts/SpaceGrotesk-Variable.ttf",
+  "/fonts/satoshi-variable.woff2",
+  "/images/wind-landscape.jpg",
+  "/images/forest-canopy.jpg",
+  "/fonts/InstrumentSans-Variable.ttf",
+  "/fonts/BarlowCondensed-SemiBold.ttf",
 ];
 self.addEventListener("install", (event) => {
   self.skipWaiting();

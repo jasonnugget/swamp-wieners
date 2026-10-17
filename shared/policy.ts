@@ -9,8 +9,9 @@ import type {
   Strike,
   Task,
   TaskState,
+  WeatherScreening,
 } from "./types";
-export const POLICY_VERSION = "demo-policy-1";
+export const POLICY_VERSION = "demo-policy-2";
 export const TASKS: Task[] = ["mobilization", "installation", "preparation"];
 export const CATEGORIES: Category[] = [
   "weather",
@@ -87,6 +88,9 @@ export function decide(
   alerts: Alert[],
   now: number,
   soilThresholds: number[] = [0.2, 0.3, 0.4],
+  screening?: WeatherScreening,
+  screeningNow = now,
+  screeningHorizonHours = 24,
 ): Decision {
   const active = reports.filter(
     (r) => r.siteId === site.id && r.status === "open",
@@ -119,6 +123,18 @@ export function decide(
   const soilScore =
     soil === null ? null : interpolate(soil, soilThresholds, [0, 7, 10]);
   const taskChannels: HazardChannel[] = [];
+  const freshScreening = screening?.siteId === site.id &&
+    screeningNow >= Date.parse(screening.fetchedAt) &&
+    screeningNow - Date.parse(screening.fetchedAt) < 3 * 3600000 &&
+    screeningNow >= Date.parse(screening.issuedAt) &&
+    screeningNow - Date.parse(screening.issuedAt) < 24 * 3600000;
+  const screenHours = freshScreening ? screening!.hours.filter(h =>
+    Date.parse(h.time) >= screeningNow - 3600000 && Date.parse(h.time) < screeningNow + screeningHorizonHours * 3600000) : [];
+  const peakValue = (key: "heatIndex" | "windKmh") => {
+    const values = screenHours.map(h => h[key]).filter((n): n is number => typeof n === "number" && Number.isFinite(n));
+    return values.length ? Math.max(...values) : null;
+  };
+  const officialHeat = peakValue("heatIndex"), officialWind = peakValue("windKmh");
   const channels: HazardChannel[] = CATEGORIES.map((category) => {
     const matching = alerts.filter(
       (a) =>
@@ -166,6 +182,20 @@ export function decide(
         mode: forecast!.mode,
         source: "Open-Meteo weather forecast",
       });
+    }
+    if (base.severity === null && (category === "heat" || category === "weather")) {
+      const value = category === "heat" ? officialHeat : officialWind;
+      if (value !== null) {
+        const severity = category === "heat"
+          ? interpolate(value, [80, 90, 103, 125], [0, 3, 7, 10])
+          : value >= 50 ? 7 : value >= 30 ? 3 : 0;
+        Object.assign(base, {
+          severity, status: severity >= 7 ? "RESTRICTED" : "AVAILABLE",
+          title: category === "heat" ? `${Math.round(value)}°F forecast heat index` : `${Math.round(value)} km/h peak wind`,
+          detail: `${screeningHorizonHours === 24 ? "Next 24 hours" : "Selected briefing period"} from NOAA/NWS. ${category === "heat" ? "Heat index derived from forecast temperature and humidity." : "Wind screening from hourly forecasts."} Other hazards require separate verification. Issued ${screening!.issuedAt}.`,
+          mode: "live", source: "NOAA/NWS · forecast screening (not custom ML)",
+        });
+      }
     }
     if (category === "lightning")
       Object.assign(

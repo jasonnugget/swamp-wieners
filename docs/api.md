@@ -16,6 +16,12 @@ SSE messages are JSON in `data:` frames. Updates currently carry a timestamp rat
 
 ## Crew report endpoints
 
+### Save team assignments
+
+`POST /api/teams` accepts `{ "name": "Access crew", "members": ["Alex Rivera", "Sam Chen"], "siteIds": ["621"] }`. Supply an existing UUID `id` to edit a team. Names contain 1 to 80 characters, the roster contains 1 to 100 names, and assignments contain 1 to 1,000 existing plant IDs. Repeated names and plant IDs are deduplicated. Team names must be unique ignoring case. Success returns the stored `CrewTeam` with HTTP 201 for creation or 200 for editing, then broadcasts an SSE invalidation. Missing edit targets return 404; duplicate team names return 409; invalid assignments return 400.
+
+Snapshots include `teams`. Teams are shared SQLite records and survive restart and demo reset. The browser remembers the selected reporting team and name locally; this does not establish an authenticated identity.
+
 ### Create a report
 
 `POST /api/reports` accepts:
@@ -33,6 +39,8 @@ SSE messages are JSON in `data:` frames. Updates currently carry a timestamp rat
 ```
 
 `photo` is optional and contains a base64 data URL for JPEG, PNG, or WebP. The decoded image limit is 4 MB. The overall JSON request limit is 6 MB. A description must contain 5 to 2,000 characters; the author must contain 1 to 80. Tasks must contain at least one supported value. Coordinates must be finite and within latitude/longitude bounds. The site must exist.
+
+Optional `teamId` must identify a saved team with the author in its current roster and the plant in its current assignments. Invalid or outdated combinations return 400. The server records `teamId` and a snapshot of `teamName`; later roster or assignment edits do not change old reports. Reports without `teamId` remain supported.
 
 Categories are `weather`, `heat`, `lightning`, `flood`, `wildfire`, `soil`, and `wildlife`. Tasks are `mobilization`, `installation`, and `preparation`.
 
@@ -67,3 +75,13 @@ A successful HTTP response does not imply both providers succeeded. Inspect `fee
 ## Static resources
 
 `/data/*` and `/models/*` expose bundled public artifacts. `/uploads/*` serves local report evidence with a no-sniff header. The production build also serves the application shell, local fonts, styles, JavaScript chunks, and offline asset manifest. These static resources are distinct from the SQLite record store.
+
+## National weather visualization
+
+`GET /api/sites/:id/screening` loads or returns a fifteen-minute-cached NOAA/NWS `WeatherScreening` with `siteId`, `source`, `sourceUrl`, `fetchedAt`, `issuedAt` and `hours[{time, heatIndex, windKmh}]`. Missing variables are null. Invalid plant IDs return 404; no available cached forecast returns 503. Failed refreshes preserve the old record; policy expires it after three hours or a provider issue age of 24 hours. This request does not change the safety clock. Snapshots include `weatherScreenings`; national additions also load automatically in the background. Decisions use the next 24 hours of available screening as a partial heat/wind risk score, with independent hazards retained. These records are separate from custom-model `forecasts`.
+
+`GET /api/weather/atlas` returns `{ source: "Open-Meteo", points: WeatherPoint[], unavailable: string[] }` for fifty named US sample locations. Partial results remain usable; no available points returns HTTP 503 with an error. `GET /api/weather/point?latitude=39.74&longitude=-104.99` returns that coordinate's `WeatherPoint`. Coordinates must be finite and within the US atlas bounds; invalid queries return 400. Provider failure without cached data returns 503.
+
+Each point contains `current.time`, `fetchedAt`, current values, and 73 hourly forecast records. Temperatures are Fahrenheit, wind is mph, clouds are percent, and precipitation is equivalent mm/h. Current precipitation is converted from the provider's accumulation interval to an hourly rate. Missing variables stay null. Current conditions are model estimates, not sensor observations. Coordinates are cached to three decimals for fifteen minutes in a bounded server cache; identical pending requests share work. After a refresh failure, expired cached results include `stale: true` and an error. The browser preserves its last national snapshot with stale labels when offline.
+
+This visualization uses actual system/provider time independently of the demo clock and site hazard index. It does not change safety decisions, the frozen ML models' forecasts, or existing holds. Read the [provider documentation](https://open-meteo.com/en/docs) and [free-tier terms](https://open-meteo.com/en/terms). Attribution appears in the map inspector.

@@ -4,16 +4,24 @@ import { readFileSync } from "node:fs";
 import type { ModelBundle, Sample, Site } from "../../shared/types";
 import { predict } from "../../shared/model";
 const read = <T>(path: string): T => JSON.parse(readFileSync(path, "utf8"));
-test("fifty real plants, geographic bounds, and ten excluded sites", () => {
+test("national plants cover fifty states while preserving the original model cohort", () => {
   const sites = read<Site[]>("public/data/sites.json");
-  assert.equal(sites.length, 50);
-  assert.equal(new Set(sites.map((s) => s.id)).size, 50);
+  const cohort = read<Site[]>("public/data/model-sites.json");
+  assert.equal(sites.length, 285);
+  assert.equal(new Set(sites.map((s) => s.id)).size, sites.length);
+  assert.equal(new Set(sites.map((s) => s.state)).size, 50);
+  assert.equal(cohort.length, 50);
+  assert.deepEqual(sites.filter((s) => !s.catalogOnly), cohort);
   assert.equal(sites.filter((s) => s.heldOut).length, 10);
   for (const s of sites) {
-    assert.ok(s.latitude >= 24 && s.latitude <= 34);
-    assert.ok(s.longitude >= -94 && s.longitude <= -79);
+    assert.ok(sites.filter((p) => p.state === s.state).length >= 5);
+    assert.ok(s.latitude >= 18 && s.latitude <= 72);
+    assert.ok((s.longitude >= -180 && s.longitude <= -65) || (s.state === "AK" && s.longitude >= 170 && s.longitude <= 180));
+    assert.ok(new Intl.DateTimeFormat("en", { timeZone: s.timezone }));
     assert.match(s.source, /eia.gov/);
   }
+  const forecasts = read<Record<string, unknown>>("public/data/forecasts.json");
+  assert.deepEqual(Object.keys(forecasts).sort(), cohort.map((s) => s.id).sort());
 });
 test("exported data keeps temporal splits disjoint and all features available before the briefing", () => {
   const data = read<Record<string, Sample[]>>("public/data/samples.json");

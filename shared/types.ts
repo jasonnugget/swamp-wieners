@@ -22,6 +22,7 @@ export interface Site {
   source: string;
   sourceDate: string;
   heldOut: boolean;
+  catalogOnly?: boolean;
   riverScreening: boolean;
 }
 export interface Sample {
@@ -54,6 +55,18 @@ export interface Forecast {
   modelVersion: string;
   antecedentRain24?: number;
   hours: ForecastHour[];
+}
+export interface WeatherScreening {
+  siteId: string;
+  source: "NOAA/NWS";
+  sourceUrl: string;
+  fetchedAt: string;
+  issuedAt: string;
+  hours: {
+    time: string;
+    heatIndex: number | null;
+    windKmh: number | null;
+  }[];
 }
 export interface Layer {
   weights: number[][];
@@ -95,6 +108,12 @@ export interface ModelBundle {
   };
   soilThresholds: Record<string, number[]>;
 }
+export interface CrewTeam {
+  id: string;
+  name: string;
+  members: string[];
+  siteIds: string[];
+}
 export interface HazardReport {
   id: string;
   siteId: string;
@@ -105,6 +124,8 @@ export interface HazardReport {
   longitude: number;
   photoUrl?: string;
   author: string;
+  teamId?: string;
+  teamName?: string;
   status: "open" | "resolved";
   createdAt: string;
   resolvedAt?: string;
@@ -162,6 +183,8 @@ export interface Briefing {
   text: string;
 }
 export interface Snapshot {
+  weatherScreenings?: Record<string, WeatherScreening>;
+  teams: CrewTeam[];
   now: string;
   clockMode: "real" | "demo";
   sites: Site[];

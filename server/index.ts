@@ -7,13 +7,18 @@ import { Store } from "./store";
 import { Engine } from "./engine";
 import { triage } from "./integrations/jev";
 import { fetchAlerts, fetchWeather } from "./integrations/feeds";
+import { loadWeather } from "./integrations/atlas-weather";
+import { fetchNwsScreening } from "./integrations/nws-screening";
+import type { WeatherLocation, WeatherAtlas } from "../shared/weather";
 import { CATEGORIES, TASKS } from "../shared/policy";
 import type {
   Forecast,
+  CrewTeam,
   HazardReport,
   ModelBundle,
   Site,
   Strike,
+  WeatherScreening,
 } from "../shared/types";
 
 try {
@@ -61,6 +66,49 @@ app.get("/api/health", (_req, res) =>
   res.json({ ok: true, version: engine.models.version }),
 );
 app.get("/api/snapshot", (_req, res) => res.json(engine.snapshot()));
+const screeningPending = new Map<string, Promise<void>>();
+function refreshScreening(site: Site): Promise<void> {
+  const pending = screeningPending.get(site.id);
+  if (pending) return pending;
+  const previous = store.get<WeatherScreening>("weather-screening", site.id);
+  if (previous && Date.now() - Date.parse(previous.fetchedAt) < 900000) return Promise.resolve();
+  const promise = (async () => {
+    try {
+      store.put("weather-screening", site.id, await fetchNwsScreening(site));
+      store.put("feed", `${site.id}:screening`, { id: `${site.id}:screening`, checkedAt: new Date().toISOString(), ok: true, message: "NOAA/NWS forecast screening loaded; custom ML not applied." });
+    } catch (error) {
+      store.put("feed", `${site.id}:screening`, { id: `${site.id}:screening`, checkedAt: new Date().toISOString(), ok: false, message: String(error) });
+    } finally {
+      screeningPending.delete(site.id);
+      broadcast();
+    }
+  })();
+  screeningPending.set(site.id, promise);
+  return promise;
+}
+app.get("/api/sites/:id/screening", async (req, res) => {
+  const site = engine.sites.find(s => s.id === req.params.id);
+  if (!site) return res.status(404).json({ error: "Site not found" });
+  await refreshScreening(site);
+  const screening = store.get<WeatherScreening>("weather-screening", site.id);
+  return screening ? res.json(screening) : res.status(503).json({ error: "NOAA forecast unavailable. Retry shortly." });
+});
+const weatherLocations = read<WeatherLocation[]>("data/weather-stations.json");
+app.get("/api/weather/atlas", async (_req, res) => {
+  const batches = Array.from({ length: Math.ceil(weatherLocations.length / 10) }, (_, i) => weatherLocations.slice(i * 10, i * 10 + 10));
+  const results = await Promise.allSettled(batches.map((locations) => loadWeather(locations)));
+  const points = results.flatMap((result) => result.status === "fulfilled" ? result.value : []);
+  const result: WeatherAtlas = { source: "Open-Meteo", points, unavailable: weatherLocations.filter((p) => !points.some((s) => s.id === p.id)).map((p) => p.id) };
+  res.status(points.length ? 200 : 503).json(points.length ? result : { error: "Live weather is unavailable. Try again shortly." });
+});
+app.get("/api/weather/point", async (req, res) => {
+  const parsed = z.object({ latitude: z.coerce.number().finite().min(18).max(72), longitude: z.coerce.number().finite().min(-180).max(180) }).safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: "Valid US map coordinates are required." });
+  const { latitude, longitude } = parsed.data;
+  if (longitude > -65 && longitude < 170) return res.status(400).json({ error: "Choose a point within the US map." });
+  const points = await loadWeather([{ id: "inspect", name: "Selected location", latitude, longitude }]);
+  return points[0] ? res.json(points[0]) : res.status(503).json({ error: "Weather unavailable at this location. Try another point or retry." });
+});
 app.get("/api/events", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -73,7 +121,36 @@ app.get("/api/events", (req, res) => {
     clients.delete(res);
   });
 });
+const teamSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(1).max(80),
+  members: z.array(z.string().trim().min(1).max(80)).min(1).max(100),
+  siteIds: z.array(z.string()).min(1).max(1000),
+});
+app.post("/api/teams", (req, res) => {
+  const parsed = teamSchema.safeParse(req.body);
+  if (!parsed.success)
+    return res.status(400).json({ error: "Provide a team name, at least one crew member, and at least one plant." });
+  const input = parsed.data;
+  if (input.siteIds.some((id) => !engine.sites.some((s) => s.id === id)))
+    return res.status(400).json({ error: "Every assigned plant must exist." });
+  if (input.id && !store.get<CrewTeam>("team", input.id))
+    return res.status(404).json({ error: "Team not found" });
+  const teams = store.all<CrewTeam>("team");
+  if (teams.some((t) => t.id !== input.id && t.name.toLowerCase() === input.name.toLowerCase()))
+    return res.status(409).json({ error: "A team with that name already exists." });
+  const team: CrewTeam = {
+    id: input.id ?? randomUUID(),
+    name: input.name,
+    members: [...new Set(input.members)],
+    siteIds: [...new Set(input.siteIds)],
+  };
+  store.put("team", team.id, team);
+  broadcast();
+  return res.status(input.id ? 200 : 201).json(team);
+});
 const reportSchema = z.object({
+  teamId: z.string().uuid().optional(),
   siteId: z.string(),
   category: z.enum(
     CATEGORIES as [
@@ -101,6 +178,9 @@ app.post("/api/reports", (req, res) => {
   const { photo, ...input } = parsed.data;
   if (!engine.sites.some((s) => s.id === input.siteId))
     return res.status(404).json({ error: "Site not found" });
+  const team = input.teamId ? store.get<CrewTeam>("team", input.teamId) : undefined;
+  if (input.teamId && (!team || !team.members.includes(input.author) || !team.siteIds.includes(input.siteId)))
+    return res.status(400).json({ error: "Choose a current team member and a plant assigned to that team. Reopen the report to refresh assignments." });
   let photoUrl: string | undefined;
   if (photo) {
     const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(
@@ -118,7 +198,7 @@ app.post("/api/reports", (req, res) => {
     writeFileSync(join(directory, "uploads", imageId), bytes);
     photoUrl = `/uploads/${imageId}`;
   }
-  const report = engine.report({ ...input, photoUrl });
+  const report = engine.report({ ...input, teamName: team?.name, photoUrl });
   broadcast();
   res.status(201).json(report);
   void triage(report).then((result) => {
@@ -228,9 +308,9 @@ async function updateFeeds(site: Site, weather = true) {
   refreshing.add(site.id);
   const now = Date.now();
   const results = await Promise.allSettled([
-    weather
+    weather && !site.catalogOnly
       ? fetchWeather(site, engine.models, now)
-      : Promise.resolve(undefined),
+      : weather && site.catalogOnly ? refreshScreening(site).then(() => undefined) : Promise.resolve(undefined),
     fetchAlerts(site),
   ]);
   if (results[0].status === "fulfilled" && results[0].value)
@@ -248,8 +328,8 @@ async function updateFeeds(site: Site, weather = true) {
     store.put("feed", `${site.id}:${i === 0 ? "weather" : "nws"}`, {
       id: `${site.id}:${i === 0 ? "weather" : "nws"}`,
       checkedAt: new Date(now).toISOString(),
-      ok: r.status === "fulfilled",
-      message:
+      ok: r.status === "fulfilled" && !(i === 0 && site.catalogOnly && !store.get<{ok: boolean}>("feed", `${site.id}:screening`)?.ok),
+      message: i === 0 && site.catalogOnly ? (store.get<{message: string}>("feed", `${site.id}:screening`)?.message ?? "NOAA forecast unavailable") :
         r.status === "fulfilled"
           ? i === 0
             ? "Live 48-hour-lead forecast loaded"
@@ -299,7 +379,19 @@ const timer = setInterval(() => {
   if (engine.tick()) broadcast();
 }, 5000);
 engine.tick();
-// Stagger network work; every site gets watched after opting into the real clock.
+// Fill the national map in demo and real modes without changing the safety clock.
+// Selected-site requests share these jobs and can jump ahead of background work.
+function fillNationalScreenings() {
+  if (process.env.DISABLE_NWS_SCREENING === "1") return;
+  const due = engine.sites.filter(s => s.catalogOnly && !screeningPending.has(s.id) &&
+    Date.now() - Date.parse(store.get<WeatherScreening>("weather-screening", s.id)?.fetchedAt ?? "1970-01-01") > 900000 &&
+    Date.now() - Date.parse(store.get<{checkedAt: string}>("feed", `${s.id}:screening`)?.checkedAt ?? "1970-01-01") > 900000);
+  for (const site of due.slice(0, Math.max(0, 3 - screeningPending.size))) void refreshScreening(site);
+}
+const screeningTimer = setInterval(fillNationalScreenings, 2000);
+fillNationalScreenings();
+// Stagger official alert checks across the national catalog in real-clock mode.
+// Frozen ML forecasts remain limited to the original historical cohort.
 // Alerts are polled every two minutes, weather every fifteen, up to five in flight.
 const feedTimer = setInterval(() => {
   if (engine.clockMode() !== "real" || refreshing.size >= 5) return;
@@ -335,6 +427,7 @@ const server = app.listen(
     ),
 );
 function shutdown() {
+  clearInterval(screeningTimer);
   clearInterval(timer);
   clearInterval(feedTimer);
   for (const c of clients) c.end();

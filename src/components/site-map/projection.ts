@@ -27,6 +27,13 @@ export function unproject(x: number, z: number) {
   return { latitude, longitude };
 }
 
+export function projectUS(latitude: number, longitude: number) {
+  return project(latitude, longitude > 0 ? longitude - 360 : longitude);
+}
+export function normalizeLongitude(longitude: number) {
+  return ((longitude + 180) % 360 + 360) % 360 - 180;
+}
+
 export function riskColor(risk: number | null | undefined) {
   return risk == null
     ? "#9cabb4"
@@ -37,7 +44,7 @@ export function riskColor(risk: number | null | undefined) {
         : "#c9ee8d";
 }
 
-export const REGION = { west: -94.5, east: -78.5, south: 23.7, north: 34.5 };
+export const REGION = { west: -188, east: -65, south: 18, north: 72 };
 export const LAND_TOP = 0.16;
 
 export interface StateGeometry {
