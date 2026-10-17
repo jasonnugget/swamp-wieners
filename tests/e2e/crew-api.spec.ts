@@ -1,0 +1,38 @@
+import { test, expect } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import type { CrewWorkspace } from "../../shared/crew";
+const photo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1kAAAAASUVORK5CYII=";
+
+test("native crew workspace scopes history and keeps photo reports durable and retries duplicate-free", async ({ request }) => {
+  const initial: CrewWorkspace = await (await request.get("/api/crew/workspace")).json();
+  expect(initial.version).toBe(1);
+  expect(initial.sites).toHaveLength(285);
+  expect(["demo", "real"]).toContain(initial.clockMode);
+  expect(initial).not.toHaveProperty("forecasts");
+  expect(initial).not.toHaveProperty("siteRisks");
+  const [site, other] = initial.sites;
+  const body = { clientRequestId: randomUUID(), siteId: site.id, category: "soil", description: `Crew photo ${randomUUID()}: saturated access road`, tasks: ["mobilization"], author: "iOS crew", latitude: site.latitude + 0.001, longitude: site.longitude, photo };
+  const accepted = await request.post("/api/reports", { data: body });
+  expect(accepted.status()).toBe(201);
+  const report = await accepted.json();
+  const retry = await request.post("/api/reports", { data: body });
+  expect(retry.status()).toBe(201);
+  expect((await retry.json()).id).toBe(report.id);
+  expect((await request.post("/api/reports", { data: { ...body, description: "Different observation using an existing request ID" } })).status()).toBe(409);
+  const loaded: CrewWorkspace = await (await request.get(`/api/crew/workspace?siteId=${site.id}`)).json();
+  expect(loaded.reports.filter(r => r.id === report.id)).toHaveLength(1);
+  expect(loaded.reports.every(r => r.siteId === site.id)).toBe(true);
+  const image = await request.get(report.photoUrl);
+  expect(image.status()).toBe(200);
+  expect(image.headers()["content-type"]).toContain("image/png");
+  expect((await image.body()).byteLength).toBeGreaterThan(10);
+  const elsewhere: CrewWorkspace = await (await request.get(`/api/crew/workspace?siteId=${other.id}`)).json();
+  expect(elsewhere.reports.some(r => r.id === report.id)).toBe(false);
+  const risks = await (await request.get(`/api/sites/${site.id}/risk`)).json();
+  expect(risks.tasks.find((t: { task: string }) => t.task === "mobilization").state).toBe("HOLD");
+  await request.post(`/api/reports/${report.id}/resolve`, { data: { author: "Site reviewer", resolution: "Verified access was restored; original evidence retained." } });
+  const history: CrewWorkspace = await (await request.get(`/api/crew/workspace?siteId=${site.id}`)).json();
+  expect(history.reports.find(r => r.id === report.id)).toMatchObject({ status: "resolved", photoUrl: report.photoUrl, latitude: body.latitude, resolvedBy: "Site reviewer" });
+  expect((await request.get("/api/crew/workspace?siteId=missing")).status()).toBe(404);
+  expect((await request.get("/api/crew/workspace?siteId=")).status()).toBe(400);
+});

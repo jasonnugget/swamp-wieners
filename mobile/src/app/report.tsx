@@ -1,0 +1,15 @@
+import { Alert, Image, Share, Text, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { useCrew } from "../state/CrewProvider";
+import { photoUrl } from "../lib/api";
+import { categories, taskOptions } from "../lib/report-input";
+import { Button, Notice, Page, styles } from "../components/ui";
+import SiteMap from "../components/SiteMap";
+
+export default function Report() {
+  const { id } = useLocalSearchParams<{ id: string }>(), crew = useCrew();
+  const report = crew.reports.find(r => r.id === id);
+  if (!report) return <Page title="Site observation" back><Notice>This report is not in the loaded site history. Reconnect and choose its plant to read the record.</Notice></Page>;
+  const image = report.photoUrl && photoUrl(crew.profile.server, report.photoUrl);
+  return <Page title={report.status === "open" ? "A hazard to know." : "A lesson kept."} caption={report.status === "open" ? "UNRESOLVED OBSERVATION" : "RESOLVED / SITE MEMORY"} back><Text style={styles.heading}>{report.description}</Text><Text style={styles.small}>{categories.find(c => c.id === report.category)?.label} · {report.author}{report.teamName ? ` · ${report.teamName}` : ""}{"\n"}{new Date(report.createdAt).toLocaleString()}</Text>{crew.stale && <Notice>Cached report · reconnect for its latest review status.</Notice>}{image && <Image source={{ uri: image }} style={{ width: "100%", aspectRatio: 0.95, borderRadius: 22 }} resizeMode="cover" accessibilityLabel="Original crew hazard photo"/>}{crew.site && <SiteMap site={crew.site} reports={[report]} height={240}/>}<Text style={styles.small}>Hazard pin: {report.latitude.toFixed(5)}, {report.longitude.toFixed(5)}</Text><View style={styles.card}><Text style={styles.heading}>Affected work</Text>{report.tasks.map(task => <Text style={styles.body} key={task}>{taskOptions.find(t => t.id === task)?.label}</Text>)}<Text style={styles.small}>{report.status === "open" ? "Crew-selected tasks were placed on hold when shared. Independent restrictions still apply." : "This report’s resolution does not clear any independent hold."}</Text></View>{report.status === "resolved" && <View style={styles.card}><Text style={styles.heading}>Reviewed by {report.resolvedBy}</Text><Text style={styles.body}>{report.resolution}</Text><Text style={styles.small}>{report.resolvedAt && new Date(report.resolvedAt).toLocaleString()}</Text></View>}<Button title="Share this observation" icon="share-2" secondary onPress={() => { void Share.share({ message: `${crew.site?.name ?? "Site"}: ${report.description}\nReported by ${report.author}. Status: ${report.status}.${crew.stale ? " Cached record; review status may have changed." : ""}\nHazard location: https://maps.apple.com/?ll=${report.latitude},${report.longitude}\nPlanIT record: ${report.id}` }).catch(() => Alert.alert("Could not open sharing", "Try again, or show the crew this report in PlanIT.")); }}/><Notice>This record stays with the location for future crews and project owners. Supervisor review and resolutions remain in PlanIT Control.</Notice></Page>;
+}

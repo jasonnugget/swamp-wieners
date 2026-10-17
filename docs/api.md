@@ -144,3 +144,11 @@ The compatibility `/api/weather/atlas` and `/api/weather/point` routes remain av
 A companion has `usage: "DEMO_ONLY"`, `method: "location-season-weather-v2"`, `scenario` (all 34 environmental values), `fields` (SOURCE/SYNTHETIC kind, reason and confidence per path), and `completeness` counts. Synthetic confidence is zero. Existing source zero/false values are preserved. Event/gauge fallback values are hypothetical; they are not live provider records. Full CLI exports also retain `observed`, plant identity, generation time and per-field basis arrays.
 
 Completion never mutates `snapshot`, source coverage, numerical risk, channel evidence, task decisions or overrides. The UI uses it only for explicitly labeled condition previews. Map layers and ranking continue to select canonical values. Future synthetic preview values do not establish future observations or authorize work. See [completion assumptions](site-data-completion.md).
+
+## Native crew app
+
+`GET /api/crew/workspace?siteId=<plant>` returns `CrewWorkspace` (`version: 1`): all catalog `sites`, current `teams`, the selected `siteId`, server-clock `now`/`clockMode`, and only that plant’s `reports`, including resolved history. Omitted `siteId` selects the first catalog plant; empty/invalid queries return 400 and unknown sites return 404. This read does not assemble national risk snapshots or forecasts. Native clients reuse `/api/events` for active-app updates.
+
+`POST /api/reports` additionally accepts optional UUID `clientRequestId`. Repeating an unchanged accepted request returns HTTP 201 with its existing report, without a second upload, record or triage job. Reusing the same ID for different details returns 409. The report and request receipt commit in one SQLite transaction. Editing a native draft creates a new request ID; an unchanged retry preserves it. Demo reset clears receipt records with reports. Existing web clients may omit this field.
+
+The iOS client compresses photographs to JPEG, explicitly confirms the pin and submits the existing report contract. It does not claim a share succeeded before HTTP acceptance, silently queue offline uploads, or turn a resolved report into an independent all-clear. Its sandbox drafts and cached records are not operational server evidence.

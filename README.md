@@ -26,6 +26,10 @@ Run `npm run data:complete` to refresh all plants and write a field-by-field [da
 
 For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter calls the official `https://api.typesafe.ai/v1/systemone` endpoint. Jev classifies report text and affected tasks; it does not generate briefings or clear restrictions. No credential is bundled. Without a key, manual reporting remains fully functional and the interface says that Jev is unavailable.
 
+## Native iOS crew app
+
+[PlanIT Crew](mobile/README.md) is a separate Expo iPhone app for **photo → map pin → team sharing**. It uses the same server, preserves reports as location knowledge for later project owners, and keeps unshared drafts on the device. See [iPhone and Simulator setup](mobile/README.md#run-on-your-iphone).
+
 ## What is implemented
 
 - 285 EIA plant locations across all fifty states, an interactive Three.js supervisor map with risk beacons and an expanded showcase, seven visible hazard channels, and an evidence-backed 0–10 index. Missing safety coverage stays unknown.

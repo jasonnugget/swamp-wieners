@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "PlanIT Crew",
+    "slug": "planit-crew",
+    "scheme": "planit-crew",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": [
+      "ios"
+    ],
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.planit.crew",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Connect to your crew's PlanIT server on the same Wi-Fi network.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true
+        },
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose a hazard photo to share with your crew and preserve in site history.",
+          "cameraPermission": "Photograph hazards so your crew and future project owners can see what you observed.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Locate a hazard pin on the site map. Your location is only requested when you tap Use my current location."
+        }
+      ],
+      "expo-font"
+    ]
+  }
+}
