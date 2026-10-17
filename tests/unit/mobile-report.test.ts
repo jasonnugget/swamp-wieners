@@ -25,3 +25,19 @@ test("native submissions retain retry identity but exclude sandbox paths and dra
   assert.throws(() => reportPayload(draft, "file:///draft/photo.jpg"), /could not be read/);
   assert.throws(() => reportPayload({ ...draft, pinConfirmed: false }, "data:image/jpeg;base64,aGVsbG8="), /Confirm/);
 });
+
+test("a photo-only report uses its selected type without inventing observation details", () => {
+  const photo = "data:image/jpeg;base64,aGVsbG8=";
+  const withoutNote = { ...draft, category: "flood" as const, description: "   " };
+  assert.equal(draftIssue(withoutNote), undefined);
+  const payload = reportPayload(withoutNote, photo);
+  assert.equal(payload.description, "Flooding · photo report");
+  assert.equal(payload.clientRequestId, draft.requestId);
+  assert.equal(reportPayload(withoutNote, photo).clientRequestId, payload.clientRequestId);
+  assert.equal(withoutNote.description, "   ");
+  assert.equal(reportPayload({ ...withoutNote, description: "Water across the access road" }, photo).description, "Water across the access road");
+  assert.throws(() => reportPayload({ ...withoutNote, pinConfirmed: false }, photo), /Confirm/);
+  assert.throws(() => reportPayload({ ...withoutNote, latitude: NaN }, photo), /Confirm/);
+  assert.throws(() => reportPayload({ ...withoutNote, author: "" }, photo), /reporting name/);
+  assert.throws(() => reportPayload({ ...withoutNote, tasks: [] }, photo), /affected task/);
+});

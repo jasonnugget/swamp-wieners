@@ -17,6 +17,7 @@ export default function Layout() {
     <Stack.Screen name="capture" options={{ presentation: "fullScreenModal", gestureEnabled: false }}/>
     <Stack.Screen name="sites" options={{ presentation: "modal" }}/>
     <Stack.Screen name="team" options={{ presentation: "modal" }}/>
+    <Stack.Screen name="conditions" options={{ presentation: "modal" }}/>
     <Stack.Screen name="report" options={{ presentation: "modal" }}/>
   </Stack></CrewProvider></SafeAreaProvider>;
 }

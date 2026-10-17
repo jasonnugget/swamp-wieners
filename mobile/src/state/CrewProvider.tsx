@@ -22,6 +22,7 @@ function useCrewState() {
   const [error, setError] = useState(""), [storageError, setStorageError] = useState("");
   const [active, setActive] = useState(AppState.currentState === "active");
   const [refreshing, setRefreshing] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const sync = useRef<{ refresh(reason?: RefreshReason): Promise<void> } | undefined>(undefined);
   const refresh = useCallback(() => { void sync.current?.refresh("manual"); }, []);
   const draftWrites = useRef(Promise.resolve());
@@ -51,7 +52,7 @@ function useCrewState() {
     void draftWrites.current.catch(() => setStorageError("Your draft could not be saved on this device. Keep the app open."));
   }, [ready, draft]);
   useEffect(() => {
-    const listener = AppState.addEventListener("change", state => setActive(state === "active"));
+    const listener = AppState.addEventListener("change", state => { setActive(state === "active"); if (state === "active") setCurrentTime(Date.now()); });
     return () => listener.remove();
   }, []);
   useEffect(() => {
@@ -60,18 +61,19 @@ function useCrewState() {
     const updater = createWorkspaceSync({
       load: () => loadWorkspace(profile.server, profile.siteId || undefined, abort.signal),
       onData: next => {
+        setCurrentTime(Date.now());
         setWorkspace(current => reconcileWorkspace(current, next)); setWorkspaceServer(profile.server); setStale(false); setError("");
         if (!profile.siteId) setProfile(p => ({ ...p, siteId: next.siteId }));
         void writeStored(storageKeys.cache, { server: profile.server, workspace: next }).catch(() => {});
       },
-      onError: e => { setStale(true); setError(e instanceof Error ? e.message : "Cannot reach PlanIT. Check the server connection in Crew."); },
+      onError: e => { setCurrentTime(Date.now()); setStale(true); setError(e instanceof Error ? e.message : "Cannot reach PlanIT. Check the server connection in Crew."); },
       onStatus: status => { setLoading(status.loading); setRefreshing(status.refreshing); },
     });
     sync.current = updater;
     void updater.refresh("initial");
     const stream = new EventSource(`${profile.server}/api/events`, { pollingInterval: 5000 });
     stream.addEventListener("message", () => { void updater.refresh(); });
-    const timer = setInterval(() => { void updater.refresh(); }, 30000);
+    const timer = setInterval(() => { setCurrentTime(Date.now()); void updater.refresh(); }, 30000);
     return () => { sync.current = undefined; updater.dispose(); abort.abort(); stream.removeAllEventListeners(); stream.close(); clearInterval(timer); };
   }, [ready, active, profile.server, profile.siteId]);
   const site = workspace?.sites.find(s => s.id === profile.siteId) ?? workspace?.sites.find(s => s.id === workspace.siteId);
@@ -94,15 +96,16 @@ function useCrewState() {
     const old = draft; setDraft(undefined);
     if (old?.photoUri) void FileSystem.deleteAsync(old.photoUri, { idempotent: true }).catch(() => {});
   }
-  async function publish(): Promise<HazardReport> {
+  async function publish({ confirmPin = false }: { confirmPin?: boolean } = {}): Promise<HazardReport> {
     if (!draft?.photoUri) throw new Error("Add a photo first.");
     if (draft.server !== profile.server) throw new Error("This draft belongs to a different PlanIT server. Reconnect to its server in Crew before sharing.");
     await draftWrites.current.catch(() => {});
-    const accepted = await shareReport(profile.server, reportPayload(draft, await photoData(draft.photoUri)));
+    const accepted = await shareReport(profile.server, reportPayload({ ...draft, pinConfirmed: confirmPin || draft.pinConfirmed }, await photoData(draft.photoUri)));
     setWorkspace(current => current?.siteId === accepted.siteId ? { ...current, reports: [...current.reports.filter(r => r.id !== accepted.id), accepted] } : current);
+    setProfile(current => current.server === draft.server ? { ...current, name: accepted.author } : current);
     discardDraft(); void sync.current?.refresh(); return accepted;
   }
-  return { profile, setProfile, workspace, site, team, reports, draft, startDraft, editDraft, discardDraft, publish, ready, loading, refreshing, stale: stale || workspace?.siteId !== site?.id, error, storageError, refresh };
+  return { profile, setProfile, workspace, site, team, reports, draft, startDraft, editDraft, discardDraft, publish, ready, loading, refreshing, currentTime, stale: stale || workspace?.siteId !== site?.id, error, storageError, refresh };
 }
 const CrewContext = createContext<ReturnType<typeof useCrewState> | null>(null);
 export function CrewProvider({ children }: { children: ReactNode }) { const value = useCrewState(); return <CrewContext.Provider value={value}>{children}</CrewContext.Provider>; }

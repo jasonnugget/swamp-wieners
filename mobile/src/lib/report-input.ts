@@ -34,7 +34,7 @@ export function draftIssue(draft: CrewDraft): string | undefined {
   if (!draft.photoUri) return "Take or choose a photo of the hazard.";
   if (!draft.siteId) return "Choose the plant where you observed this hazard.";
   if (!draft.author.trim() || draft.author.trim().length > 80) return "Add your reporting name (up to 80 characters).";
-  if (draft.description.trim().length < 5 || draft.description.trim().length > 2000) return "Describe what the crew needs to know (5–2,000 characters).";
+  if ((draft.description.trim().length > 0 && draft.description.trim().length < 5) || draft.description.trim().length > 2000) return "Add a note of 5–2,000 characters, or leave it blank.";
   if (!categories.some(c => c.id === draft.category)) return "Choose a hazard type.";
   if (!draft.tasks.length || draft.tasks.some(t => !taskOptions.some(option => option.id === t))) return "Choose at least one affected task.";
   if (!draft.pinConfirmed || !Number.isFinite(draft.latitude) || !Number.isFinite(draft.longitude) || Math.abs(draft.latitude) > 90 || Math.abs(draft.longitude) > 180) return "Confirm the hazard's location on the map.";
@@ -46,7 +46,7 @@ export function reportPayload(draft: CrewDraft, photo: string) {
   if (photo.length > 5_500_000) throw new Error("The photo is too large. Choose a smaller image.");
   return {
     clientRequestId: draft.requestId, siteId: draft.siteId, teamId: draft.teamId || undefined,
-    author: draft.author.trim(), category: draft.category, description: draft.description.trim(),
+    author: draft.author.trim(), category: draft.category, description: draft.description.trim() || `${categories.find(category => category.id === draft.category)!.label} · photo report`,
     tasks: [...new Set(draft.tasks)], latitude: draft.latitude, longitude: draft.longitude, photo,
   };
 }

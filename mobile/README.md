@@ -30,7 +30,13 @@ You can alternatively set `EXPO_PUBLIC_API_URL` in `mobile/.env`, using [.env.ex
 
 If the server uses its demonstration clock, the app labels it. Switch the workspace to live time in PlanIT Control before real field reporting; the phone does not silently change a shared server clock.
 
-Choose a plant and your reporting name in **Crew**. Pick an existing team to use its assigned plants and roster. Team setup remains in the website's Crew reports view. Tap **Snap a hazard**, take or choose a photo, mark the location, select affected work, and share. The app confirms sharing only after the server accepts it. Other open apps and the supervisor receive live invalidations; pull to refresh is also available.
+Choose a plant and your reporting name in **Crew**. Pick an existing team to use its assigned plants and roster. Team setup remains in the website's Crew reports view. Tap **Snap a hazard** to open the camera directly. Take a photo, check the hazard type and pin on one review screen, then tap **Confirm pin & share hazard**. Notes are optional; names are remembered after sharing. The affected-work summary stays visible and can be changed before submission. Camera cancellation or denial leaves a **Choose photo** option. The app confirms sharing only after the server accepts it. Other open apps and the supervisor receive live invalidations; pull to refresh is also available.
+
+## Today at the site
+
+The **On site** tab shows today’s selected-site hazard summary. Tap **View all 7 hazards and work status**, or **Today’s conditions & work status** on the map, for heat, wind/weather, ground/access, flooding, lightning, fire/smoke and wildlife screening, independent holds and source check times.
+
+Current conditions come from the same canonical pipeline as the website, scoped to one plant. Forecast/model estimates are labeled; they are not confirmed incidents or exact hazard pins. Missing or stale readings remain unknown. Today uses the plant’s local calendar date and real time, even in a demo reporting workspace. Older unresolved crew reports remain carried forward on the map and in history. Cached conditions preserve last-known holds but cannot claim a current score. Restart the API after updating its code to supply the new conditions field.
 
 ## Visual design and browser preview
 
@@ -71,7 +77,7 @@ The Simulator can use `http://127.0.0.1:3001` as its server address. Its camera 
 
 ## Boundaries and checks
 
-Routes live in `src/app/`, workflow/provider state in `src/state/` and `src/features/`, reusable native views in `src/components/`, and transport/photo/draft helpers in `src/lib/`. `src/README.md` describes these boundaries. Shared browser/server/native contracts live in the maintained root `shared/` directory; native code imports their types without bundling web components or model code.
+Routes live in `src/app/`, workflow/provider state in `src/state/` and `src/features/`, reusable native views in `src/components/`, and transport/photo/draft helpers in `src/lib/`. `src/README.md` describes these boundaries. Shared browser/server/native contracts live in the maintained root `shared/` directory. `metro.config.js` exposes that directory for the small pure date and risk-configuration helpers; the separate mobile lockfile is preserved. Native code does not import web components or model-training code.
 
 ```bash
 npm run check

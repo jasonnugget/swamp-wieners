@@ -40,6 +40,7 @@ export async function api<T>(server: string, path: string, body?: unknown, signa
 export async function loadWorkspace(server: string, siteId?: string, signal?: AbortSignal) {
   const data = await api<CrewWorkspace>(server, `/crew/workspace${siteId ? `?siteId=${encodeURIComponent(siteId)}` : ""}`, undefined, signal);
   if (data.version !== 1 || !Array.isArray(data.sites) || !Array.isArray(data.teams) || !Array.isArray(data.reports) || !data.sites.some(s => s.id === data.siteId)) throw new Error("This server does not support the crew app. Start the updated PlanIT API.");
+  if (data.conditions && (data.conditions.siteId !== data.siteId || !Array.isArray(data.conditions.channels) || !Array.isArray(data.conditions.activeOverrides) || !Array.isArray(data.conditions.tasks) || !data.conditions.observation?.provenance)) throw new Error("The site hazard response is incomplete. Refresh or update the PlanIT API.");
   return data;
 }
 export function shareReport(server: string, body: unknown) { return api<HazardReport>(server, "/reports", body); }

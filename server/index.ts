@@ -90,6 +90,7 @@ app.get("/api/crew/workspace", (req, res) => {
     version: 1, siteId, now: new Date(engine.now()).toISOString(), clockMode: engine.clockMode(),
     sites: engine.sites, teams: store.all<CrewTeam>("team"),
     reports: store.all<HazardReport>("report").filter(report => report.siteId === siteId),
+    conditions: engine.snapshot(siteId).siteRisks[siteId],
   };
   res.json(workspace);
 });

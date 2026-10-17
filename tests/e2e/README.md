@@ -33,3 +33,5 @@ Cold browser runs allow up to thirty seconds for map assets and live snapshot pr
 If the host’s software GPU stalls after initialization, run `PLAYWRIGHT_ML_CPU=1 npm run test:e2e` to verify actual CPU inference/training and offline persistence. This opt-in makes GPU contexts unavailable only to the test’s Model Lab and retains graphics for the offline atlas check. Application backend selection and model calculations remain unchanged. A CPU run does not establish GPU support.
 
 `crew-api.spec.ts` exercises the native client contract: scoped history, real photo upload/retrieval, idempotent retries, payload-conflict rejection, immediate task holds and retained resolution evidence. Native camera/Apple Maps interaction requires an iPhone or iOS Simulator; see [mobile setup](../../mobile/README.md).
+
+The native crew API check also verifies selected-site canonical conditions, all seven channels, absence of synthetic completion and immediate crew task holds in the returned conditions.

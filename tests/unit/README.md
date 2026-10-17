@@ -36,6 +36,8 @@ NWPS provider tests cover zero/negative stage, sentinel/stale/flow/distance reje
 
 Atlas regression tests compare frames with and without demo companions at hours 0, 24 and 72, for all 285 plants. Every companion field must be non-null while the original snapshot, risk, source coverage and policy remain identical.
 
-`mobile-report.test.ts` checks native report validation, deliberate pin confirmation, photo requirements and retry identity without bundling native modules.
+`mobile-report.test.ts` checks native report validation, deliberate pin confirmation, photo requirements and retry identity without bundling native modules. Blank notes produce a category-only photo label; photos, names, confirmed finite pins and affected tasks remain required.
 
 `mobile-sync.test.ts` covers silent background updates, manual refresh during an in-flight request, coalesced invalidations, failed reads and late-response disposal. It verifies that clock ticks preserve map-data identity while hazards, resolutions, rosters, sites and clock-mode changes still propagate.
+
+`mobile-hazards.test.ts` checks selected-site day boundaries, future/demo/other-site report exclusions, unknown coverage, measured zero, independent holds, stale/cached/future snapshots and forecast-lightning labeling. Reconciliation checks preserve map data identities while current conditions and check timestamps change.

@@ -5,13 +5,13 @@ import { Button, color, font, Icon, Text } from "./ui";
 import FieldArtwork from "./FieldArtwork";
 import { Reveal, useMotionPreference } from "./motion";
 
-export default function FieldHero({ hasSite, draft, scrollY }: { hasSite: boolean; draft: boolean; scrollY: SharedValue<number> }) {
+export default function FieldHero({ hasSite, draft, scrollY, onCapture, capturing }: { hasSite: boolean; draft: boolean; scrollY: SharedValue<number>; onCapture(): void; capturing: boolean }) {
   const reduced = useMotionPreference();
   const artwork = useAnimatedStyle(() => ({ transform: [{ translateY: reduced ? 0 : Math.min(scrollY.value, 500) * .12 }], opacity: reduced ? 1 : interpolate(scrollY.value, [0, 500], [1, .4], Extrapolation.CLAMP) }));
   return <Reveal delay={70}><View style={hero.shell}><View style={hero.core}>
     <Animated.View style={[StyleSheet.absoluteFill, artwork]}><FieldArtwork/></Animated.View>
     <View style={hero.copy}><View style={{ flexDirection: "row", gap: 12, alignItems: "center", justifyContent: "center" }}><Text accessibilityRole="header" style={hero.title}>See it.</Text><FieldArtwork compact/></View><Text accessibilityRole="header" style={hero.title}>Pass it on.</Text><Text style={hero.description}>Your field knowledge.{"\n"}Your crew’s next advantage.</Text></View>
-    <View style={{ gap: 8, marginTop: 28 }}><Button title={draft ? "Continue hazard draft" : "Snap a hazard"} icon={draft ? "edit-3" : "camera"} disabled={!hasSite} onPress={() => router.push("/capture")}/><Pressable accessibilityRole="button" accessibilityLabel="View site map" disabled={!hasSite} onPress={() => router.push("/map")} style={({ pressed }) => [hero.mapLink, { opacity: !hasSite ? .4 : pressed ? .7 : 1 }]}><Text style={{ color: color.accent, fontSize: 13 }}>View site map</Text><Icon name="arrow-up-right" size={16} tint={color.accent}/></Pressable></View>
+    <View style={{ gap: 8, marginTop: 28 }}><Button title={draft ? "Continue hazard draft" : "Snap a hazard"} icon={draft ? "edit-3" : "camera"} disabled={!hasSite} busy={capturing} onPress={onCapture}/><Pressable accessibilityRole="button" accessibilityLabel="View site map" disabled={!hasSite} onPress={() => router.push("/map")} style={({ pressed }) => [hero.mapLink, { opacity: !hasSite ? .4 : pressed ? .7 : 1 }]}><Text style={{ color: color.accent, fontSize: 13 }}>View site map</Text><Icon name="arrow-up-right" size={16} tint={color.accent}/></Pressable></View>
     <View style={hero.flow}><Text style={hero.flowText}>Photo</Text><View style={hero.flowLine}/><Text style={hero.flowText}>Pin</Text><View style={hero.flowLine}/><Text style={hero.flowText}>Share</Text></View>
   </View></View></Reveal>;
 }

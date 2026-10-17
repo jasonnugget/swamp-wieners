@@ -38,3 +38,5 @@ Change interfaces here before changing producers and consumers. Policy changes n
 `atlas.ts` defines the canonical national risk-frame response, layer field selectors, continuous display palette and supervisor ranking. Display selectors never calculate hazard scores. Ranking puts active holds first, then significant known risk, then insufficient evidence ahead of observed low-risk sites. `weather.ts` retains provider transport contracts and region bounds; map layers read the canonical snapshot, with no browser hazard scoring.
 
 `crew.ts` defines the compact native crew workspace contract. It reuses site, team and report types without exporting browser state or model payloads.
+
+`crew.ts` includes an optional selected-site `conditions` snapshot for native clients. It preserves the canonical risk/observation/provenance/task contract; missing older cached conditions stay unavailable. Native screens never replace unknown fields with synthetic completion values.

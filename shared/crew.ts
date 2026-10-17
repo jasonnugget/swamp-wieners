@@ -1,3 +1,4 @@
+import type { SiteRiskSnapshot } from "./risk";
 import type { CrewTeam, HazardReport, Site } from "./types";
 
 /** Small native-client contract; no national scoring or forecast payloads. */
@@ -9,4 +10,6 @@ export interface CrewWorkspace {
   sites: Site[];
   teams: CrewTeam[];
   reports: HazardReport[];
+  /** Current, selected-site canonical risk; optional for older cached workspaces. */
+  conditions?: SiteRiskSnapshot;
 }

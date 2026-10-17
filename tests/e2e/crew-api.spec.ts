@@ -7,6 +7,10 @@ test("native crew workspace scopes history and keeps photo reports durable and r
   const initial: CrewWorkspace = await (await request.get("/api/crew/workspace")).json();
   expect(initial.version).toBe(1);
   expect(initial.sites).toHaveLength(285);
+  expect(initial.conditions?.siteId).toBe(initial.siteId);
+  expect(initial.conditions?.channels).toHaveLength(7);
+  expect(initial.conditions?.observation.version).toBe(1);
+  expect(initial.conditions).not.toHaveProperty("completion");
   expect(["demo", "real"]).toContain(initial.clockMode);
   expect(initial).not.toHaveProperty("forecasts");
   expect(initial).not.toHaveProperty("siteRisks");
@@ -22,12 +26,16 @@ test("native crew workspace scopes history and keeps photo reports durable and r
   const loaded: CrewWorkspace = await (await request.get(`/api/crew/workspace?siteId=${site.id}`)).json();
   expect(loaded.reports.filter(r => r.id === report.id)).toHaveLength(1);
   expect(loaded.reports.every(r => r.siteId === site.id)).toBe(true);
+  expect(loaded.conditions?.siteId).toBe(site.id);
+  expect(loaded.conditions?.tasks.find(task => task.task === "mobilization")?.state).toBe("HOLD");
+  expect(loaded.conditions?.activeOverrides.some(override => override.source === "crew" && override.reason === body.description)).toBe(true);
   const image = await request.get(report.photoUrl);
   expect(image.status()).toBe(200);
   expect(image.headers()["content-type"]).toContain("image/png");
   expect((await image.body()).byteLength).toBeGreaterThan(10);
   const elsewhere: CrewWorkspace = await (await request.get(`/api/crew/workspace?siteId=${other.id}`)).json();
   expect(elsewhere.reports.some(r => r.id === report.id)).toBe(false);
+  expect(elsewhere.conditions?.siteId).toBe(other.id);
   const risks = await (await request.get(`/api/sites/${site.id}/risk`)).json();
   expect(risks.tasks.find((t: { task: string }) => t.task === "mobilization").state).toBe("HOLD");
   await request.post(`/api/reports/${report.id}/resolve`, { data: { author: "Site reviewer", resolution: "Verified access was restored; original evidence retained." } });
