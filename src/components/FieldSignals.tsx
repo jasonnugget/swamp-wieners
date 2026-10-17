@@ -40,7 +40,7 @@ export function HazardProfile({ sites, risks, paused }: RiskData & { paused: boo
   }), [sites, risks]);
   const active = profile.find(p => p.hazard === selected)!;
   return <SignalFigure label="National hazard profile" paused={paused}>
-    <figcaption><span>01 / Environmental signals</span><span>{sites.length} plants</span></figcaption>
+    <figcaption><span>Environmental signals</span><span>{sites.length} plants</span></figcaption>
     <svg className="signal-dial" viewBox="0 0 420 398" role="img" aria-label={`${active.label}: ${active.mean === null ? "unknown" : active.mean.toFixed(1) + " out of 10"}, mean of ${active.count} known plants`}>
       {profile.map((p, i) => <g className="signal-orbit" key={p.hazard} data-active={p.hazard === selected} data-unknown={p.mean === null}>
         <circle cx="210" cy="210" r={174 - i * 18} pathLength="100" transform="rotate(135 210 210)" className="dial-track" strokeDasharray="75 25"/>
@@ -64,7 +64,7 @@ export function WorkReadiness({ sites, risks, paused }: RiskData & { paused: boo
   const counts = Object.fromEntries(states.map(state => [state, rows.filter(r => r.state === state).length]));
   const active = rows.find(r => r.site.id === hovered);
   return <SignalFigure label="Automatic site work-readiness board" paused={paused}>
-    <figcaption><span>03 / Plan the work</span><span>{sites.length} plants · work decisions</span></figcaption>
+    <figcaption><span>Plan the work</span><span>{sites.length} plants · work decisions</span></figcaption>
     <div className="signal-readout"><strong>{counts.AVAILABLE}</strong><span>Available for {TASK_LABELS[task].toLowerCase()}<br/><small>{counts.HOLD} on hold · {counts.RESTRICTED} restricted · {counts.UNKNOWN} unknown</small></span></div>
     <div className="signal-task-tabs" role="group" aria-label="Compare work types">{(["mobilization", "installation", "preparation"] as Task[]).map(t => <button type="button" key={t} aria-pressed={task === t} onClick={() => { setTask(t); setHovered(null); }}>{TASK_LABELS[t]}</button>)}</div>
     <div className="signal-board" role="img" aria-label={`${TASK_LABELS[task]}: ${counts.AVAILABLE} available, ${counts.RESTRICTED} restricted, ${counts.HOLD} hold, ${counts.UNKNOWN} unknown`} onPointerLeave={() => setHovered(null)}>{rows.map(({ site, state }) => <span className="signal-point" key={site.id} data-state={state} onPointerEnter={() => setHovered(site.id)} title={`${site.name} · ${state}`} />)}</div>

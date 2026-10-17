@@ -1,4 +1,4 @@
-const CACHE = "planit-field-v9";
+const CACHE = "planit-field-v11";
 const CORE = [
   "/",
   "/favicon.svg",
@@ -16,6 +16,8 @@ const CORE = [
   "/fonts/manrope.woff2",
   "/fonts/SpaceGrotesk-Variable.ttf",
   "/fonts/satoshi-variable.woff2",
+  "/fonts/geist-latin-variable.woff2",
+  "/fonts/geist-latin-ext-variable.woff2",
   "/images/wind-landscape.jpg",
   "/images/forest-canopy.jpg",
   "/fonts/InstrumentSans-Variable.ttf",

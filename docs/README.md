@@ -11,7 +11,9 @@
 | [Environmental providers](environment-providers.md) | Source contracts, caching, credentials, live checks and fallbacks |
 | [Verified data sources](verified-data-sources.md) | Distinguishing implemented adapters from historical endpoint research and verification evidence |
 | [Frontend case study](frontend-case-study.md) | Reviewing the visual design, current challenge coverage, historical captures and open UX findings |
+| [Reference-driven design](reference-design.md) | Reviewing the homepage references, verified awards, design decisions and research limits |
 | [Immersive atlas](immersive-atlas.md) | Reviewing the full-screen map, floating controls, mobile drawer and current screenshots |
+| [Playful web UI](web-playful-ui.md) | Reviewing the shared web/mobile visual direction, web screenshots, evidence boundaries and browser checks |
 | [UI audit](ui-audit.md) | Reviewing the current supervisor layout, screenshots, field completeness and browser checks |
 | [Site-data completion](site-data-completion.md) | Regenerating source-first, explicitly demo-only completion exports |
 | [Demo](demo.md) | Rehearsing the report handoff and offline demonstration |
@@ -27,3 +29,7 @@ Directory READMEs describe the nearby files. These documents explain behavior th
 `assets/atlas-immersive-*.png` document the full-screen map iteration and are maintained with the immersive atlas audit. Earlier screenshots remain historical captures of their documented layouts.
 
 [Homepage field signals](home-signals.md) documents the concentric hazard dial, automatic NWS hourly outlook, task-readiness board and motion boundaries.
+
+`assets/web-playful/` holds the current desktop/phone homepage, atlas and working-view captures. Its audit describes the isolated runtime and unavailable live-feed coverage; the images do not claim active provider connectivity. Earlier website captures remain historical.
+
+`assets/reference-design/` contains homepage, evidence, atlas and working-view captures for the [reference design study](reference-design.md). They use existing local provider records with visible freshness limits and do not establish complete live coverage.

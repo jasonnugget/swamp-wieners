@@ -2,9 +2,11 @@
 
 | File | Purpose |
 | --- | --- |
+| `NetworkPreview.tsx` | Lightweight SVG plant geography, shared native site selection, canonical task state and independent holds; stale/cached readings remain unknown |
 | `FieldSignals.tsx` | Homepage concentric hazard dial and canonical task-readiness tile board; scoped GSAP entrances |
 | `WeatherOutlook.tsx` | Automatically selected 24-hour NWS heat/wind forecast, keyboard/pointer scrubbing and visibility-aware playback |
-| `FieldSculpture.tsx` | Decorative animated field-line artwork for the homepage; never operational evidence |
+| `FieldSculpture.tsx` | Original animated SVG camera/notebook artwork for the static loading screen; never operational evidence |
+| `CrewNotes.tsx` | Homepage carousel of accepted reports from the selected site; preserves report-history context |
 | `SiteMap.tsx` | Three.js authoritative risk atlas, environmental layers, showcase controls, and report pinning |
 | `ForecastChart.tsx` | Model median, uncertainty band, baseline, and optional reanalysis outcomes |
 | `WorkWindows.tsx` | Task-specific model screening windows from shared calculations |

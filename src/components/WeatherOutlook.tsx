@@ -56,7 +56,7 @@ export default function WeatherOutlook({ sites, screenings, paused, cached }: { 
   const windMax = Math.max(10, Math.ceil(Math.max(0, ...(entry?.hours.map(h => h.wind ?? 0) ?? [])) / 5) * 5);
   const scrub = (value: number) => { setHour(value); setPlaying(false); };
   return <div ref={root}><SignalFigure label="Automatic 24-hour heat and wind outlook" paused={paused}>
-    <figcaption><span>02 / Find the hottest hour</span><span>NOAA/NWS · next 24 hours</span></figcaption>
+    <figcaption><span>Find the hottest hour</span><span>NOAA/NWS · next 24 hours</span></figcaption>
     {entry ? <>
       <div className="outlook-place"><span>{chosen === entry.site.id ? "Plant outlook" : "Automatic spotlight"} / {entry.site.name}, {entry.site.state}</span><button type="button" className="outlook-play" aria-label={playing ? "Pause weather scan" : "Play weather scan"} aria-pressed={playing} disabled={paused || reduced || cached} onClick={() => setPlaying(!playing)}>{playing && !paused && !reduced && !cached ? <Pause size={14} weight="light" aria-hidden="true"/> : <Play size={14} weight="light" aria-hidden="true"/>}<span>Scan hours</span></button></div>
       <div className="outlook-readings"><div><strong>{reading?.heat == null ? "?" : reading.heat.toFixed(0)}<small>°F</small></strong><span>Heat index · {reading ? formatHour(reading.time) : "unknown"}</span></div><div><strong>{reading?.wind == null ? "?" : reading.wind.toFixed(1)}<small> mph</small></strong><span>Sustained wind</span></div></div>

@@ -1,31 +1,33 @@
-import { ArrowUpRight as AtlasArrow, Broadcast as AtlasBroadcast, MapPinSimple as AtlasPin, CaretDown as AtlasCaret } from "@phosphor-icons/react";
 import { rankSites } from "../../shared/atlas";
 import { lazy, Suspense, useCallback, useEffect, useState, type MouseEvent } from "react";
 import {
   ArrowDown,
   ArrowRight,
   ArrowUpRight,
-  ChevronDown,
-  ClipboardList,
-  Clock3,
-  Download,
-  Flame,
+  ArrowUpRight as AtlasArrow,
+  Broadcast as AtlasBroadcast,
+  MapPinSimple as AtlasPin,
+  CaretDown as AtlasCaret,
+  CaretDown as ChevronDown,
+  ClipboardText as ClipboardList,
+  Clock as Clock3,
+  DownloadSimple as Download,
+  Fire as Flame,
   Gauge,
   MapPin,
-  Menu,
   X,
-  Radio,
-  RefreshCw,
-  Search,
+  Broadcast as Radio,
+  ArrowsClockwise as RefreshCw,
+  MagnifyingGlass as Search,
   ShieldCheck,
-  Sparkles,
+  Sparkle as Sparkles,
   Thermometer,
-  TriangleAlert,
+  Warning as TriangleAlert,
   Waves,
-  WifiOff,
+  WifiSlash as WifiOff,
   Wind,
-  Zap,
-} from "lucide-react";
+  Lightning as Zap,
+} from "@phosphor-icons/react";
 import type { Category, ModelBundle, Site, Snapshot } from "../../shared/types";
 import { CATEGORY_LABELS, TASK_LABELS } from "../../shared/policy";
 import { cacheAssets, loadSnapshot, readCachedSnapshot, request } from "../lib/api";
@@ -202,26 +204,26 @@ export default function App() {
     <div className={`app-shell view-${page}`}>
       <a className="skip-link" href="#workspace-content">Skip to workspace</a>
       <header className="site-header">
-        <a className="site-wordmark" href={pageHref("home")} onClick={e => navigateLink(e, "home")} aria-label="PlanIT home">PlanIT<span className="wordmark-cross" aria-hidden="true">+</span></a>
+        <a className="site-wordmark" href={pageHref("home")} onClick={e => navigateLink(e, "home")} aria-label="PlanIT home">PlanIT<span className="wordmark-cross" aria-hidden="true"><AtlasPin size={18} weight="light"/></span></a>
         <nav id="site-navigation" className={menuOpen ? "site-navigation is-open" : "site-navigation"} aria-label="Workspace navigation">
           {(Object.keys(pageLabels) as Page[]).map(item => <a key={item} href={pageHref(item)} onClick={e => navigateLink(e, item)} aria-current={page === item ? "page" : undefined}>{pageLabels[item]}{item === "reports" && openReports.length > 0 && <span className="report-count">{openReports.length}</span>}</a>)}
         </nav>
         <div className="site-header-actions">
-          <button className="header-report" onClick={() => setReportOpen(true)}>Report hazard{page === "atlas" ? <AtlasArrow size={17} weight="light" aria-hidden="true"/> : <ArrowUpRight size={17} aria-hidden="true" />}</button>
-          <button className="demo-control" aria-label="Demo controls" aria-expanded={demoOpen} onClick={() => setDemoOpen(!demoOpen)}>{page === "atlas" ? <AtlasBroadcast size={17} weight="light" aria-hidden="true"/> : <Radio size={17} aria-hidden="true" />}</button>
-          <button className="menu-control" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="site-navigation" onClick={() => setMenuOpen(!menuOpen)}>{page === "atlas" ? <span className="atlas-menu-lines" data-open={menuOpen} aria-hidden="true"><i/><i/></span> : menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}</button>
+          <button className="header-report" onClick={() => setReportOpen(true)}>Report hazard<i><AtlasArrow size={17} weight="light" aria-hidden="true"/></i></button>
+          <button className="demo-control" aria-label="Demo controls" aria-expanded={demoOpen} onClick={() => setDemoOpen(!demoOpen)}><AtlasBroadcast size={19} weight="light" aria-hidden="true"/></button>
+          <button className="menu-control" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="site-navigation" onClick={() => setMenuOpen(!menuOpen)}><span className="atlas-menu-lines" data-open={menuOpen} aria-hidden="true"><i/><i/></span></button>
         </div>
       </header>
       <div className="main-shell">
         <main id="workspace-content" className="overflow-x-hidden w-full max-w-full" tabIndex={-1}>
-          {page === "home" && <HomePage onNavigate={navigateLink} snapshot={snapshot} cached={offline} />}
+          {page === "home" && <HomePage onNavigate={navigateLink} snapshot={snapshot} cached={offline} selectedSite={site} onSelectSite={setSelected} />}
           {page !== "home" && page !== "atlas" && <div className="page-heading">
             <div><p className="section-caption">PlanIT / {pageLabels[page]}</p><h1>{page === "intelligence" ? "The work ahead." : page === "lab" ? "Know what your model knows." : page === "reports" ? "Local knowledge that stays." : "Tomorrow starts with today."}</h1><p>{page === "intelligence" ? "Review hazards, unknown coverage, and task restrictions before equipment mobilizes." : page === "lab" ? "Explore heat and ground-wetness estimates. Test local calibration without changing operational decisions." : page === "reports" ? "Pin what the crew sees, document affected tasks, and preserve the report for the next shift." : "Next-day conditions, task restrictions, and unresolved reports, prepared at 6 PM site-local time."}</p></div>
             <span className="workspace-connection">{offline ? "Cached workspace" : snapshot.clockMode === "demo" ? "Historical demo" : "Connected"}<span>{date}</span></span>
           </div>}
           {error && (
             <div className="error-banner" role="alert">
-              <TriangleAlert aria-hidden="true" size={16} />
+              <TriangleAlert weight="light" aria-hidden="true" size={16} />
               {error}
               <button className="text-button" onClick={() => setError("")}>
                 Dismiss
@@ -230,14 +232,14 @@ export default function App() {
           )}
           {offline && (
             <div className="offline-banner">
-              <WifiOff aria-hidden="true" size={16} />
+              <WifiOff weight="light" aria-hidden="true" size={16} />
               Showing the last saved workspace. Browser inference and training
               remain available with cached assets. Reconnect to share reports.
             </div>
           )}
           {page !== "home" && <div className="site-context">
             <div className="site-selector">
-              {page === "atlas" ? <AtlasPin size={18} weight="light" aria-hidden="true"/> : <MapPin aria-hidden="true" size={18} />}
+              {page === "atlas" ? <AtlasPin size={18} weight="light" aria-hidden="true"/> : <MapPin weight="light" aria-hidden="true" size={18} />}
               <div>
                 <span>ACTIVE SITE</span>
                 <select
@@ -257,7 +259,7 @@ export default function App() {
                   ))}
                 </select>
               </div>
-              {page === "atlas" ? <AtlasCaret size={14} weight="light" aria-hidden="true"/> : <ChevronDown aria-hidden="true" size={14} />}
+              {page === "atlas" ? <AtlasCaret size={14} weight="light" aria-hidden="true"/> : <ChevronDown weight="light" aria-hidden="true" size={14} />}
             </div>
             <div className="site-meta">
               <span>
@@ -278,7 +280,7 @@ export default function App() {
           {demoOpen && (
             <section className="demo-panel" aria-label="Demonstration controls">
               <div>
-                <Radio aria-hidden="true" size={16} />
+                <Radio weight="light" aria-hidden="true" size={16} />
                 <strong>Demonstration controls</strong>
                 <span>
                   Clock:{" "}
@@ -292,7 +294,7 @@ export default function App() {
                 <button className="icon-button" aria-label="Close demo controls" onClick={() => {
                   setDemoOpen(false);
                   document.querySelector<HTMLButtonElement>(".demo-control")?.focus();
-                }}><X size={17} aria-hidden="true" /></button>
+                }}><X weight="light" size={17} aria-hidden="true" /></button>
               </div>
               <div>
                 <button
@@ -306,7 +308,7 @@ export default function App() {
                     )
                   }
                 >
-                  <Zap aria-hidden="true" size={14} />
+                  <Zap weight="light" aria-hidden="true" size={14} />
                   Strike within 6 mi
                 </button>
                 <button
@@ -395,7 +397,7 @@ export default function App() {
                 <div className="metric-grid">
                   <div className="metric">
                     <span>
-                      <MapPin aria-hidden="true" size={14} />
+                      <MapPin weight="light" aria-hidden="true" size={14} />
                       Sites monitored
                     </span>
                     <strong>
@@ -409,7 +411,7 @@ export default function App() {
                   </div>
                   <div className="metric">
                     <span>
-                      <TriangleAlert aria-hidden="true" size={14} />
+                      <TriangleAlert weight="light" aria-hidden="true" size={14} />
                       Sites with active holds
                     </span>
                     <strong>
@@ -424,7 +426,7 @@ export default function App() {
                   </div>
                   <div className="metric">
                     <span>
-                      <Thermometer aria-hidden="true" size={14} />
+                      <Thermometer weight="light" aria-hidden="true" size={14} />
                       Site peak heat index
                     </span>
                     <strong>
@@ -435,7 +437,7 @@ export default function App() {
                   </div>
                   <div className="metric">
                     <span>
-                      <ClipboardList aria-hidden="true" size={14} />
+                      <ClipboardList weight="light" aria-hidden="true" size={14} />
                       Crew reports to carry
                     </span>
                     <strong>
@@ -451,10 +453,10 @@ export default function App() {
                       <span className="eyebrow">WHERE TO FOCUS</span>
                       <h2 className="workspace-section-title">Site priorities</h2>
                     </div>
-                    <ArrowDown aria-hidden="true" size={17} />
+                    <ArrowDown weight="light" aria-hidden="true" size={17} />
                   </div>
                   <label className="search">
-                    <Search aria-hidden="true" size={15} />
+                    <Search weight="light" aria-hidden="true" size={15} />
                     <input
                       type="search"
                       aria-label="Search sites"
@@ -470,6 +472,7 @@ export default function App() {
                       <button
                         key={s.id}
                         className={`priority-row ${s.id === site.id ? "selected" : ""}`}
+                        aria-pressed={s.id === site.id}
                         onClick={() => setSelected(s.id)}
                       >
                         <span className="site-rank">
@@ -503,13 +506,14 @@ export default function App() {
                       <span className="eyebrow">PLAN BEFORE THE SHIFT</span>
                       <h2 className="workspace-section-title">Tomorrow’s heat window</h2>
                     </div>
-                    <button
+                    <a
                       className="text-link"
-                      onClick={() => navigate("lab")}
+                      href={pageHref("lab")}
+                      onClick={(event) => navigateLink(event, "lab")}
                     >
                       Inspect in Model Lab
-                      <ArrowUpRight aria-hidden="true" size={14} />
-                    </button>
+                      <ArrowUpRight weight="light" aria-hidden="true" size={14} />
+                    </a>
                   </div>
                   <ForecastChart hours={weather} timezone={site.timezone} />
                   {bundle.soilThresholds[site.id] && <WorkWindows
@@ -519,7 +523,7 @@ export default function App() {
                   />}
                   <div className="forecast-footer">
                     <span>
-                      <Clock3 aria-hidden="true" size={14} />
+                      <Clock3 weight="light" aria-hidden="true" size={14} />
                       {weather[0] &&
                         new Date(weather[0].time).toLocaleDateString("en-US", {
                           month: "short",
@@ -540,7 +544,7 @@ export default function App() {
                         )
                       }
                     >
-                      <RefreshCw aria-hidden="true" size={13} className={busy ? "spin" : ""} />
+                      <RefreshCw weight="light" aria-hidden="true" size={13} className={busy ? "spin" : ""} />
                       Connect live sources
                     </button>
                   </div>
@@ -586,7 +590,7 @@ export default function App() {
                   ))}
                   {decision.lightningUntil && (
                     <div className="lightning-countdown">
-                      <Zap aria-hidden="true" size={17} />
+                      <Zap weight="light" aria-hidden="true" size={17} />
                       <div>
                         <strong>Lightning all-clear countdown</strong>
                         <p>
@@ -625,7 +629,7 @@ export default function App() {
                         className={`hazard-card ${severityClass(channel.severity)}`}
                       >
                         <div>
-                          <Icon size={18} />
+                          <Icon size={18} weight="light" aria-hidden="true" />
                           <span>{CATEGORY_LABELS[channel.category]}</span>
                           <span className="hazard-number">
                             {channel.severity?.toFixed(1) ?? "?"}
@@ -648,7 +652,7 @@ export default function App() {
               </section>}
               <div className="handoff-callout">
                 <span className="callout-icon">
-                  <Sparkles aria-hidden="true" size={23} />
+                  <Sparkles weight="light" aria-hidden="true" size={23} />
                 </span>
                 <div>
                   <span className="eyebrow">
@@ -660,13 +664,14 @@ export default function App() {
                     PM briefing.
                   </p>
                 </div>
-                <button
+                <a
                   className="secondary"
-                  onClick={() => navigate("reports")}
+                  href={pageHref("reports")}
+                  onClick={(event) => navigateLink(event, "reports")}
                 >
                   Open site memory
-                  <ArrowRight aria-hidden="true" size={15} />
-                </button>
+                  <ArrowRight weight="light" aria-hidden="true" size={15} />
+                </a>
               </div>
               </>}
             </>
@@ -712,7 +717,7 @@ export default function App() {
                   </p>
                 </div>
                 <span className="backend">
-                  <Clock3 aria-hidden="true" size={15} />
+                  <Clock3 weight="light" aria-hidden="true" size={15} />
                   6:00 PM local
                 </span>
               </div>
@@ -754,7 +759,7 @@ export default function App() {
                             setTimeout(() => URL.revokeObjectURL(url), 1000);
                           }}
                         >
-                          <Download aria-hidden="true" size={14} />
+                          <Download weight="light" aria-hidden="true" size={14} />
                           Download briefing
                         </button>
                       </div>
@@ -762,7 +767,7 @@ export default function App() {
                   ))
               ) : (
                 <section className="panel empty-state">
-                  <ClipboardList aria-hidden="true" size={32} />
+                  <ClipboardList weight="light" aria-hidden="true" size={32} />
                   <h2 className="workspace-section-title">The next briefing runs at 6 PM</h2>
                   <p>
                     Use the demo clock to execute the real scheduler and see the
@@ -773,7 +778,7 @@ export default function App() {
                     onClick={() => setDemoOpen(true)}
                   >
                     Open demo controls
-                    <Clock3 aria-hidden="true" size={15} />
+                    <Clock3 weight="light" aria-hidden="true" size={15} />
                   </button>
                 </section>
               )}
@@ -789,7 +794,7 @@ export default function App() {
             </p>
             <a href="/data/provenance.json" target="_blank" rel="noreferrer">
               Sources & provenance
-              <ArrowUpRight aria-hidden="true" size={12} />
+              <ArrowUpRight weight="light" aria-hidden="true" size={12} />
             </a>
           </footer>}
         </main>
@@ -810,7 +815,7 @@ export default function App() {
       )}
       {notice && (
         <div className="toast" role="status">
-          <ShieldCheck aria-hidden="true" size={17} />
+          <ShieldCheck weight="light" aria-hidden="true" size={17} />
           {notice}
         </div>
       )}

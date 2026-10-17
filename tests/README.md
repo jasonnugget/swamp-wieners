@@ -14,17 +14,17 @@ Generated screenshots, traces, and reports are ignored. Do not add documentation
 
 ## Latest implementation verification
 
-The homepage field-signal charts were verified on October 17, 2026. Unit tests were skipped for this visual iteration at the user’s request; the prior operational-pipeline run passed 125 tests.
+The reference-driven website redesign was verified on October 17, 2026. The [reference design study](../docs/reference-design.md) records sources, screenshots, accessibility checks and verification limits.
 
 | Check | Recorded result |
 | --- | --- |
-| `npm test` | Skipped for this iteration at the user’s request |
-| `npm run test:e2e` | 31 passed, 0 failed, 4.0 minutes |
-| `npm run build` | Passed through the full browser suite’s build step; bundle-size warning remains |
+| `npm test` | 140 passed, 0 failed |
+| `npm run test:e2e` | 37 passed, 0 failed, 4.0 minutes |
+| `npm run build` | Passed through the full browser suite’s build step; browser-ML bundle-size warning remains |
 | TypeScript | Passed as part of `npm run build` |
 | Lint | No lint script is configured |
 
-The full browser suite returned exit 0. Homepage checks cover the concentric hazard dial, zero/null/stale handling, automatically selected NWS hourly outlooks, expired/future source rejection, line gaps, wind conversion, keyboard scrubbing, policy counts without reports, empty forecasts, scan progression and motion pause. The [homepage audit](../docs/home-signals.md) records sources, findings, limits and desktop/phone captures.
+The full browser suite returned exit 0. New preview checks cover shared plant selection through atlas navigation and reload, stale/cached unknown readings with retained holds, and missing local geography at 320px. Existing checks retain crew handoff, reporting, model calibration, offline inference, source distinctions, forecast scrubbing and mobile layout. The crew/SSE test selects a plant whose canonical risk is unknown because prior screening checks can leave legitimate provider-cache records after a demo reset.
 
 These are implementation-run results. Source-adapter fixture tests do not establish live credentials, nationwide coverage or calibrated field-safety performance. The completion command was also run against the local national catalog; its output records actual source/synthetic/N/A counts and source failures. See [provider verification boundaries](../docs/environment-providers.md) and [completion semantics](../docs/site-data-completion.md).
 

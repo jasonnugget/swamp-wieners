@@ -19,7 +19,7 @@ for (const legacy of ["before canonical risk", "before structured risk evidence"
     expect(errors).toEqual([]);
     await page.unroute("**/api/snapshot");
     await page.getByRole("button", { name: "Retry connection" }).click();
-    await expect(page.getByRole("heading", { name: "The field. In perspective." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "See the risk. Plan the work." })).toBeVisible();
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem("planit-snapshot-v1")!).format)).toBe(2);
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem("planit-crew-profile")!).author)).toBe("Keep my profile");
     expect(errors).toEqual([]);
@@ -38,7 +38,7 @@ test("browser cache quota failures do not discard successful live snapshot reads
     };
   });
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "The field. In perspective." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "See the risk. Plan the work." })).toBeVisible();
   await expect(page.locator(".offline-banner")).toHaveCount(0);
   expect(errors).toEqual([]);
 });

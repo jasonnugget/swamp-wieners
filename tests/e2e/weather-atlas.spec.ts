@@ -168,7 +168,10 @@ test("canonical atlas renders all risk ranges, unknowns, hazard layers, timeline
 
 test("a real crew submission updates the supervisor beacon, evidence, tasks and priority queue through SSE", async ({ page, request, context }) => {
   await request.post("/api/demo/reset", { data: {} });
-  const snapshot = await (await request.get("/api/snapshot")).json(), site = snapshot.sites.find((s: {catalogOnly?: boolean}) => s.catalogOnly);
+  const snapshot = await (await request.get("/api/snapshot")).json();
+  // Earlier screening checks can leave real NOAA cache entries after demo reset.
+  const site = snapshot.sites.find((s: { id: string; catalogOnly?: boolean }) => s.catalogOnly && snapshot.siteRisks[s.id]?.risk === null);
+  expect(site).toBeDefined();
   await page.route("**/api/sites/*/screening", r => r.fulfill({ status: 503, json: { error: "No fixture screening" } }));
   await page.addInitScript(id => localStorage.setItem("planit-site", id), site.id);
   await page.goto("/?view=atlas");

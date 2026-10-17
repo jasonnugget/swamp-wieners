@@ -1,0 +1,182 @@
+/* Homepage: a geographic introduction to the working field-safety tools. */
+.fieldwork-home { --chapter-space: clamp(90px, 10vw, 152px); color: #202820; }
+.fieldwork-home .home-hero { max-width: 1560px; margin: auto; min-height: 800px; padding: 70px 5vw 110px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr); gap: 3vw; align-items: center; }
+.fieldwork-home .hero-copy { pointer-events: auto; padding-bottom: 35px; }
+.fieldwork-home .hero-intro { margin-bottom: 29px; font-size: 11px; font-weight: 500; letter-spacing: .06em; color: #5f6b5c; }
+.fieldwork-home .home-hero h1 { font-size: clamp(52px, 5.75vw, 89px); line-height: 1.04; letter-spacing: -.069em; font-weight: 500; margin-bottom: 30px; max-width: 72rem; text-wrap: initial; }
+.fieldwork-home .home-hero h1 > span { color: #6b7b61; white-space: nowrap; }
+.fieldwork-home .hero-description { font-size: 15px; line-height: 1.85; max-width: 365px; color: #5d6659; }
+.fieldwork-home .hero-actions { margin-top: 32px; gap: 23px; }
+.fieldwork-home .editorial-link { border-radius: 999px; border: 0; padding: 8px 8px 8px 21px; gap: 28px; min-height: 52px; background: #202820; color: #fafbf6; font-size: 12px; font-weight: 500; }
+.fieldwork-home .editorial-link > i { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: #ffffff16; flex-shrink: 0; }
+.fieldwork-home .editorial-link:hover { background: #384a2d; }
+.fieldwork-home .editorial-link:active { transform: scale(.98); }
+.fieldwork-home .hero-actions .editorial-link { min-width: 197px; background: #202820; color: #fafbf6; border-radius: 999px; }
+.fieldwork-home .hero-actions .editorial-link > i { width: 36px; height: 36px; border-radius: 50%; background: #ffffff16; }
+.fieldwork-home .quiet-link { font-size: 12px; color: #35432d; gap: 12px; }
+.fieldwork-home .hero-actions .quiet-link { padding: 16px 0; }
+.fieldwork-home .hero-footnote { font-size: 10px; color: #727c6c; margin-top: 25px; }
+.hero-network { position: relative; min-width: 0; transform-origin: center; }
+.hero-network::before { content: ""; position: absolute; z-index: -1; width: 122%; height: 95%; left: -6%; top: -1%; background: radial-gradient(ellipse, #dbe7c970, transparent 68%); pointer-events: none; }
+.fieldwork-home .hero-baseline { left: 5vw; right: 5vw; border-color: #20282020; height: 67px; font-size: 10px; color: #65715d; }
+.fieldwork-home .hero-baseline button { color: #495541; }
+.network-facts { max-width: 1400px; margin: 0 auto; padding: 40px 5vw 45px; display: grid; grid-template-columns: 1fr 1fr 1.15fr 1.65fr; gap: 30px; align-items: center; }
+.network-facts > p { display: flex; flex-direction: column; gap: 10px; }
+.network-facts strong { font-size: 36px; font-weight: 450; line-height: 1; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
+.network-facts > p > span { font-size: 11px; color: #606c58; }
+.network-facts > div { border-left: 1px solid #20282020; padding: 13px 0 13px 28px; display: flex; gap: 16px; align-items: center; }
+.network-facts > div > svg { flex-shrink: 0; color: #4c633d; }
+.network-facts > div > span { color: #606c58; font-size: 11px; line-height: 1.9; }
+.fieldwork-home .home-perspective { padding: var(--chapter-space) 5vw; max-width: 1500px; margin: auto; }
+.fieldwork-home .section-caption { color: #5f6c56; font-size: 11px; margin-bottom: 27px; letter-spacing: .025em; }
+.fieldwork-home .perspective-heading { grid-template-columns: 1.5fr 1fr; gap: 9%; margin-bottom: 55px; }
+.fieldwork-home .perspective-heading h2 { font-size: clamp(40px, 4.7vw, 72px); font-weight: 450; line-height: 1.07; letter-spacing: -.06em; }
+.fieldwork-home .inline-landscape { width: 1.1em; height: .7em; border-radius: 999px; margin: 0 .08em .06em .03em; }
+.fieldwork-home .inline-landscape img { filter: saturate(.35); }
+.fieldwork-home .perspective-heading > p { color: #606c58; font-size: 14px; line-height: 1.85; }
+.fieldwork-home .feature-accordion { background: #e2e8d9; padding: 7px; border-radius: 28px; gap: 7px; min-height: 470px; }
+.fieldwork-home .feature-panel { border-radius: 21px; padding: 32px; background: #263726; min-height: 456px; justify-content: flex-end; }
+.fieldwork-home .feature-panel > img { filter: grayscale(.65) saturate(.55); opacity: .25; }
+.fieldwork-home .feature-panel[data-open="true"] > img { opacity: .65; }
+.fieldwork-home .feature-panel::after { background: linear-gradient(180deg, #1723150a 10%, #1723156b 45%, #172315e6); }
+.feature-symbol { position: absolute; left: 30px; top: 30px; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid #eff4e635; color: #e5eedb; z-index: 1; }
+.fieldwork-home .feature-trigger { min-height: 55px; gap: 16px; align-items: flex-start; }
+.fieldwork-home .feature-trigger > span { font-weight: 450; line-height: 1.18; font-size: 24px; }
+.fieldwork-home .feature-panel[data-open="true"] .feature-trigger > span { font-size: clamp(27px, 2.65vw, 42px); letter-spacing: -.045em; }
+.fieldwork-home .feature-trigger > svg { margin-top: 5px; }
+.fieldwork-home .feature-detail { max-width: 415px; margin-top: 13px; }
+.fieldwork-home .feature-detail p { font-size: 13px; line-height: 1.8; color: #dfe7d7; margin-bottom: 24px; }
+.fieldwork-home .feature-detail a { font-size: 12px; border-color: #f4f7ef40; }
+.feature-model-art { color: #c3d99c; position: absolute; inset: 0; opacity: .8; }
+.feature-model-art svg { width: 100%; height: 100%; object-fit: cover; }
+.fieldwork-home .photography-note { color: #697561; font-size: 10px; padding-top: 14px; }
+.fieldwork-home .home-statement { background: #222e24; color: #f2f4eb; padding: 90px max(5vw, calc((100vw - 1320px) / 2)) 95px; }
+.statement-heading { display: flex; align-items: center; gap: 16px; color: #bac9af; font-size: 11px; margin-bottom: 57px; }
+.fieldwork-home .home-statement > p { color: #f2f4eb; font-size: clamp(32px, 4.1vw, 62px); font-weight: 400; letter-spacing: -.045em; line-height: 1.27; margin: 0; max-width: 1170px; }
+.evidence-principles { display: grid; grid-template-columns: 1fr 1fr; gap: 10%; margin-top: 70px; padding-top: 35px; border-top: 1px solid #e9efdf24; max-width: 100%; }
+.evidence-principles > div { display: grid; grid-template-columns: 28px 1fr; column-gap: 13px; row-gap: 10px; align-items: center; }
+.evidence-principles svg { color: #b8cf9b; }
+.evidence-principles h3 { font-size: 15px; font-weight: 450; letter-spacing: -.02em; }
+.fieldwork-home .evidence-principles p { grid-column: 2; font-size: 12px; line-height: 1.8; color: #b6c1af; letter-spacing: 0; font-weight: 400; margin: 0; max-width: 400px; }
+.fieldwork-home .home-story { background: #eef1e8; padding: var(--chapter-space) 5vw; }
+.fieldwork-home .story-layout { max-width: 1320px; margin: auto; grid-template-columns: 1fr 1.1fr; gap: 8%; }
+.fieldwork-home .story-heading h2 { font-size: clamp(37px, 3.9vw, 60px); line-height: 1.09; font-weight: 450; letter-spacing: -.055em; margin-bottom: 25px; }
+.fieldwork-home .story-heading h2 > span { color: #708264; }
+.story-intro { max-width: 340px; font-size: 14px; line-height: 1.85; color: #606c58; margin-bottom: 30px; }
+.fieldwork-home .story-data-context { color: #65715d; font-size: 10px; line-height: 1.8; margin-top: 25px; }
+.fieldwork-home .story-chapters > article, .fieldwork-home .story-chapters > article:last-child { background: #fafbf7; border: 6px solid #e1e7d7; box-shadow: inset 0 1px 0 #fff; border-radius: 26px; padding: 34px; margin-bottom: 28px; }
+.fieldwork-home .story-chapters > article:last-child { margin-bottom: 0; }
+.fieldwork-home .chapter-word { color: #708264; font-size: 10px; }
+.fieldwork-home .story-chapters h3 { font-size: 31px; font-weight: 450; line-height: 1.15; margin: 16px 0 18px; letter-spacing: -.04em; }
+.fieldwork-home .story-chapters p { color: #606c58; font-size: 13px; line-height: 1.8; }
+.fieldwork-home .story-chapters .field-signal { border-color: #d7dfcd; background: #f4f6ee; }
+.fieldwork-home .story-chapters .signal-footnote { font-size: 10px; line-height: 1.7; }
+.fieldwork-home .story-chapters .editorial-link { margin-top: 26px; }
+.fieldwork-home .crew-notes { max-width: 1500px; margin: auto; padding: var(--chapter-space) 5vw; }
+.fieldwork-home .crew-notes-heading h2 { font-size: clamp(42px, 4.7vw, 72px); font-weight: 450; line-height: 1.06; letter-spacing: -.055em; }
+.fieldwork-home .crew-notes-heading p { color: #606c58; }
+.fieldwork-home .crew-notes-empty { border: 6px solid #e1e7d7; border-radius: 28px; background: #f9faf6; padding: 42px; }
+.fieldwork-home .crew-notes-empty > svg { color: #708264; }
+.fieldwork-home .crew-notes-empty h3 { font-size: 25px; font-weight: 450; }
+.fieldwork-home .crew-notes-empty p { color: #606c58; font-size: 13px; }
+.fieldwork-home .crew-note { border: 6px solid #e1e7d7; border-radius: 26px; background: #fafbf7; }
+.fieldwork-home .crew-note h3 { font-weight: 500; font-size: 22px; overflow-wrap: anywhere; }
+.fieldwork-home .note-controls button { background: #e6ecdc; border-radius: 50%; }
+.fieldwork-home .note-controls button:hover { background: #cfddbb; }
+.fieldwork-home .note-no-photo { background: #e4ebd8; }
+.fieldwork-home .home-action { max-width: 1376px; margin: 0 4vw 65px; border-radius: 32px; border: 7px solid #d8e4c5; padding: 70px 5vw 57px; background: #c3d99c; }
+.fieldwork-home .home-action .section-caption { color: #465938; }
+.fieldwork-home .home-action > a { color: #25351e; align-items: center; }
+.fieldwork-home .home-action h2 { font-size: clamp(42px, 6vw, 89px); font-weight: 450; line-height: 1.05; letter-spacing: -.065em; }
+.action-arrow { display: grid; place-items: center; border: 1px solid #2a3e2250; border-radius: 50%; width: 105px; height: 105px; flex-shrink: 0; }
+.action-arrow svg { width: 56px; height: 56px; transition: transform 700ms var(--motion); }
+.fieldwork-home .home-action > a:hover .action-arrow svg { transform: translate(5px, -5px); }
+.fieldwork-home .action-bottom { margin-top: 45px; }
+.fieldwork-home .action-bottom p { color: #475c38; font-size: 12px; }
+.fieldwork-home .home-action .editorial-link { color: #fafbf6; }
+.fieldwork-home .home-footer { max-width: 1500px; margin: auto; padding: 35px 5vw 50px; align-items: center; border-color: #20282020; }
+.fieldwork-home .footer-wordmark { font-size: 36px; font-weight: 650; }
+.fieldwork-home .footer-wordmark > span { font-size: 10px; color: #606c58; letter-spacing: 0; }
+.fieldwork-home .home-footer > p { color: #606c58; font-size: 10px; }
+.fieldwork-home .home-footer > div { gap: 25px; }
+.fieldwork-home a:focus-visible, .fieldwork-home button:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; }
+.fieldwork-home .editorial-link:focus-visible { outline-color: #4c633d; }
+@media (min-width: 1500px) { .fieldwork-home .home-action { margin-inline: auto; } }
+@media (max-width: 1100px) {
+  .fieldwork-home .home-hero { padding-top: 50px; min-height: 690px; gap: 2.5vw; }
+  .fieldwork-home .home-hero h1 { font-size: 5.65vw; }
+  .fieldwork-home .hero-description { font-size: 13px; max-width: 310px; }
+  .fieldwork-home .hero-actions { gap: 15px; }
+  .fieldwork-home .hero-actions .editorial-link { min-width: 175px; font-size: 11px; padding-left: 16px; }
+  .fieldwork-home .hero-actions .quiet-link { font-size: 11px; }
+  .fieldwork-home .story-chapters > article, .fieldwork-home .story-chapters > article:last-child { padding: 25px; }
+  .fieldwork-home .story-layout { gap: 5%; }
+  .network-facts { gap: 20px; }
+  .network-facts > div { padding-left: 20px; gap: 12px; }
+  .fieldwork-home .crew-notes-empty { gap: 25px; padding: 30px; }
+}
+@media (max-width: 950px) {
+  .fieldwork-home .story-layout { grid-template-columns: 1fr; gap: 50px; }
+  .fieldwork-home .story-heading h2 { font-size: 48px; }
+  .fieldwork-home .story-chapters > article { max-width: 650px; margin-inline: auto; }
+  .fieldwork-home .story-intro { max-width: 500px; }
+  .fieldwork-home .perspective-heading { grid-template-columns: 1.35fr 1fr; gap: 5%; }
+  .network-facts { grid-template-columns: repeat(3, 1fr); }
+  .network-facts > div { grid-column: 1 / -1; border-left: 0; border-top: 1px solid #20282020; padding: 22px 0 0; }
+}
+@media (max-width: 767px) {
+  .fieldwork-home { --chapter-space: 88px; }
+  .fieldwork-home .home-hero { padding: 62px 20px 88px; grid-template-columns: minmax(0, 1fr); gap: 38px; min-height: 0; }
+  .fieldwork-home .hero-copy { padding-bottom: 0; }
+  .fieldwork-home .hero-intro { font-size: 10px; margin-bottom: 24px; }
+  .fieldwork-home .home-hero h1 { font-size: clamp(43px, 10.6vw, 75px); line-height: 1.06; margin-bottom: 22px; }
+  .fieldwork-home .hero-description { font-size: 13px; max-width: 370px; }
+  .fieldwork-home .hero-actions { margin-top: 24px; gap: 20px; }
+  .fieldwork-home .hero-footnote { margin-top: 19px; font-size: 9px; }
+  .fieldwork-home .hero-baseline { left: 20px; right: 20px; height: 60px; font-size: 9px; }
+  .fieldwork-home .hero-baseline > span { max-width: 170px; }
+  .network-facts { padding: 35px 24px; gap: 22px 12px; }
+  .network-facts strong { font-size: 31px; }
+  .network-facts > p > span { font-size: 10px; line-height: 1.5; }
+  .network-facts > div > span { font-size: 10px; }
+  .fieldwork-home .home-perspective { padding-inline: 20px; }
+  .fieldwork-home .perspective-heading { grid-template-columns: 1fr; gap: 25px; margin-bottom: 32px; }
+  .fieldwork-home .perspective-heading h2 { font-size: clamp(35px, 9vw, 54px); }
+  .fieldwork-home .perspective-heading > p { font-size: 13px; max-width: 390px; }
+  .fieldwork-home .feature-accordion { border-radius: 24px; padding: 5px; gap: 5px; min-height: 0; }
+  .fieldwork-home .feature-panel { min-height: 96px; padding: 24px; border-radius: 19px; }
+  .fieldwork-home .feature-panel[data-open="true"] { min-height: 420px; }
+  .feature-symbol { top: 24px; left: 24px; }
+  .fieldwork-home .feature-panel:not([data-open="true"]) .feature-symbol { display: none; }
+  .fieldwork-home .feature-trigger { align-items: center; min-height: 48px; }
+  .fieldwork-home .feature-trigger > span, .fieldwork-home .feature-panel[data-open="true"] .feature-trigger > span { font-size: 26px; letter-spacing: -.045em; }
+  .fieldwork-home .feature-trigger > svg { margin-top: 0; }
+  .fieldwork-home .feature-detail p { font-size: 12px; }
+  .fieldwork-home .photography-note { font-size: 9px; }
+  .fieldwork-home .home-statement { padding: 65px 24px; }
+  .statement-heading { font-size: 10px; gap: 13px; margin-bottom: 34px; }
+  .fieldwork-home .home-statement > p { font-size: 33px; }
+  .evidence-principles { grid-template-columns: 1fr; gap: 30px; margin-top: 42px; padding-top: 28px; }
+  .fieldwork-home .home-story { padding-inline: 20px; }
+  .fieldwork-home .story-heading h2 { font-size: 40px; }
+  .fieldwork-home .story-chapters > article, .fieldwork-home .story-chapters > article:last-child { padding: 24px 18px; border-width: 5px; border-radius: 24px; }
+  .fieldwork-home .story-chapters h3 { font-size: 29px; }
+  .fieldwork-home .crew-notes { padding-inline: 20px; }
+  .fieldwork-home .crew-notes-heading { gap: 24px; }
+  .fieldwork-home .crew-notes-heading h2 { font-size: 44px; }
+  .fieldwork-home .crew-notes-empty { padding: 24px; gap: 24px; border-width: 5px; }
+  .fieldwork-home .crew-notes-empty h3 { font-size: 24px; }
+  .fieldwork-home .crew-notes-empty > svg { width: 36px; height: 36px; }
+  .fieldwork-home .home-action { padding: 45px 24px; margin: 0 16px 40px; border-radius: 26px; border-width: 5px; }
+  .fieldwork-home .home-action h2 { font-size: clamp(31px, 8vw, 52px); }
+  .fieldwork-home .home-action > a { align-items: flex-start; }
+  .action-arrow { width: 40px; height: 40px; }
+  .action-arrow svg { width: 24px; height: 24px; }
+  .fieldwork-home .action-bottom { margin-top: 32px; }
+  .fieldwork-home .home-footer { padding: 35px 24px 45px; flex-wrap: wrap; align-items: flex-start; }
+  .fieldwork-home .home-footer > div { gap: 17px; }
+  .desktop-break { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fieldwork-home .hero-copy > *, .hero-network, .fieldwork-home .story-chapters > article { opacity: 1 !important; transform: none !important; }
+}

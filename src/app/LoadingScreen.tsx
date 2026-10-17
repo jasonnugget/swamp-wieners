@@ -1,4 +1,5 @@
-import { ArrowUpRight, Zap } from "lucide-react";
+import { ArrowUpRight, MapPinSimple as Zap } from "@phosphor-icons/react";
+import FieldSculpture from "../components/FieldSculpture";
 
 export default function LoadingScreen({ snapshotReady, modelReady, error, onEnter }: {
   snapshotReady: boolean;
@@ -8,11 +9,11 @@ export default function LoadingScreen({ snapshotReady, modelReady, error, onEnte
 }) {
   return (
     <div className="boot-screen" aria-busy={!error && !(snapshotReady && modelReady)}>
-      <div className="boot-top"><span className="boot-wordmark"><Zap aria-hidden="true" size={20} /> PlanIT<span>↗</span></span><span>FIELD INTELLIGENCE / CONTROL</span></div>
-      <div className="boot-orbit" aria-hidden="true"><div /><div /><div /><span className="boot-core"><Zap aria-hidden="true" size={45} strokeWidth={1} /></span><i /></div>
+      <div className="boot-top"><span className="boot-wordmark"><Zap aria-hidden="true" size={20} /> PlanIT<span>↗</span></span><span>Good eyes. Good crew.</span></div>
+      <div className="boot-illustration"><FieldSculpture paused/></div>
       <div className="boot-copy">
-        <span className="eyebrow">A NEW PERSPECTIVE ON THE FIELD</span>
-        <h1>See the whole<br /><span>picture.</span><ArrowUpRight aria-hidden="true" /></h1>
+        <span className="eyebrow">A better heads-up starts here.</span>
+        <h1>GET YOUR<br /><span>BEARINGS.</span><ArrowUpRight aria-hidden="true" /></h1>
         <div className="boot-status" role="status">
           {error ? "Connection needs attention" : "Preparing your view…"}
           <span className="boot-pulse" aria-hidden="true">•••</span>

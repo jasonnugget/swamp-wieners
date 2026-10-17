@@ -1,108 +1,52 @@
-import { useEffect, useRef } from "react";
+'use client';
+import { useRef } from "react";
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
 
-/** Abstract field lines; this artwork does not represent weather or site readings. */
+/** Original field-kit illustration. Not terrain, provider data or a crew photo. */
 export default function FieldSculpture({ paused }: { paused: boolean }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const phase = useRef(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext("2d");
-    if (!canvas || !context) return;
-    const media = matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0;
-    let width = 0;
-    let height = 0;
-    let visible = true;
-    let time = phase.current;
-    let last = 0;
-    let pointerX = 0;
-    let pointerY = 0;
-
-    function draw() {
-      context!.clearRect(0, 0, width, height);
-      const scale = Math.min(width / 4.3, height / 3.7);
-      const angle = -.38 + pointerX * .13;
-      const cx = width * .51;
-      const cy = height * .5;
-      for (let strand = 0; strand < 112; strand++) {
-        const v = (strand / 111) * Math.PI * 2;
-        const shade = Math.sin(v + .7);
-        context!.beginPath();
-        for (let step = 0; step <= 170; step++) {
-          const u = (step / 170) * Math.PI * 2;
-          const twist = v + u * .5 + time * .1;
-          const radius = 1.14 + .24 * Math.cos(twist * 3 + time * .25);
-          const tube = .38 + .1 * Math.sin(u * 3 + time * .3);
-          const x = (radius + tube * Math.cos(twist)) * Math.cos(u);
-          const y = (radius + tube * Math.cos(twist)) * Math.sin(u);
-          const z = tube * Math.sin(twist) + .27 * Math.sin(u * 2 + time * .15);
-          const rx = x * Math.cos(angle) - y * Math.sin(angle);
-          const ry = x * Math.sin(angle) + y * Math.cos(angle);
-          const px = cx + (rx + z * .12) * scale;
-          const py = cy + (ry * .65 - z * .95 + pointerY * .08) * scale;
-          if (step === 0) context!.moveTo(px, py);
-          else context!.lineTo(px, py);
-        }
-        context!.strokeStyle = shade > -.1
-          ? `rgba(185, 64, 29, ${.21 + (shade + 1) * .15})`
-          : `rgba(64, 46, 34, ${.12 + (1 - shade) * .08})`;
-        context!.lineWidth = strand % 7 === 0 ? .95 : .55;
-        context!.stroke();
-      }
-    }
-    function tick(now: number) {
-      frame = 0;
-      if (!visible || document.hidden || paused || media.matches) return;
-      if (now - last > 1000 / 30) {
-        time += Math.min((now - (last || now)) / 1000, .05);
-        phase.current = time;
-        last = now;
-        draw();
-      }
-      frame = requestAnimationFrame(tick);
-    }
-    function sync() {
-      cancelAnimationFrame(frame);
-      frame = 0;
-      last = 0;
-      draw();
-      if (visible && !document.hidden && !paused && !media.matches) frame = requestAnimationFrame(tick);
-    }
-    function resize() {
-      const box = canvas!.getBoundingClientRect();
-      width = box.width;
-      height = box.height;
-      const ratio = Math.min(devicePixelRatio || 1, 2);
-      canvas!.width = Math.round(width * ratio);
-      canvas!.height = Math.round(height * ratio);
-      context!.setTransform(ratio, 0, 0, ratio, 0, 0);
-      draw();
-    }
-    function pointer(event: PointerEvent) {
-      if (media.matches || paused) return;
-      const box = canvas!.getBoundingClientRect();
-      pointerX = (event.clientX - box.left) / box.width - .5;
-      pointerY = (event.clientY - box.top) / box.height - .5;
-    }
-    const resizeObserver = new ResizeObserver(resize);
-    const intersection = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); });
-    resizeObserver.observe(canvas);
-    intersection.observe(canvas);
-    canvas.addEventListener("pointermove", pointer, { passive: true });
-    document.addEventListener("visibilitychange", sync);
-    media.addEventListener("change", sync);
-    resize();
-    sync();
-    return () => {
-      cancelAnimationFrame(frame);
-      resizeObserver.disconnect();
-      intersection.disconnect();
-      canvas.removeEventListener("pointermove", pointer);
-      document.removeEventListener("visibilitychange", sync);
-      media.removeEventListener("change", sync);
-    };
-  }, [paused]);
-
-  return <canvas ref={canvasRef} className="field-sculpture" aria-hidden="true" />;
+  const root = useRef<HTMLDivElement>(null);
+  useGSAP(() => {
+    const media = gsap.matchMedia();
+    media.add("(prefers-reduced-motion: no-preference)", () => {
+      if (paused || !root.current) return;
+      const loops = [
+        gsap.to(".kit-camera", { y: -9, rotation: 2, duration: 3.8, repeat: -1, yoyo: true, ease: "sine.inOut", transformOrigin: "50% 50%" }),
+        gsap.to(".kit-notebook", { y: 8, rotation: -2, duration: 4.5, repeat: -1, yoyo: true, ease: "sine.inOut", transformOrigin: "50% 50%" }),
+        gsap.to(".kit-spark", { scale: .85, rotation: 12, duration: 2.8, repeat: -1, yoyo: true, ease: "sine.inOut", transformOrigin: "50% 50%" }),
+      ];
+      let visible = true;
+      const sync = () => loops.forEach(tween => visible && !document.hidden ? tween.play() : tween.pause());
+      const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync(); });
+      observer.observe(root.current); document.addEventListener("visibilitychange", sync); sync();
+      return () => { observer.disconnect(); document.removeEventListener("visibilitychange", sync); loops.forEach(tween => tween.kill()); };
+    });
+    return () => media.revert();
+  }, { scope: root, dependencies: [paused], revertOnUpdate: true });
+  return <div className="field-sculpture field-kit" ref={root} aria-hidden="true">
+    <svg viewBox="0 0 620 570" fill="none">
+      <path d="M58 385c-55-35-48-86-15-78s40 75-10 89c-34 9-36 47-12 63 22 14 57-3 58-31M504 72l6-22m18 37 22-7m-27 29 17 12" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+      <g className="kit-notebook"><g transform="rotate(12 390 295)">
+        <rect x="258" y="158" width="239" height="307" rx="16" fill="#202820"/>
+        <rect x="250" y="148" width="239" height="307" rx="16" fill="#fafbf7" stroke="currentColor" strokeWidth="4"/>
+        <path d="M281 153v297m-40-260h21m-21 35h21m-21 35h21m-21 35h21m-21 35h21m-21 35h21m-21 35h21" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+        <path d="m312 245 37-24 42 24 66-36v171l-58 31-51-26-36 27Z" fill="#e5ecd9" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"/>
+        <path d="M349 225v159m42-136 7 159m-69-50 32-60 35 29 44-59" stroke="currentColor" strokeWidth="2.5" strokeDasharray="6 9"/>
+        <path d="M434 279c0 20-25 37-25 37s-25-17-25-37a25 25 0 0 1 50 0Z" fill="#c3d99c" stroke="currentColor" strokeWidth="3"/><circle cx="409" cy="279" r="8" fill="#202820"/>
+        <path d="M317 183h86m-86 13h52" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+      </g></g>
+      <g className="kit-camera"><g transform="rotate(-12 245 280)">
+        <path d="m143 198 18-43h100l27 43" fill="#fafbf7" stroke="currentColor" strokeWidth="4" strokeLinejoin="round"/>
+        <rect x="96" y="206" width="302" height="204" rx="39" fill="#202820"/>
+        <rect x="84" y="192" width="302" height="204" rx="39" fill="#c3d99c" stroke="currentColor" strokeWidth="4"/>
+        <path d="M85 251h300" stroke="currentColor" strokeWidth="4"/>
+        <circle cx="238" cy="299" r="72" fill="#fafbf7" stroke="currentColor" strokeWidth="5"/>
+        <circle cx="238" cy="299" r="47" fill="#202820"/>
+        <path d="m219 283 27-11" stroke="#fafbf7" strokeWidth="10" strokeLinecap="round"/>
+        <rect x="312" y="212" width="40" height="17" rx="6" fill="#202820"/><circle cx="124" cy="219" r="9" fill="#202820"/>
+      </g></g>
+      <path className="kit-spark" d="m463 96 10 29 30 4-23 20 5 30-27-16-27 14 7-30-21-22 30-2Z" fill="#fafbf7" stroke="currentColor" strokeWidth="4" strokeLinejoin="round"/>
+      <path d="M144 108c-2-18 3-39 19-54m-48 48-9-21m69 37 20-11" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+    </svg>
+  </div>;
 }

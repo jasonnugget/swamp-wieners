@@ -4,6 +4,7 @@ Run `npm run test:e2e` from the root. Installed Google Chrome is required. `play
 
 | File | Coverage |
 | --- | --- |
+| `network-preview.spec.ts` | Shared homepage/atlas plant selection and reload persistence; stale/cached unknown states with retained holds; local-geography failure at 320px |
 | `home-signals.spec.ts` | Hazard dial zero/null/stale handling; automatic NWS forecast selection, gaps, freshness, wind units and scrubbing; policy board without reports; scan/pause, reduced motion, empty forecasts and phone bounds |
 | `immersive-atlas.spec.ts` | Full-viewport renderer, floating navigation, two-line title, drawer close/reopen/Escape focus, inert hidden content, persistent close control, selected-site summary, mobile bounds and reduced motion |
 | `site-data-preview.spec.ts` | All-plant/current/future completion APIs, source precedence, unchanged operational scores/policy/coverage, synthetic labels, source-only switch and Site intelligence companion |
@@ -35,3 +36,5 @@ If the host’s software GPU stalls after initialization, run `PLAYWRIGHT_ML_CPU
 `crew-api.spec.ts` exercises the native client contract: scoped history, real photo upload/retrieval, idempotent retries, payload-conflict rejection, immediate task holds and retained resolution evidence. Native camera/Apple Maps interaction requires an iPhone or iOS Simulator; see [mobile setup](../../mobile/README.md).
 
 The native crew API check also verifies selected-site canonical conditions, all seven channels, absence of synthetic completion and immediate crew task holds in the returned conditions.
+
+The playful website keeps the existing `redesign.spec.ts` navigation, readiness, reduced-motion and reset-confirmation checks, using the current hero/loading titles. Its additional carousel check creates labeled accepted reports in the isolated test server and proves that home shows only the selected site’s evidence and links to the matching report history. Font/asset changes also need the workflow’s offline inference/reload check. See [the current web UI audit](../../docs/web-playful-ui.md).

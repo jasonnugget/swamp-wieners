@@ -13,7 +13,7 @@
   src: url("/fonts/manrope.woff2") format("woff2");
 }
 :root {
-  font-family: "Instrument Sans", sans-serif;
+  font-family: "Geist", sans-serif;
   color: #27352b;
   background: #f6f7f2;
   font-synthesis: none;
@@ -83,7 +83,7 @@ p {
 h1,
 h2,
 h3 {
-  font-family: Manrope, "Instrument Sans", sans-serif;
+  font-family: "Geist", sans-serif;
 }
 h1 {
   font-size: 30px;
@@ -124,7 +124,7 @@ small {
   align-items: center;
   gap: 11px;
   color: #f0f4e9;
-  font-family: Manrope, sans-serif;
+  font-family: "Geist", sans-serif;
   font-size: 25px;
   font-weight: 750;
   letter-spacing: -1px;
@@ -144,7 +144,7 @@ small {
 }
 .brand-sub {
   display: block;
-  font-family: "Instrument Sans", sans-serif;
+  font-family: "Geist", sans-serif;
   font-size: 9px;
   letter-spacing: 4px;
   font-weight: 500;
@@ -572,7 +572,7 @@ main {
   color: #90a280;
 }
 .metric > strong {
-  font-family: Manrope, sans-serif;
+  font-family: "Geist", sans-serif;
   font-size: 34px;
   font-weight: 650;
   letter-spacing: -1.4px;
@@ -583,7 +583,7 @@ main {
   font-size: 11px;
   letter-spacing: 0;
   color: #a0ab95;
-  font-family: "Instrument Sans", sans-serif;
+  font-family: "Geist", sans-serif;
   font-weight: 400;
   margin-left: 7px;
 }
@@ -1020,14 +1020,14 @@ main {
   color: #a8b19d;
 }
 .page-footer > span {
-  font-family: Manrope, sans-serif;
+  font-family: "Geist", sans-serif;
   font-size: 12px;
   font-weight: 650;
   letter-spacing: -0.4px;
   white-space: nowrap;
 }
 .page-footer > span > span {
-  font-family: "Instrument Sans", sans-serif;
+  font-family: "Geist", sans-serif;
   font-size: 6px;
   letter-spacing: 1.3px;
   display: block;
@@ -1369,7 +1369,7 @@ main {
 }
 .comparison > div > strong {
   font-size: 24px;
-  font-family: Manrope, sans-serif;
+  font-family: "Geist", sans-serif;
   font-weight: 600;
   letter-spacing: -0.8px;
 }
@@ -1542,7 +1542,7 @@ main {
   color: #a2ad96;
 }
 .report-card > h3 {
-  font-family: "Instrument Sans", sans-serif;
+  font-family: "Geist", sans-serif;
   font-weight: 500;
   font-size: 16px;
   line-height: 1.7;
@@ -1637,7 +1637,7 @@ main {
 .briefing-card pre {
   white-space: pre-wrap;
   line-height: 2;
-  font-family: "Instrument Sans", sans-serif;
+  font-family: "Geist", sans-serif;
   font-size: 12px;
   padding: 10px 23px 25px;
   color: #819371;
