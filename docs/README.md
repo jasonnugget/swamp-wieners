@@ -26,4 +26,4 @@ Directory READMEs describe the nearby files. These documents explain behavior th
 
 `assets/atlas-immersive-*.png` document the full-screen map iteration and are maintained with the immersive atlas audit. Earlier screenshots remain historical captures of their documented layouts.
 
-[Homepage field signals](home-signals.md) documents the snapshot-driven hazard profile, risk/coverage plot, crew-report chart and motion boundaries.
+[Homepage field signals](home-signals.md) documents the concentric hazard dial, automatic NWS hourly outlook, task-readiness board and motion boundaries.

@@ -19,12 +19,12 @@ The homepage field-signal charts were verified on October 17, 2026. Unit tests w
 | Check | Recorded result |
 | --- | --- |
 | `npm test` | Skipped for this iteration at the user’s request |
-| `npm run test:e2e` | 30 passed, 0 failed, 3.9 minutes |
+| `npm run test:e2e` | 31 passed, 0 failed, 4.0 minutes |
 | `npm run build` | Passed through the full browser suite’s build step; bundle-size warning remains |
 | TypeScript | Passed as part of `npm run build` |
 | Lint | No lint script is configured |
 
-The full browser suite returned exit 0. After the final selected-color and halo adjustments, the homepage chart tests rebuilt the app and passed both workflows in 15.5 seconds with exit 0. Homepage checks cover actual channel averages, measured zero versus unknown, stale exclusion, shared plant selection, report status counts, motion pause and phone layout. The [field-signal audit](../docs/home-signals.md) records chart semantics and production captures.
+The full browser suite returned exit 0. Homepage checks cover the concentric hazard dial, zero/null/stale handling, automatically selected NWS hourly outlooks, expired/future source rejection, line gaps, wind conversion, keyboard scrubbing, policy counts without reports, empty forecasts, scan progression and motion pause. The [homepage audit](../docs/home-signals.md) records sources, findings, limits and desktop/phone captures.
 
 These are implementation-run results. Source-adapter fixture tests do not establish live credentials, nationwide coverage or calibrated field-safety performance. The completion command was also run against the local national catalog; its output records actual source/synthetic/N/A counts and source failures. See [provider verification boundaries](../docs/environment-providers.md) and [completion semantics](../docs/site-data-completion.md).
 
