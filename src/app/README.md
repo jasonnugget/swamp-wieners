@@ -31,3 +31,5 @@ Site intelligence also renders the selected plant’s current canonical observat
 The current-evidence section mounts `SiteObservationPreview` for the inspected plant. It requests the backend’s demo companion and offers the same source-only switch as Conditions. Hypothetical values do not change the canonical priority list or period-specific decisions.
 
 The atlas route applies its own floating header, light Phosphor icons and animated menu lines. These are presentation changes only; native links, browser history, report actions and shared site selection remain the same. Other views keep the editorial page header.
+
+The “Stay curious. Stay prepared.” chapters render `FieldSignals` from the existing workspace snapshot. The hazard profile excludes unknown/stale channels; the risk/coverage plot shares selected-site state with the atlas; the report chart counts open/resolved records, including demo history. There are no extra provider requests or frontend hazard calculations. The motion control and reduced-motion preference disable chart entrances.

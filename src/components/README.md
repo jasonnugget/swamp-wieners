@@ -2,6 +2,7 @@
 
 | File | Purpose |
 | --- | --- |
+| `FieldSignals.tsx` | Homepage hazard means, risk/coverage scatter and open/resolved crew counts from snapshot props; scoped GSAP entrances |
 | `FieldSculpture.tsx` | Decorative animated field-line artwork for the homepage; never operational evidence |
 | `SiteMap.tsx` | Three.js authoritative risk atlas, environmental layers, showcase controls, and report pinning |
 | `ForecastChart.tsx` | Model median, uncertainty band, baseline, and optional reanalysis outcomes |

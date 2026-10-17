@@ -14,17 +14,17 @@ Generated screenshots, traces, and reports are ignored. Do not add documentation
 
 ## Latest implementation verification
 
-The atlas control refinement was verified on October 17, 2026. Unit tests were skipped for this visual iteration at the user’s request; the prior operational-pipeline run passed 125 tests.
+The homepage field-signal charts were verified on October 17, 2026. Unit tests were skipped for this visual iteration at the user’s request; the prior operational-pipeline run passed 125 tests.
 
 | Check | Recorded result |
 | --- | --- |
 | `npm test` | Skipped for this iteration at the user’s request |
-| `npm run test:e2e` | 28 passed, 0 failed, 4.0 minutes |
+| `npm run test:e2e` | 30 passed, 0 failed, 3.9 minutes |
 | `npm run build` | Passed through the full browser suite’s build step; bundle-size warning remains |
 | TypeScript | Passed as part of `npm run build` |
 | Lint | No lint script is configured |
 
-The full browser run reported all 28 scenarios passing, but its command wrapper returned status 143 after shutdown. An isolated rerun of `tests/e2e/immersive-atlas.spec.ts` rebuilt the app, passed in 27.5 seconds and returned exit 0.
+The full browser suite returned exit 0. After the final selected-color and halo adjustments, the homepage chart tests rebuilt the app and passed both workflows in 15.5 seconds with exit 0. Homepage checks cover actual channel averages, measured zero versus unknown, stale exclusion, shared plant selection, report status counts, motion pause and phone layout. The [field-signal audit](../docs/home-signals.md) records chart semantics and production captures.
 
 These are implementation-run results. Source-adapter fixture tests do not establish live credentials, nationwide coverage or calibrated field-safety performance. The completion command was also run against the local national catalog; its output records actual source/synthetic/N/A counts and source failures. See [provider verification boundaries](../docs/environment-providers.md) and [completion semantics](../docs/site-data-completion.md).
 

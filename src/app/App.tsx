@@ -214,7 +214,7 @@ export default function App() {
       </header>
       <div className="main-shell">
         <main id="workspace-content" className="overflow-x-hidden w-full max-w-full" tabIndex={-1}>
-          {page === "home" && <HomePage onNavigate={navigateLink} />}
+          {page === "home" && <HomePage onNavigate={navigateLink} snapshot={snapshot} selectedSite={site.id} onSelect={setSelected} cached={offline} />}
           {page !== "home" && page !== "atlas" && <div className="page-heading">
             <div><p className="section-caption">PlanIT / {pageLabels[page]}</p><h1>{page === "intelligence" ? "The work ahead." : page === "lab" ? "Know what your model knows." : page === "reports" ? "Local knowledge that stays." : "Tomorrow starts with today."}</h1><p>{page === "intelligence" ? "Review hazards, unknown coverage, and task restrictions before equipment mobilizes." : page === "lab" ? "Explore heat and ground-wetness estimates. Test local calibration without changing operational decisions." : page === "reports" ? "Pin what the crew sees, document affected tasks, and preserve the report for the next shift." : "Next-day conditions, task restrictions, and unresolved reports, prepared at 6 PM site-local time."}</p></div>
             <span className="workspace-connection">{offline ? "Cached workspace" : snapshot.clockMode === "demo" ? "Historical demo" : "Connected"}<span>{date}</span></span>

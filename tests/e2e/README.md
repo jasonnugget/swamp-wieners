@@ -4,6 +4,7 @@ Run `npm run test:e2e` from the root. Installed Google Chrome is required. `play
 
 | File | Coverage |
 | --- | --- |
+| `home-signals.spec.ts` | Canonical hazard means, zero/null/stale handling, risk/coverage plant selection, crew report counts, motion pause, reduced motion and phone bounds |
 | `immersive-atlas.spec.ts` | Full-viewport renderer, floating navigation, two-line title, drawer close/reopen/Escape focus, inert hidden content, persistent close control, selected-site summary, mobile bounds and reduced motion |
 | `site-data-preview.spec.ts` | All-plant/current/future completion APIs, source precedence, unchanged operational scores/policy/coverage, synthetic labels, source-only switch and Site intelligence companion |
 | `site-risk-api.spec.ts` | All-site current snapshot parity, observation validation, structured factors/drivers, model availability, provider status, atlas hours 0/72 and invalid query handling |
