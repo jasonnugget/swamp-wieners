@@ -1,7 +1,7 @@
 import * as tf from "./tensorflow";
 import "@tensorflow/tfjs-backend-webgpu";
-import type { ModelBundle, Network, Sample } from "../shared/types";
-import { predict } from "../shared/model";
+import type { ModelBundle, Network, Sample } from "../../../shared/types";
+import { predict } from "../../../shared/model";
 export interface CalibrationResult {
   backend: string;
   elapsedMs: number;

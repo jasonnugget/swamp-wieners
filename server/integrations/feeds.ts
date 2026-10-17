@@ -1,6 +1,6 @@
-import type { Alert, Forecast, ModelBundle, Site } from "../shared/types";
-import { features, heatIndex, predict } from "../shared/model";
-import { localParts, nextDate } from "../shared/clock";
+import type { Alert, Forecast, ModelBundle, Site } from "../../shared/types";
+import { features, heatIndex, predict } from "../../shared/model";
+import { localParts, nextDate } from "../../shared/clock";
 
 export async function fetchWeather(
   site: Site,

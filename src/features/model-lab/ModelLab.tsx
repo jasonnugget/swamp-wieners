@@ -10,10 +10,10 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import type { Forecast, ModelBundle, Sample, Site } from "../shared/types";
-import { forecastSample, heatIndex } from "../shared/model";
+import type { Forecast, ModelBundle, Sample, Site } from "../../../shared/types";
+import { forecastSample, heatIndex } from "../../../shared/model";
 import type { CalibrationResult } from "./browser-ml";
-import ForecastChart from "./ForecastChart";
+import ForecastChart from "../../components/ForecastChart";
 
 export default function ModelLab({
   site,

@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decide, distanceMiles, lightningUntil } from "../shared/policy";
-import { heatIndex } from "../shared/model";
-import type { Forecast, HazardReport, Site, Strike } from "../shared/types";
+import { decide, distanceMiles, lightningUntil } from "../../shared/policy";
+import { heatIndex } from "../../shared/model";
+import type { Forecast, HazardReport, Site, Strike } from "../../shared/types";
 const site: Site = {
   id: "1",
   name: "Test",

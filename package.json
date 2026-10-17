@@ -10,7 +10,7 @@
     "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"",
     "build": "tsc --noEmit && vite build",
     "start": "tsx server/index.ts",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test tests/unit/*.test.ts",
     "test:e2e": "playwright test",
     "data:prepare": ".venv/bin/python scripts/prepare_data.py",
     "ml:train": "OPENBLAS_NUM_THREADS=2 .venv/bin/python scripts/train.py"

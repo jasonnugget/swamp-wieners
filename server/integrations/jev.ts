@@ -1,4 +1,4 @@
-import type { HazardReport } from "../shared/types";
+import type { HazardReport } from "../../shared/types";
 export async function triage(
   report: HazardReport,
 ): Promise<NonNullable<HazardReport["triage"]>> {

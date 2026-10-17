@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { Store } from "./store";
 import { Engine } from "./engine";
-import { triage } from "./jev";
-import { fetchAlerts, fetchWeather } from "./feeds";
+import { triage } from "./integrations/jev";
+import { fetchAlerts, fetchWeather } from "./integrations/feeds";
 import { CATEGORIES, TASKS } from "../shared/policy";
 import type {
   Forecast,

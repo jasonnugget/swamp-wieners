@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import type { ModelBundle, Sample, Site } from "../shared/types";
-import { predict } from "../shared/model";
+import type { ModelBundle, Sample, Site } from "../../shared/types";
+import { predict } from "../../shared/model";
 const read = <T>(path: string): T => JSON.parse(readFileSync(path, "utf8"));
 test("fifty real plants, geographic bounds, and ten excluded sites", () => {
   const sites = read<Site[]>("public/data/sites.json");

@@ -27,14 +27,14 @@ import {
   Wind,
   Zap,
 } from "lucide-react";
-import type { Category, ModelBundle, Site, Snapshot } from "../shared/types";
-import { CATEGORY_LABELS, TASK_LABELS } from "../shared/policy";
-import { cacheAssets, loadSnapshot, readCachedSnapshot, request } from "./api";
-import SiteMap from "./SiteMap";
-import ForecastChart from "./ForecastChart";
-import WorkWindows from "./WorkWindows";
-import Reports, { ReportForm } from "./Reports";
-const ModelLab = lazy(() => import("./ModelLab"));
+import type { Category, ModelBundle, Site, Snapshot } from "../../shared/types";
+import { CATEGORY_LABELS, TASK_LABELS } from "../../shared/policy";
+import { cacheAssets, loadSnapshot, readCachedSnapshot, request } from "../lib/api";
+import SiteMap from "../components/SiteMap";
+import ForecastChart from "../components/ForecastChart";
+import WorkWindows from "../components/WorkWindows";
+import Reports, { ReportForm } from "../features/reports/Reports";
+const ModelLab = lazy(() => import("../features/model-lab/ModelLab"));
 type Page = "dashboard" | "lab" | "reports" | "briefings";
 const navigation = [
   { id: "dashboard" as Page, label: "Overview", icon: LayoutDashboard },

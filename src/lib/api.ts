@@ -1,4 +1,4 @@
-import type { Snapshot } from "../shared/types";
+import type { Snapshot } from "../../shared/types";
 const CACHE = "planit-snapshot-v1";
 export async function request<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/api${path}`, {

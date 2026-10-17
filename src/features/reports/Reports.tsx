@@ -6,15 +6,15 @@ import type {
   Site,
   Snapshot,
   Task,
-} from "../shared/types";
+} from "../../../shared/types";
 import {
   CATEGORIES,
   CATEGORY_LABELS,
   TASKS,
   TASK_LABELS,
-} from "../shared/policy";
-import { request } from "./api";
-import SiteMap from "./SiteMap";
+} from "../../../shared/policy";
+import { request } from "../../lib/api";
+import SiteMap from "../../components/SiteMap";
 
 export function ReportForm({
   site,

@@ -1,4 +1,4 @@
-import type { ForecastHour } from "../shared/types";
+import type { ForecastHour } from "../../shared/types";
 export default function ForecastChart({
   hours,
   reveal = false,

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { workWindows } from "../shared/windows";
-import type { ForecastHour } from "../shared/types";
+import { workWindows } from "../../shared/windows";
+import type { ForecastHour } from "../../shared/types";
 test("forecast windows group consecutive shift hours and keep task-specific thresholds", () => {
   const hours = Array.from(
     { length: 24 },

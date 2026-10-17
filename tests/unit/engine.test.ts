@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Store } from "../server/store";
-import { Engine } from "../server/engine";
-import { localParts, nextDate } from "../shared/clock";
-import type { ModelBundle, Site } from "../shared/types";
+import { Store } from "../../server/store";
+import { Engine } from "../../server/engine";
+import { localParts, nextDate } from "../../shared/clock";
+import type { ModelBundle, Site } from "../../shared/types";
 const sites = JSON.parse(
   readFileSync("public/data/sites.json", "utf8"),
 ) as Site[];

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { ForecastHour } from "../shared/types";
-import { workWindows } from "../shared/windows";
+import type { ForecastHour } from "../../shared/types";
+import { workWindows } from "../../shared/windows";
 export default function WorkWindows({
   hours,
   timezone,

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { Decision, HazardReport, Site } from "../shared/types";
+import type { Decision, HazardReport, Site } from "../../shared/types";
 maplibregl.setWorkerUrl(workerUrl);
 export default function SiteMap({
   sites,
