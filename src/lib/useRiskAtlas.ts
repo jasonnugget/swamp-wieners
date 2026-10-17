@@ -23,7 +23,7 @@ export function useRiskAtlas(enabled: boolean, hour: number, sites: Site[], curr
     setLoading(true); setError("");
     // Coalesce fast gestures; only the selected site is scored for future hours.
     const timer = setTimeout(() => {
-      const query = new URLSearchParams({ hour: String(hour), ...(siteId ? { siteId } : {}) });
+      const query = new URLSearchParams({ hour: String(hour), completion: "1", ...(siteId ? { siteId } : {}) });
       void fetch(`/api/risk/atlas?${query}`, { signal: AbortSignal.any([abort.signal, AbortSignal.timeout(25000)]) })
         .then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.error ?? "Risk atlas unavailable"); return data as RiskAtlas; })
         .then(data => {

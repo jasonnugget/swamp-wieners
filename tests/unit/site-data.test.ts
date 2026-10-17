@@ -44,7 +44,7 @@ test("all 285 plants have identical completed shape and field-level provenance",
     for (const group of ENVIRONMENT_GROUPS) for (const [key, value] of Object.entries(result.scenario[group])) {
       const metadata = result.fields[`${group}.${key}`];
       assert.ok(metadata);
-      if (value === null) assert.equal(metadata.kind, "NOT_APPLICABLE");
+      assert.notEqual(value, null, `${plant.id}: ${group}.${key}`);
       if (typeof value === "number") assert.ok(Number.isFinite(value));
       if (metadata.kind === "SYNTHETIC") assert.ok(metadata.basis.length);
     }
@@ -67,13 +67,18 @@ test("fallbacks are deterministic, geographic, seasonal and based on available l
   assert.ok(completeSiteData(site, input, now).scenario.soil.moistureSurface! > florida.scenario.soil.moistureSurface!);
 });
 
-test("no-event scenarios do not invent strike/gauge/fire/sighting measurements", () => {
+test("hypothetical event and gauge values fill previews without inventing operational measurements", () => {
   const result = completeSiteData(site, normalize(site, undefined, now), now);
   assert.equal(result.scenario.lightning.evidenceMode, "DEMO");
   assert.equal(result.scenario.lightning.strikes10mi30m, 0);
   for (const path of ["lightning.latestStrikeAt", "lightning.nearestStrikeMiles", "flood.stage", "wildfire.nearestFireMiles", "wildlife.latestSightingAt"])
-    assert.equal(result.fields[path].kind, "NOT_APPLICABLE");
+    assert.equal(result.fields[path].kind, "SYNTHETIC");
   assert.equal(result.observed.lightning.strikes10mi30m, null);
+  assert.equal(result.observed.flood.stage, null);
+  assert.equal(result.completeness.notApplicable, 0);
+  assert.ok(result.scenario.lightning.nearestStrikeMiles! > 10);
+  assert.ok(now - Date.parse(result.scenario.lightning.latestStrikeAt!) > 30 * 60000);
+  assert.ok(now - Date.parse(result.scenario.wildlife.latestSightingAt!) > 24 * 3600000);
   assert.equal(result.fields["lightning.strikes10mi30m"].kind, "SYNTHETIC");
 });
 
@@ -86,6 +91,8 @@ test("source failures are disclosed and positive strike evidence is never paired
   assert.equal(result.scenario.lightning.nearestStrikeMiles, 6);
   assert.equal(result.scenario.lightning.strikes10mi30m, 1);
   assert.equal(result.fields["lightning.strikes10mi30m"].kind, "SYNTHETIC");
+  assert.equal(result.scenario.lightning.evidenceMode, "DEMO");
+  assert.equal(result.observed.lightning.evidenceMode, "LIVE");
   assert.match(result.fields["weather.temperatureF"].reason, /timed out/);
   assert.throws(() => completeSiteData({ ...site, id: "wrong" }, input, now), /match/);
 });

@@ -110,5 +110,25 @@ test("site-scoped snapshots and forecasts exclude every other plant", () => fixt
   scoped.siteRisks[sites[0].id] = snapshot.siteRisks[sites[0].id];
   const future = riskAtlas(scoped, store, 24, now);
   assert.equal(future.sites.length, 1);
+  const completed = riskAtlas(scoped, store, 24, now, true);
+  assert.equal(completed.sites.length, 1);
+  assert.equal(completed.sites[0].completion!.usage, "DEMO_ONLY");
+  assert.equal(Object.keys(completed.sites[0].completion!.fields).length, 34);
   assert.deepEqual(future.sites[0], riskAtlas(snapshot, store, 24, now).sites[0]);
+}));
+
+test("optional demo companions fill every field for every hour without changing authoritative risk, coverage or holds", () => fixture((store, snapshot) => {
+  const before = structuredClone(snapshot);
+  for (const hour of [0, 24, 72]) {
+    const raw = riskAtlas(snapshot, store, hour, now), completed = riskAtlas(snapshot, store, hour, now, true);
+    for (const [index, entry] of completed.sites.entries()) {
+      assert.deepEqual(entry.snapshot, raw.sites[index].snapshot);
+      assert.equal(raw.sites[index].completion, undefined);
+      assert.equal(entry.completion!.usage, "DEMO_ONLY");
+      assert.equal(Object.keys(entry.completion!.fields).length, 34);
+      for (const group of Object.values(entry.completion!.scenario)) for (const value of Object.values(group)) assert.notEqual(value, null);
+      assert.equal(entry.completion!.completeness.notApplicable, 0);
+    }
+  }
+  assert.deepEqual(snapshot, before);
 }));

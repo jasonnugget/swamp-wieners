@@ -58,7 +58,7 @@ export default function RiskControls({ data, currentData, showTimeline, sites, l
         <section className="atlas-work-decisions"><h3>Work decisions</h3><dl className="atlas-tasks" aria-label="Task decisions">{r?.tasks.map(t => <div key={t.task}><dt>{TASK_LABELS[t.task]}</dt><dd data-state={t.state}>{t.state}</dd></div>)}</dl></section>
         <section className="atlas-priorities"><div className="atlas-section-heading"><h3>Review next</h3><ArrowUpRight size={15} aria-hidden="true"/></div>{network.priority.map(({ site, risk }) => <button type="button" key={site.id} onClick={() => onSelect(site.id)}><span>{site.name}<small>{site.state} · {risk.observation.coverage.percent.toFixed(0)}% coverage{risk.tasks.some(t => t.state === "HOLD") ? " · STOP WORK" : ""}</small></span><strong>{risk.risk?.toFixed(1) ?? "?"}</strong></button>)}</section>
       </div>
-      <div hidden={view !== "conditions"} className="atlas-detail-content">{r && <ObservationDetails observation={r.observation} timezone={site?.timezone}/>}</div>
+      <div hidden={view !== "conditions"} className="atlas-detail-content">{r && <ObservationDetails observation={r.observation} timezone={site?.timezone} completion={entry?.completion}/>}</div>
       <div hidden={view !== "sources"} className="atlas-detail-content atlas-sources">{r && site && <SourceDetails snapshot={r} site={site}/>}</div>
       {atlas?.limitations.map(line => <p className="atlas-limitation" key={line}>{line}</p>)}
       <p className="atlas-freshness">{data.stale ? "CACHED / STALE · " : ""}{atlas?.validAt ? `Valid ${new Date(atlas.validAt).toLocaleString()}` : "Waiting for frame"}</p>

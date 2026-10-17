@@ -17,3 +17,5 @@ GSAP motion is scoped to `HomePage.tsx`. The field sculpture has its own canvas 
 The selected-site forecast slider spans the bottom of the map and appears only while focusing a plant. The atlas inspector also contains canonical risk channels, coverage/confidence, task states, source details and stop-work controls. It scrolls independently on desktop and follows the map in the mobile page. `evidence.css` styles the shared 34-field observation inspector and provider/model/plant details used by both the atlas and Site intelligence. Keep its source labels, units, unknown readings and native disclosure controls intact.
 
 Unknown beacons use the existing gray with a question mark; low-confidence known values also use dashed, translucent markers; continuous risk colors interpolate the existing lime/amber/coral palette.
+
+`evidence.css` also styles the demo gap-fill switch, synthetic reading badges and explanatory notice. Preserve the text labels so generated fields remain identifiable without relying on color.

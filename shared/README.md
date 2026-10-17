@@ -11,7 +11,7 @@ This directory is imported by the client, server, and unit tests. Keep it free o
 | `risk-config.ts`, `risk-scoring.ts` | Continuous channel curves, evidence merge, confidence and dominant-plus-compounding risk |
 | `crew-risk.ts` | Confirmed semantic classifications, report aging and explicit task controls |
 | `atlas.ts` | Batched risk-frame contract, display selectors/colors and supervisor ranking |
-| `site-data.ts` | Separate demo-only field completion, provenance and source/synthetic/N/A counts |
+| `site-data.ts` | Demo-only 34-field completion, compact API companions, provenance and source/synthetic counts |
 | `clock.ts` | IANA-timezone local parts and next-date calculation |
 | `windows.ts` | Consecutive task-specific daytime screening windows |
 

@@ -39,7 +39,7 @@
 .site-observation-panel > details { margin-top: 20px; border-top: 1px solid #ccd5be; }
 .site-observation-panel > details > summary { padding-block: 15px; cursor: pointer; color: #4a6039; font-size: 13px; }
 .site-observation-panel .observation-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0 38px; align-items: start; }
-.site-observation-panel .observation-intro { grid-column: 1 / -1; }
+.site-observation-panel .observation-preview-controls { grid-column: 1 / -1; }
 .site-observation-panel .source-provider-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 38px; align-items: start; }
 @media (max-width: 700px) {
   .site-observation-panel { padding: 22px 18px; }
@@ -47,3 +47,10 @@
   .site-observation-panel h2 { font-size: 23px; }
   .site-observation-panel .observation-details, .site-observation-panel .source-provider-list { grid-template-columns: 1fr; }
 }
+
+.observation-preview-controls { margin-bottom: 18px; }
+.observation-preview-controls label { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px; color: #46513d; cursor: pointer; }
+.observation-preview-controls input { width: 16px; height: 16px; accent-color: #536c3f; }
+.observation-demo-notice { padding: 12px; background: #ede2cf; color: #705333; font-size: 11px; line-height: 1.8; border-left: 2px solid #ac784c; }
+.observation-synthetic { display: block; font-size: 9px; color: #80582d; margin-top: 4px; }
+.observation-field[data-origin="synthetic"] > summary > strong { color: #80582d; }

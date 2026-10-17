@@ -16,7 +16,7 @@ Three views organize the expanded record:
 
 Site intelligence reuses the observation and source components in a labeled current-evidence section. Historical model and replay sections keep their separate time context. Mobile places the full inspector below the map and timeline in normal page flow. Layer controls scroll horizontally within their own toolbar.
 
-The display reads the canonical backend frame. It does not recalculate risk or request a separate weather truth. Missing fields say **Unknown**, measured zeros remain zero, and false flags say **No**. Forecast lightning potential is labeled separately from detected strikes. Synthetic completion estimates remain outside the operational atlas.
+The display reads the canonical backend frame. It does not recalculate risk or request a separate weather truth. Missing fields say **Unknown**, measured zeros remain zero, and false flags say **No**. Forecast lightning potential is labeled separately from detected strikes. The subsequent completion update adds a labeled demo companion to Conditions and Site intelligence. The default-on gap-fill switch shows hypothetical values for missing fields; turning it off restores Unknown. These companions remain outside operational risk, map layers, coverage and task decisions. The screenshots below precede this switch.
 
 ## Screenshots
 
@@ -52,3 +52,11 @@ The [historical frontend audit](frontend-case-study.md) records unresolved repor
 The existing TensorFlow bundle still produces a production chunk-size warning. A fully populated national workspace can also exceed browser localStorage capacity; live reads continue when saving fails, but that browser may lack a fresh offline copy. Screenshot checks do not establish hardware GPU performance or usability in field conditions.
 
 See [the verification record](../tests/README.md) for exact unit, browser and build results, and [provider documentation](environment-providers.md) for source and credential limits.
+
+## Demo completion follow-up
+
+The completed Conditions view now fills all 34 fields with source-backed values or visibly labeled synthetic estimates. This production capture uses persisted source evidence plus the backend’s hypothetical fallback companion, without injected browser fixtures. Collection was disabled on the capture process. The inspected plant had 34 populated fields, eight synthetic fields and no captured JavaScript page errors. Operational coverage and risk remain independent of the preview.
+
+![Conditions with a reversible demo gap-fill switch and labeled hypothetical lightning values](assets/supervisor-demo-completion.png)
+
+The added browser checks validate all-plant API completion, source zero/false precedence, source-only switching, site changes, 72-hour frames and the Site intelligence preview. Unit checks compare canonical frames with and without companions to prove that hypothetical data cannot modify source risk, coverage, tasks or holds. Exact latest totals are in the [verification record](../tests/README.md).

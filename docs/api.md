@@ -134,3 +134,13 @@ Map layers select values without recalculating risk:
 Unknown values use gray question marks. Known values below 50% confidence use dashed/translucent markers. Display color is continuous; coverage, confidence and task state remain separate. Supervisor ranking uses current snapshots: active HOLD first, then known risk at least 4, then insufficient evidence (null risk, confidence below 0.5 or coverage below 50%), then observed low risk. Within each tier, higher risk leads, followed by lower confidence and name.
 
 The compatibility `/api/weather/atlas` and `/api/weather/point` routes remain available for external consumers. The supervisor map no longer calls either route, and arbitrary land clicks no longer create a separate weather truth. Historical replay, Model Lab and immutable briefing views retain their labeled periods.
+
+## Demo data completion
+
+`GET /api/risk/atlas?hour=0..72&completion=1` adds `completion` beside each `{site, snapshot}`. Omit the parameter or use `completion=0` for the unchanged canonical response. Other completion values return HTTP 400. The browser atlas requests the companion in the existing national batch.
+
+`GET /api/sites/:id/data-completion` returns one compact companion or HTTP 404 for an unknown plant. Site intelligence requests only its inspected plant and cancels superseded reads. These read-only endpoints use persisted evidence and do not query providers.
+
+A companion has `usage: "DEMO_ONLY"`, `method: "location-season-weather-v2"`, `scenario` (all 34 environmental values), `fields` (SOURCE/SYNTHETIC kind, reason and confidence per path), and `completeness` counts. Synthetic confidence is zero. Existing source zero/false values are preserved. Event/gauge fallback values are hypothetical; they are not live provider records. Full CLI exports also retain `observed`, plant identity, generation time and per-field basis arrays.
+
+Completion never mutates `snapshot`, source coverage, numerical risk, channel evidence, task decisions or overrides. The UI uses it only for explicitly labeled condition previews. Map layers and ranking continue to select canonical values. Future synthetic preview values do not establish future observations or authorize work. See [completion assumptions](site-data-completion.md).
