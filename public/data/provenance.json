@@ -1,0 +1,18 @@
+{
+  "sites": "https://www.eia.gov/electricity/data/eia860m/xls/august_generator2026.xlsx",
+  "forecast": "https://open-meteo.com/en/docs/previous-runs-api",
+  "target": "https://open-meteo.com/en/docs/historical-weather-api",
+  "forecastLeadHours": 48,
+  "targetDataset": "ERA5-Land reanalysis; ERA5 fallback at Stock Island (coastal land-grid gap)",
+  "start": "2024-01-01",
+  "end": "2026-09-30",
+  "rows": 1173000,
+  "features": "All inputs use archived 48-hour forecasts; rainfall history is an estimated antecedent, not observed rainfall.",
+  "limitations": [
+    "Soil moisture is a modeled grid-cell proxy, not bearing capacity.",
+    "Reanalysis heat targets are not on-site observations.",
+    "Four manually selected Mississippi corridor sites have demonstration rainfall screening; floodplain membership is not verified.",
+    "Demo day deliberately selected as the hero site\u2019s highest upper HeatCast prediction during July\u2013August; aggregate metrics cover the full test period."
+  ],
+  "mapOutlines": "https://github.com/PublicaMundi/MappingAPI/blob/master/data/geojson/us-states.json"
+}

@@ -1,0 +1,1055 @@
+{
+  "heat": {
+    "mae": 2.42441,
+    "baselineMae": 3.05682,
+    "pinball": 0.78148,
+    "coverage": 0.80472,
+    "count": 262080,
+    "precision": 0.26658,
+    "recall": 0.7478
+  },
+  "unseenHeat": {
+    "mae": 2.61629,
+    "baselineMae": 2.96018,
+    "pinball": 0.84419,
+    "coverage": 0.77608,
+    "count": 65520,
+    "precision": 0.27936,
+    "recall": 0.70903
+  },
+  "soil": {
+    "mae": 0.04966,
+    "baselineMae": 0.06255,
+    "pinball": 0.01588,
+    "coverage": 0.73536,
+    "count": 262080,
+    "precision": 0.19063,
+    "recall": 0.8878
+  },
+  "unseenSoil": {
+    "mae": 0.07066,
+    "baselineMae": 0.08362,
+    "pinball": 0.02295,
+    "coverage": 0.56854,
+    "count": 65520,
+    "precision": 0.13815,
+    "recall": 0.83653
+  },
+  "bySite": {
+    "621": {
+      "heat": {
+        "mae": 2.21079,
+        "baselineMae": 2.35332,
+        "pinball": 0.71417,
+        "coverage": 0.83868,
+        "count": 6552,
+        "precision": 0.0,
+        "recall": 0.0
+      },
+      "soil": {
+        "mae": 0.05317,
+        "baselineMae": 0.07044,
+        "pinball": 0.01662,
+        "coverage": 0.7178,
+        "count": 6552,
+        "precision": 0.19692,
+        "recall": 0.89055
+      }
+    },
+    "627": {
+      "heat": {
+        "mae": 2.66512,
+        "baselineMae": 2.74109,
+        "pinball": 0.84012,
+        "coverage": 0.75565,
+        "count": 6552,
+        "precision": 0.09735,
+        "recall": 0.61111
+      },
+      "soil": {
+        "mae": 0.08387,
+        "baselineMae": 0.11663,
+        "pinball": 0.03025,
+        "coverage": 0.40659,
+        "count": 6552,
+        "precision": 0.00271,
+        "recall": 1.0
+      }
+    },
+    "7846": {
+      "heat": {
+        "mae": 2.46575,
+        "baselineMae": 2.6729,
+        "pinball": 0.78895,
+        "coverage": 0.75214,
+        "count": 6552,
+        "precision": 0.46226,
+        "recall": 0.68056
+      },
+      "soil": {
+        "mae": 0.05134,
+        "baselineMae": 0.07866,
+        "pinball": 0.01654,
+        "coverage": 0.59341,
+        "count": 6552,
+        "precision": 0.0,
+        "recall": 0.0
+      }
+    },
+    "65866": {
+      "heat": {
+        "mae": 2.31774,
+        "baselineMae": 2.66517,
+        "pinball": 0.75576,
+        "coverage": 0.79899,
+        "count": 6552,
+        "precision": 0.34911,
+        "recall": 0.78667
+      },
+      "soil": {
+        "mae": 0.03794,
+        "baselineMae": 0.04916,
+        "pinball": 0.01276,
+        "coverage": 0.95971,
+        "count": 6552,
+        "precision": 0.01038,
+        "recall": 0.28571
+      }
+    },
+    "60061": {
+      "heat": {
+        "mae": 2.31616,
+        "baselineMae": 2.47733,
+        "pinball": 0.74943,
+        "coverage": 0.79747,
+        "count": 6552,
+        "precision": 0.15764,
+        "recall": 0.78049
+      },
+      "soil": {
+        "mae": 0.04542,
+        "baselineMae": 0.08536,
+        "pinball": 0.01522,
+        "coverage": 0.70543,
+        "count": 6552,
+        "precision": 0.0083,
+        "recall": 0.4
+      }
+    },
+    "61982": {
+      "heat": {
+        "mae": 2.58201,
+        "baselineMae": 2.95627,
+        "pinball": 0.83156,
+        "coverage": 0.73672,
+        "count": 6552,
+        "precision": 0.34307,
+        "recall": 0.79661
+      },
+      "soil": {
+        "mae": 0.05578,
+        "baselineMae": 0.06401,
+        "pinball": 0.0187,
+        "coverage": 0.57937,
+        "count": 6552,
+        "precision": 0.13485,
+        "recall": 0.8018
+      }
+    },
+    "628": {
+      "heat": {
+        "mae": 2.70523,
+        "baselineMae": 3.52524,
+        "pinball": 0.84514,
+        "coverage": 0.76068,
+        "count": 6552,
+        "precision": 0.12371,
+        "recall": 0.66667
+      },
+      "soil": {
+        "mae": 0.04771,
+        "baselineMae": 0.06993,
+        "pinball": 0.01438,
+        "coverage": 0.77549,
+        "count": 6552,
+        "precision": 0.22586,
+        "recall": 0.30254
+      }
+    },
+    "6046": {
+      "heat": {
+        "mae": 2.20121,
+        "baselineMae": 2.60635,
+        "pinball": 0.71261,
+        "coverage": 0.83089,
+        "count": 6552,
+        "precision": 0.32353,
+        "recall": 0.70213
+      },
+      "soil": {
+        "mae": 0.03969,
+        "baselineMae": 0.05747,
+        "pinball": 0.01231,
+        "coverage": 0.79579,
+        "count": 6552,
+        "precision": 0.2352,
+        "recall": 0.9319
+      }
+    },
+    "62490": {
+      "heat": {
+        "mae": 2.55209,
+        "baselineMae": 2.92513,
+        "pinball": 0.82166,
+        "coverage": 0.73046,
+        "count": 6552,
+        "precision": 0.41667,
+        "recall": 0.7377
+      },
+      "soil": {
+        "mae": 0.05305,
+        "baselineMae": 0.0596,
+        "pinball": 0.0176,
+        "coverage": 0.60714,
+        "count": 6552,
+        "precision": 0.09025,
+        "recall": 0.89209
+      }
+    },
+    "10202": {
+      "heat": {
+        "mae": 2.31935,
+        "baselineMae": 2.94149,
+        "pinball": 0.74636,
+        "coverage": 0.82418,
+        "count": 6552,
+        "precision": 0.36957,
+        "recall": 0.70833
+      },
+      "soil": {
+        "mae": 0.04162,
+        "baselineMae": 0.04895,
+        "pinball": 0.01269,
+        "coverage": 0.77335,
+        "count": 6552,
+        "precision": 0.14723,
+        "recall": 0.82382
+      }
+    },
+    "612": {
+      "heat": {
+        "mae": 2.2657,
+        "baselineMae": 2.47991,
+        "pinball": 0.72653,
+        "coverage": 0.83059,
+        "count": 6552,
+        "precision": 0.15569,
+        "recall": 0.66667
+      },
+      "soil": {
+        "mae": 0.04515,
+        "baselineMae": 0.08569,
+        "pinball": 0.01475,
+        "coverage": 0.73901,
+        "count": 6552,
+        "precision": 0.0,
+        "recall": 0.0
+      }
+    },
+    "56799": {
+      "heat": {
+        "mae": 2.35995,
+        "baselineMae": 3.39243,
+        "pinball": 0.7591,
+        "coverage": 0.81822,
+        "count": 6552,
+        "precision": 0.39796,
+        "recall": 0.68421
+      },
+      "soil": {
+        "mae": 0.03788,
+        "baselineMae": 0.05107,
+        "pinball": 0.01176,
+        "coverage": 0.76129,
+        "count": 6552,
+        "precision": 0.15281,
+        "recall": 0.69976
+      }
+    },
+    "69355": {
+      "heat": {
+        "mae": 2.30606,
+        "baselineMae": 2.85305,
+        "pinball": 0.73156,
+        "coverage": 0.81151,
+        "count": 6552,
+        "precision": 0.24561,
+        "recall": 0.7
+      },
+      "soil": {
+        "mae": 0.05702,
+        "baselineMae": 0.06005,
+        "pinball": 0.0188,
+        "coverage": 0.59799,
+        "count": 6552,
+        "precision": 0.07014,
+        "recall": 0.96466
+      }
+    },
+    "65173": {
+      "heat": {
+        "mae": 2.45119,
+        "baselineMae": 2.92752,
+        "pinball": 0.78012,
+        "coverage": 0.76404,
+        "count": 6552,
+        "precision": 0.29412,
+        "recall": 0.76923
+      },
+      "soil": {
+        "mae": 0.05842,
+        "baselineMae": 0.066,
+        "pinball": 0.02004,
+        "coverage": 0.52137,
+        "count": 6552,
+        "precision": 0.08533,
+        "recall": 0.8913
+      }
+    },
+    "683": {
+      "heat": {
+        "mae": 2.43967,
+        "baselineMae": 3.51218,
+        "pinball": 0.77653,
+        "coverage": 0.82662,
+        "count": 6552,
+        "precision": 0.15942,
+        "recall": 0.70968
+      },
+      "soil": {
+        "mae": 0.03847,
+        "baselineMae": 0.06035,
+        "pinball": 0.01249,
+        "coverage": 0.80723,
+        "count": 6552,
+        "precision": 0.20309,
+        "recall": 0.95793
+      }
+    },
+    "50250": {
+      "heat": {
+        "mae": 2.42102,
+        "baselineMae": 3.11179,
+        "pinball": 0.788,
+        "coverage": 0.78632,
+        "count": 6552,
+        "precision": 0.37688,
+        "recall": 0.87209
+      },
+      "soil": {
+        "mae": 0.04357,
+        "baselineMae": 0.0448,
+        "pinball": 0.01454,
+        "coverage": 0.89652,
+        "count": 6552,
+        "precision": 0.12622,
+        "recall": 0.59815
+      }
+    },
+    "664": {
+      "heat": {
+        "mae": 2.24946,
+        "baselineMae": 2.75374,
+        "pinball": 0.73396,
+        "coverage": 0.81334,
+        "count": 6552,
+        "precision": 0.23016,
+        "recall": 0.82857
+      },
+      "soil": {
+        "mae": 0.04253,
+        "baselineMae": 0.06205,
+        "pinball": 0.01399,
+        "coverage": 0.67918,
+        "count": 6552,
+        "precision": 0.13985,
+        "recall": 0.91176
+      }
+    },
+    "65888": {
+      "heat": {
+        "mae": 2.62949,
+        "baselineMae": 3.65615,
+        "pinball": 0.86385,
+        "coverage": 0.77427,
+        "count": 6552,
+        "precision": 0.39062,
+        "recall": 0.78125
+      },
+      "soil": {
+        "mae": 0.07803,
+        "baselineMae": 0.06494,
+        "pinball": 0.02385,
+        "coverage": 0.57647,
+        "count": 6552,
+        "precision": 0.10461,
+        "recall": 0.99419
+      }
+    },
+    "66128": {
+      "heat": {
+        "mae": 2.17323,
+        "baselineMae": 2.48723,
+        "pinball": 0.70091,
+        "coverage": 0.83806,
+        "count": 6552,
+        "precision": 0.29412,
+        "recall": 0.625
+      },
+      "soil": {
+        "mae": 0.04628,
+        "baselineMae": 0.07207,
+        "pinball": 0.01523,
+        "coverage": 0.72237,
+        "count": 6552,
+        "precision": 0.15551,
+        "recall": 0.98649
+      }
+    },
+    "643": {
+      "heat": {
+        "mae": 2.33617,
+        "baselineMae": 3.08276,
+        "pinball": 0.76379,
+        "coverage": 0.80464,
+        "count": 6552,
+        "precision": 0.3871,
+        "recall": 0.75949
+      },
+      "soil": {
+        "mae": 0.04971,
+        "baselineMae": 0.05632,
+        "pinball": 0.01568,
+        "coverage": 0.75885,
+        "count": 6552,
+        "precision": 0.14001,
+        "recall": 0.70472
+      }
+    },
+    "68472": {
+      "heat": {
+        "mae": 2.16875,
+        "baselineMae": 2.49294,
+        "pinball": 0.70427,
+        "coverage": 0.83303,
+        "count": 6552,
+        "precision": 0.17021,
+        "recall": 0.63158
+      },
+      "soil": {
+        "mae": 0.04768,
+        "baselineMae": 0.07536,
+        "pinball": 0.01573,
+        "coverage": 0.70559,
+        "count": 6552,
+        "precision": 0.19855,
+        "recall": 0.93675
+      }
+    },
+    "6043": {
+      "heat": {
+        "mae": 2.79514,
+        "baselineMae": 3.62243,
+        "pinball": 0.88636,
+        "coverage": 0.78663,
+        "count": 6552,
+        "precision": 0.0396,
+        "recall": 0.57143
+      },
+      "soil": {
+        "mae": 0.07836,
+        "baselineMae": 0.05894,
+        "pinball": 0.0254,
+        "coverage": 0.41606,
+        "count": 6552,
+        "precision": 0.06642,
+        "recall": 0.94755
+      }
+    },
+    "60345": {
+      "heat": {
+        "mae": 2.42408,
+        "baselineMae": 2.69547,
+        "pinball": 0.77303,
+        "coverage": 0.80067,
+        "count": 6552,
+        "precision": 0.26744,
+        "recall": 0.69697
+      },
+      "soil": {
+        "mae": 0.03616,
+        "baselineMae": 0.06813,
+        "pinball": 0.0118,
+        "coverage": 0.84463,
+        "count": 6552,
+        "precision": 0.22111,
+        "recall": 0.98187
+      }
+    },
+    "54627": {
+      "heat": {
+        "mae": 2.39924,
+        "baselineMae": 2.98855,
+        "pinball": 0.76758,
+        "coverage": 0.83639,
+        "count": 6552,
+        "precision": 0.07278,
+        "recall": 0.88462
+      },
+      "soil": {
+        "mae": 0.06596,
+        "baselineMae": 0.07455,
+        "pinball": 0.02038,
+        "coverage": 0.70894,
+        "count": 6552,
+        "precision": 0.57692,
+        "recall": 0.2116
+      }
+    },
+    "54466": {
+      "heat": {
+        "mae": 2.50557,
+        "baselineMae": 2.56513,
+        "pinball": 0.79456,
+        "coverage": 0.7793,
+        "count": 6552,
+        "precision": 0.25472,
+        "recall": 0.65854
+      },
+      "soil": {
+        "mae": 0.04615,
+        "baselineMae": 0.07076,
+        "pinball": 0.01566,
+        "coverage": 0.68559,
+        "count": 6552,
+        "precision": 0.15537,
+        "recall": 0.98947
+      }
+    },
+    "55192": {
+      "heat": {
+        "mae": 2.20677,
+        "baselineMae": 2.92122,
+        "pinball": 0.71297,
+        "coverage": 0.83822,
+        "count": 6552,
+        "precision": 0.25352,
+        "recall": 0.69231
+      },
+      "soil": {
+        "mae": 0.03941,
+        "baselineMae": 0.06947,
+        "pinball": 0.01293,
+        "coverage": 0.76206,
+        "count": 6552,
+        "precision": 0.17491,
+        "recall": 1.0
+      }
+    },
+    "617": {
+      "heat": {
+        "mae": 2.35258,
+        "baselineMae": 2.98177,
+        "pinball": 0.74629,
+        "coverage": 0.84203,
+        "count": 6552,
+        "precision": 0.07143,
+        "recall": 0.15385
+      },
+      "soil": {
+        "mae": 0.0581,
+        "baselineMae": 0.08198,
+        "pinball": 0.01913,
+        "coverage": 0.72192,
+        "count": 6552,
+        "precision": 0.15404,
+        "recall": 0.96681
+      }
+    },
+    "689": {
+      "heat": {
+        "mae": 2.40049,
+        "baselineMae": 3.17622,
+        "pinball": 0.76953,
+        "coverage": 0.80159,
+        "count": 6552,
+        "precision": 0.32484,
+        "recall": 0.75
+      },
+      "soil": {
+        "mae": 0.04353,
+        "baselineMae": 0.05078,
+        "pinball": 0.0137,
+        "coverage": 0.75244,
+        "count": 6552,
+        "precision": 0.23011,
+        "recall": 0.71068
+      }
+    },
+    "136": {
+      "heat": {
+        "mae": 2.28645,
+        "baselineMae": 3.04586,
+        "pinball": 0.74511,
+        "coverage": 0.81914,
+        "count": 6552,
+        "precision": 0.26812,
+        "recall": 0.64912
+      },
+      "soil": {
+        "mae": 0.04395,
+        "baselineMae": 0.05723,
+        "pinball": 0.01382,
+        "coverage": 0.67628,
+        "count": 6552,
+        "precision": 0.17307,
+        "recall": 0.73859
+      }
+    },
+    "55414": {
+      "heat": {
+        "mae": 2.15079,
+        "baselineMae": 2.5616,
+        "pinball": 0.68805,
+        "coverage": 0.86203,
+        "count": 6552,
+        "precision": 0.06944,
+        "recall": 0.45455
+      },
+      "soil": {
+        "mae": 0.05531,
+        "baselineMae": 0.07303,
+        "pinball": 0.01802,
+        "coverage": 0.67689,
+        "count": 6552,
+        "precision": 0.13645,
+        "recall": 0.96915
+      }
+    },
+    "6045": {
+      "heat": {
+        "mae": 2.45229,
+        "baselineMae": 2.81504,
+        "pinball": 0.78161,
+        "coverage": 0.81777,
+        "count": 6552,
+        "precision": 0.06796,
+        "recall": 0.58333
+      },
+      "soil": {
+        "mae": 0.06276,
+        "baselineMae": 0.06334,
+        "pinball": 0.01976,
+        "coverage": 0.57311,
+        "count": 6552,
+        "precision": 0.10215,
+        "recall": 0.95855
+      }
+    },
+    "6584": {
+      "heat": {
+        "mae": 1.53355,
+        "baselineMae": 1.67828,
+        "pinball": 0.52625,
+        "coverage": 0.9101,
+        "count": 6552,
+        "precision": 0.0,
+        "recall": 0.0
+      },
+      "soil": {
+        "mae": 0.0056,
+        "baselineMae": 0.0,
+        "pinball": 0.0029,
+        "coverage": 0.99496,
+        "count": 6552,
+        "precision": 1.0,
+        "recall": 1.0
+      }
+    },
+    "65886": {
+      "heat": {
+        "mae": 2.45877,
+        "baselineMae": 2.77416,
+        "pinball": 0.79631,
+        "coverage": 0.77381,
+        "count": 6552,
+        "precision": 0.42857,
+        "recall": 0.75789
+      },
+      "soil": {
+        "mae": 0.05157,
+        "baselineMae": 0.0556,
+        "pinball": 0.01634,
+        "coverage": 0.70116,
+        "count": 6552,
+        "precision": 0.13179,
+        "recall": 0.66236
+      }
+    },
+    "56407": {
+      "heat": {
+        "mae": 2.35117,
+        "baselineMae": 2.73418,
+        "pinball": 0.75067,
+        "coverage": 0.85287,
+        "count": 6552,
+        "precision": 0.0625,
+        "recall": 0.45161
+      },
+      "soil": {
+        "mae": 0.04375,
+        "baselineMae": 0.08135,
+        "pinball": 0.0136,
+        "coverage": 0.88416,
+        "count": 6552,
+        "precision": 0.27116,
+        "recall": 0.86935
+      }
+    },
+    "66553": {
+      "heat": {
+        "mae": 2.51464,
+        "baselineMae": 3.00714,
+        "pinball": 0.80421,
+        "coverage": 0.75656,
+        "count": 6552,
+        "precision": 0.46341,
+        "recall": 0.79167
+      },
+      "soil": {
+        "mae": 0.04269,
+        "baselineMae": 0.07065,
+        "pinball": 0.01353,
+        "coverage": 0.71734,
+        "count": 6552,
+        "precision": 0.0,
+        "recall": 0.0
+      }
+    },
+    "55433": {
+      "heat": {
+        "mae": 2.63822,
+        "baselineMae": 3.58877,
+        "pinball": 0.85772,
+        "coverage": 0.79563,
+        "count": 6552,
+        "precision": 0.1677,
+        "recall": 0.85263
+      },
+      "soil": {
+        "mae": 0.04783,
+        "baselineMae": 0.05763,
+        "pinball": 0.01512,
+        "coverage": 0.81395,
+        "count": 6552,
+        "precision": 0.16486,
+        "recall": 0.42938
+      }
+    },
+    "6190": {
+      "heat": {
+        "mae": 2.80847,
+        "baselineMae": 3.60201,
+        "pinball": 0.90135,
+        "coverage": 0.76206,
+        "count": 6552,
+        "precision": 0.31084,
+        "recall": 0.80124
+      },
+      "soil": {
+        "mae": 0.04441,
+        "baselineMae": 0.09101,
+        "pinball": 0.01458,
+        "coverage": 0.82189,
+        "count": 6552,
+        "precision": 0.20037,
+        "recall": 0.83247
+      }
+    },
+    "56565": {
+      "heat": {
+        "mae": 2.59517,
+        "baselineMae": 2.65279,
+        "pinball": 0.84278,
+        "coverage": 0.81349,
+        "count": 6552,
+        "precision": 0.38936,
+        "recall": 0.695
+      },
+      "soil": {
+        "mae": 0.05182,
+        "baselineMae": 0.08695,
+        "pinball": 0.0172,
+        "coverage": 0.67872,
+        "count": 6552,
+        "precision": 0.08326,
+        "recall": 0.85398
+      }
+    },
+    "1403": {
+      "heat": {
+        "mae": 2.40948,
+        "baselineMae": 2.84763,
+        "pinball": 0.78518,
+        "coverage": 0.80342,
+        "count": 6552,
+        "precision": 0.18243,
+        "recall": 0.80597
+      },
+      "soil": {
+        "mae": 0.07321,
+        "baselineMae": 0.07297,
+        "pinball": 0.02239,
+        "coverage": 0.63904,
+        "count": 6552,
+        "precision": 0.07324,
+        "recall": 0.85761
+      }
+    },
+    "55620": {
+      "heat": {
+        "mae": 3.23803,
+        "baselineMae": 3.71082,
+        "pinball": 1.05215,
+        "coverage": 0.73214,
+        "count": 6552,
+        "precision": 0.38537,
+        "recall": 0.77073
+      },
+      "soil": {
+        "mae": 0.07606,
+        "baselineMae": 0.09293,
+        "pinball": 0.02218,
+        "coverage": 0.50519,
+        "count": 6552,
+        "precision": 0.15168,
+        "recall": 1.0
+      }
+    },
+    "1393": {
+      "heat": {
+        "mae": 2.48915,
+        "baselineMae": 3.48972,
+        "pinball": 0.8131,
+        "coverage": 0.81609,
+        "count": 6552,
+        "precision": 0.19198,
+        "recall": 0.83486
+      },
+      "soil": {
+        "mae": 0.07514,
+        "baselineMae": 0.06878,
+        "pinball": 0.02438,
+        "coverage": 0.558,
+        "count": 6552,
+        "precision": 0.07621,
+        "recall": 0.98172
+      }
+    },
+    "6462": {
+      "heat": {
+        "mae": 2.59665,
+        "baselineMae": 3.8061,
+        "pinball": 0.83582,
+        "coverage": 0.79731,
+        "count": 6552,
+        "precision": 0.26503,
+        "recall": 0.83217
+      },
+      "soil": {
+        "mae": 0.04616,
+        "baselineMae": 0.0598,
+        "pinball": 0.01426,
+        "coverage": 0.91026,
+        "count": 6552,
+        "precision": 0.14522,
+        "recall": 0.88309
+      }
+    },
+    "55486": {
+      "heat": {
+        "mae": 2.39074,
+        "baselineMae": 3.41409,
+        "pinball": 0.77927,
+        "coverage": 0.8054,
+        "count": 6552,
+        "precision": 0.37657,
+        "recall": 0.81818
+      },
+      "soil": {
+        "mae": 0.0791,
+        "baselineMae": 0.05064,
+        "pinball": 0.02229,
+        "coverage": 0.65934,
+        "count": 6552,
+        "precision": 0.11749,
+        "recall": 1.0
+      }
+    },
+    "55220": {
+      "heat": {
+        "mae": 2.57409,
+        "baselineMae": 3.16395,
+        "pinball": 0.82903,
+        "coverage": 0.78953,
+        "count": 6552,
+        "precision": 0.31897,
+        "recall": 0.72549
+      },
+      "soil": {
+        "mae": 0.1332,
+        "baselineMae": 0.08875,
+        "pinball": 0.04348,
+        "coverage": 0.2178,
+        "count": 6552,
+        "precision": 0.15124,
+        "recall": 1.0
+      }
+    },
+    "55197": {
+      "heat": {
+        "mae": 2.66557,
+        "baselineMae": 3.32556,
+        "pinball": 0.85644,
+        "coverage": 0.76389,
+        "count": 6552,
+        "precision": 0.3697,
+        "recall": 0.7093
+      },
+      "soil": {
+        "mae": 0.03699,
+        "baselineMae": 0.05223,
+        "pinball": 0.01223,
+        "coverage": 0.76435,
+        "count": 6552,
+        "precision": 0.1326,
+        "recall": 0.8242
+      }
+    },
+    "8054": {
+      "heat": {
+        "mae": 3.40638,
+        "baselineMae": 3.69493,
+        "pinball": 1.12817,
+        "coverage": 0.71139,
+        "count": 6552,
+        "precision": 0.36242,
+        "recall": 0.5625
+      },
+      "soil": {
+        "mae": 0.12496,
+        "baselineMae": 0.09387,
+        "pinball": 0.04041,
+        "coverage": 0.13202,
+        "count": 6552,
+        "precision": 0.12723,
+        "recall": 1.0
+      }
+    },
+    "6072": {
+      "heat": {
+        "mae": 2.78075,
+        "baselineMae": 3.69951,
+        "pinball": 0.88575,
+        "coverage": 0.77885,
+        "count": 6552,
+        "precision": 0.26171,
+        "recall": 0.73643
+      },
+      "soil": {
+        "mae": 0.04344,
+        "baselineMae": 0.06421,
+        "pinball": 0.01331,
+        "coverage": 0.92827,
+        "count": 6552,
+        "precision": 0.13724,
+        "recall": 0.99842
+      }
+    },
+    "57037": {
+      "heat": {
+        "mae": 2.5479,
+        "baselineMae": 3.36709,
+        "pinball": 0.81762,
+        "coverage": 0.77747,
+        "count": 6552,
+        "precision": 0.24138,
+        "recall": 0.72917
+      },
+      "soil": {
+        "mae": 0.03633,
+        "baselineMae": 0.0537,
+        "pinball": 0.01169,
+        "coverage": 0.90507,
+        "count": 6552,
+        "precision": 0.25442,
+        "recall": 0.93402
+      }
+    },
+    "7988": {
+      "heat": {
+        "mae": 2.43309,
+        "baselineMae": 3.4966,
+        "pinball": 0.78525,
+        "coverage": 0.80388,
+        "count": 6552,
+        "precision": 0.24775,
+        "recall": 0.80882
+      },
+      "soil": {
+        "mae": 0.04543,
+        "baselineMae": 0.06319,
+        "pinball": 0.01455,
+        "coverage": 0.86676,
+        "count": 6552,
+        "precision": 0.35407,
+        "recall": 0.72536
+      }
+    },
+    "6073": {
+      "heat": {
+        "mae": 2.59776,
+        "baselineMae": 3.83406,
+        "pinball": 0.85464,
+        "coverage": 0.79563,
+        "count": 6552,
+        "precision": 0.39931,
+        "recall": 0.83333
+      },
+      "soil": {
+        "mae": 0.05116,
+        "baselineMae": 0.067,
+        "pinball": 0.01563,
+        "coverage": 0.90369,
+        "count": 6552,
+        "precision": 0.1116,
+        "recall": 0.78302
+      }
+    }
+  },
+  "counts": {
+    "train": 325920,
+    "validation": 173760,
+    "calibration": 176640,
+    "test": 262080,
+    "unseen": 65520,
+    "sampledTraining": 120000
+  },
+  "notes": [
+    "Training: 2024; validation: Jan\u2013Jun 2025; interval calibration: Jul\u2013Dec 2025; untouched test: Jan\u2013Sep 2026.",
+    "10 plants excluded from fitting, normalization, and uncertainty calibration.",
+    "Heat baseline is the uncorrected 48-hour GFS forecast; soil baseline is training-period site median (global median for unseen plants).",
+    "All rainfall features are archived forecast estimates, not observed rainfall. Targets are reanalysis, not on-site measurements.",
+    "Intervals calibrated marginally on chronological calibration data; coverage is not guaranteed at every site."
+  ]
+}
