@@ -24,3 +24,7 @@ The scene-module failure test blocks service workers so interception reaches the
 Screenshots/traces go to ignored `test-results/`. Keep fixtures in maintained directories; do not commit test databases or uploads. Preserve offline checks after lazy-import, Three.js, static-URL or service-worker changes. See [verification context](../README.md) for the latest recorded run.
 
 `cache-recovery.spec.ts` seeds pre-canonical and pre-structured-evidence snapshots, verifies a recoverable loading/error screen during an outage, then retries successfully without clearing the crew profile. It also forces browser storage quota errors and verifies fresh API state still opens the homepage. The offline workflow covers the versioned cache on a prepared production build.
+
+Cold browser runs allow up to thirty seconds for map assets and live snapshot propagation, while the offline package downloads. The checks still require complete geography, actual inference results and report-driven risk updates.
+
+If the host’s software GPU stalls after initialization, run `PLAYWRIGHT_ML_CPU=1 npm run test:e2e` to verify actual CPU inference/training and offline persistence. This opt-in makes GPU contexts unavailable only to the test’s Model Lab and retains graphics for the offline atlas check. Application backend selection and model calculations remain unchanged. A CPU run does not establish GPU support.

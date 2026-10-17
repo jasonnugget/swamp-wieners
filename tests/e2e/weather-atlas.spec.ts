@@ -13,7 +13,7 @@ test("the evidence panel exposes all 34 fields, provenance, sources and usable m
   await page.goto("/?view=atlas");
   const panel = page.getByLabel("Site risk inspection");
   const canvas = page.locator(".weather-atlas .three-map-canvas");
-  await expect(canvas).toHaveAttribute("data-geography", "ready");
+  await expect(canvas).toHaveAttribute("data-geography", "ready", { timeout: 30000 });
   const mapBounds = (await canvas.boundingBox())!, panelBounds = (await panel.boundingBox())!;
   expect(mapBounds.width).toBeGreaterThan(700);
   expect(mapBounds.x + mapBounds.width).toBeLessThanOrEqual(panelBounds.x + 1);
@@ -172,8 +172,8 @@ test("a real crew submission updates the supervisor beacon, evidence, tasks and 
   await dialog.getByLabel("Report plant").selectOption(site.id);
   await dialog.getByLabel("What happened?").fill("Truck stuck near access road; ground becoming saturated.");
   await dialog.getByRole("button", { name: "Share report", exact: true }).click();
-  await expect(dialog).not.toBeVisible();
-  await expect(page.getByTestId("atlas-risk")).not.toHaveText("Unknown");
+  await expect(dialog).not.toBeVisible({ timeout: 15000 });
+  await expect(page.getByTestId("atlas-risk")).not.toHaveText("Unknown", { timeout: 30000 });
   const score = Number((await page.getByTestId("atlas-risk").textContent())!.split(" /")[0]);
   expect(score).toBeGreaterThan(0); expect(score).toBeLessThan(10);
   await expect(page.locator(`.site-beacon[data-site-id="${site.id}"]`)).not.toHaveText("?");
