@@ -14,15 +14,17 @@ Generated screenshots, traces, and reports are ignored. Do not add documentation
 
 ## Latest implementation verification
 
-The immersive full-screen atlas, source-first demo companions, providers and map depth precision were verified on October 17, 2026:
+The atlas control refinement was verified on October 17, 2026. Unit tests were skipped for this visual iteration at the user’s request; the prior operational-pipeline run passed 125 tests.
 
 | Check | Recorded result |
 | --- | --- |
-| `npm test` | 125 passed, 0 failed |
-| `npm run test:e2e` | 28 passed, 0 failed, 3.5 minutes |
+| `npm test` | Skipped for this iteration at the user’s request |
+| `npm run test:e2e` | 28 passed, 0 failed, 4.0 minutes |
 | `npm run build` | Passed through the full browser suite’s build step; bundle-size warning remains |
-| `npx tsc --noEmit` | Passed |
+| TypeScript | Passed as part of `npm run build` |
 | Lint | No lint script is configured |
+
+The full browser run reported all 28 scenarios passing, but its command wrapper returned status 143 after shutdown. An isolated rerun of `tests/e2e/immersive-atlas.spec.ts` rebuilt the app, passed in 27.5 seconds and returned exit 0.
 
 These are implementation-run results. Source-adapter fixture tests do not establish live credentials, nationwide coverage or calibrated field-safety performance. The completion command was also run against the local national catalog; its output records actual source/synthetic/N/A counts and source failures. See [provider verification boundaries](../docs/environment-providers.md) and [completion semantics](../docs/site-data-completion.md).
 

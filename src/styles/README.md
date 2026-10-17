@@ -20,4 +20,4 @@ Unknown beacons use the existing gray with a question mark; low-confidence known
 
 `evidence.css` also styles the demo gap-fill switch, synthetic reading badges and explanatory notice. Preserve the text labels so generated fields remain identifiable without relying on color.
 
-The immersive atlas theme is scoped to `.view-atlas` and `.weather-atlas`. Shared observation/source components retain their paper appearance in Site intelligence. Navigation and drawer shells use subtle inner highlights; scrolling contents avoid backdrop filters. Motion changes opacity/transform and supports reduced motion.
+The immersive atlas theme is scoped to `.view-atlas` and `.weather-atlas`. Shared observation/source components retain their paper appearance in Site intelligence. Navigation uses a single baseline; region and layer selections use underlines. The evidence drawer is opaque with straight edges. Camera controls share one rectangular rail, and task states remain plain colored text. Scrolling contents avoid backdrop filters. Motion changes opacity/transform and supports reduced motion.

@@ -4,7 +4,7 @@ This frontend iteration turns `/?view=atlas` into a viewport-filling map workspa
 
 ## Layout and interaction
 
-The Three.js canvas reaches every viewport edge. Floating navigation, site selection, region controls and the layer dock sit above it. A forecast prompt opens the selected plant’s 72-hour filmstrip; panning, zooming out or returning to a region hides the slider again. The map remains on current conditions while the inspector can show that plant’s forecast frame. The dark evidence drawer uses a nested frame with its own scroll area. Desktop opens with evidence visible; phones open with the map visible and a Site details button.
+The Three.js canvas reaches every viewport edge. Floating navigation, site selection, region controls and the layer dock sit above it. A forecast prompt opens the selected plant’s 72-hour filmstrip; panning, zooming out or returning to a region hides the slider again. The map remains on current conditions while the inspector can show that plant’s forecast frame. The solid dark evidence drawer has straight edges and its own scroll area. Desktop opens with evidence visible; phones open with the map visible and a Site details button.
 
 The drawer retains Overview, Conditions and Sources, including all 34 fields, risk channels, task decisions, provider health, model availability and synthetic-data labels. Its close control stays outside the scrolling contents. Closing makes hidden controls inert and returns keyboard focus to the reopen button. Reopening focuses the close control; Escape closes from inside the drawer. The selected-site summary and a new site selection also open it.
 
@@ -12,7 +12,9 @@ Portrait phones use a larger map framing and smaller unselected point markers. O
 
 ## Visual system
 
-Satoshi typography, a charcoal/olive base and muted lime controls replace the paper sidebar. Hazard colors retain their existing semantic scale. Phosphor light icons, inner frame highlights, rounded control islands and a restrained grid tie the interface to the map. Site locations and boundaries remain geographic; land extrusion is schematic.
+Satoshi typography, a charcoal/olive map and restrained sage selection rules define the interface. Hazard colors retain their existing semantic scale. Navigation sits on a baseline; regions use text and underlines. Layers form one segmented text strip, with dotted labels still distinguishing raw measurements. The camera rail and forecast controls use straight edges. The opaque evidence sheet keeps map text from showing through its contents. Site locations and boundaries remain geographic; land extrusion is schematic.
+
+The refinement references [Awwwards’ typography collection](https://www.awwwards.com/websites/typography/) and its [Terminal Industries entry](https://www.awwwards.com/sites/terminal-industries), inspected in the browser. The references inform typographic hierarchy, spacing and restrained controls; no third-party artwork or layouts are copied. Repeated pill containers, nested circular arrows and decorative metric rings were removed in response to the interface review.
 
 The national map uses deeper state extrusion and a lower viewing angle. Desktop camera framing offsets the focal area away from the evidence drawer; report pinning retains its original camera and land depth. Adaptive near-plane precision and polygon offset remain in place.
 
