@@ -26,8 +26,10 @@ The catalog check validates at least five real plants in each of fifty states, v
 
 `atlas.test.ts` checks current-frame parity for all plants, forecast scoring and source freshness, actual zero versus null, missing future hours, strike-hold expiry, warning fetch-time provenance, display selectors, continuous colors and supervisor ranking.
 
-`site-data.test.ts` checks real-value precedence, measured zero/false, deterministic location/season fallbacks, all-plant field parity, explicit N/A event fields, source errors, unchanged operational coverage and real hourly-soil midrank. It runs the offline command in isolated SQLite storage to verify JSON/CSV exports and preserved unrelated records. Provider tests also cover shared keyless FIRMS downloads and separate Alaska caching.
+`site-data.test.ts` checks real-value precedence, measured zero/false, deterministic location/season fallbacks, all-plant field parity, fully populated hypothetical event/gauge fields with unchanged observed nulls, source errors, unchanged operational coverage and real hourly-soil midrank. It runs the offline command in isolated SQLite storage to verify JSON/CSV exports and preserved unrelated records. Provider tests also cover shared keyless FIRMS downloads and separate Alaska caching.
 
 NWPS provider tests cover zero/negative stage, sentinel/stale/flow/distance rejection, same-gauge trends and percentiles, incompatible history, timeout/non-200/malformed responses, cache timestamps and fallback without mixed gauge datums. NWS tests verify shared statewide empty checks without retimestamping.
 
 `observation-display.test.ts` verifies all 34 displayed fields against every plant’s canonical shape, preserves zero/false versus unknown, checks moisture/percentile units and negative water-level trends, and formats timestamps in the plant’s time zone.
+
+Atlas regression tests compare frames with and without demo companions at hours 0, 24 and 72, for all 285 plants. Every companion field must be non-null while the original snapshot, risk, source coverage and policy remain identical.

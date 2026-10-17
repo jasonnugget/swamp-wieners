@@ -4,6 +4,7 @@ Run `npm run test:e2e` from the root. Installed Google Chrome is required. `play
 
 | File | Coverage |
 | --- | --- |
+| `site-data-preview.spec.ts` | All-plant/current/future completion APIs, source precedence, unchanged operational scores/policy/coverage, synthetic labels, source-only switch and Site intelligence companion |
 | `site-risk-api.spec.ts` | All-site current snapshot parity, observation validation, structured factors/drivers, model availability, provider status, atlas hours 0/72 and invalid query handling |
 | `weather-atlas.spec.ts` | Canonical risk ranges, unknown/low-confidence states, coverage, eleven layers, forecast frames, search/regions, geometry reuse, countdown/reset, stale reads, all 34 observation fields, field provenance, provider/plant inspection, keyboard evidence-view switching and mobile overflow |
 | `risk-fixtures.ts` | Deterministic canonical frames produced with the backend scorer; not live provider evidence |

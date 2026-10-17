@@ -1,3 +1,4 @@
+import { completeSiteData, siteDataPreview } from "../shared/site-data";
 import { riskAtlas } from "./pipeline/atlas";
 import express from "express";
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
@@ -122,10 +123,16 @@ app.get("/api/weather/point", async (req, res) => {
   return points[0] ? res.json(points[0]) : res.status(503).json({ error: "Weather unavailable at this location. Try another point or retry." });
 });
 app.get("/api/risk/atlas", (req, res) => {
-  const parsed = z.object({ hour: z.coerce.number().int().min(0).max(72).default(0) }).safeParse(req.query);
+  const parsed = z.object({ hour: z.coerce.number().int().min(0).max(72).default(0), completion: z.enum(["0", "1"]).default("0") }).safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ error: "Risk frame hour must be an integer from 0 to 72." });
   res.setHeader("Cache-Control", "no-store");
-  res.json(riskAtlas(engine.snapshot(), store, parsed.data.hour));
+  res.json(riskAtlas(engine.snapshot(), store, parsed.data.hour, Date.now(), parsed.data.completion === "1"));
+});
+app.get("/api/sites/:id/data-completion", (req, res) => {
+  const snapshot = engine.snapshot(), site = snapshot.sites.find(s => s.id === req.params.id);
+  if (!site) return res.status(404).json({ error: "Unknown plant." });
+  res.setHeader("Cache-Control", "no-store");
+  res.json(siteDataPreview(completeSiteData(site, snapshot.siteRisks[site.id].observation, Date.now(), store.get<import("../shared/weather").WeatherPoint>("environment-weather", site.id))));
 });
 app.get("/api/events", (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");

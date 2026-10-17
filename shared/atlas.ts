@@ -1,4 +1,5 @@
 import type { SiteRiskSnapshot } from "./risk";
+import type { SiteDataPreview } from "./site-data";
 import type { Site } from "./types";
 
 export interface RiskAtlas {
@@ -8,7 +9,7 @@ export interface RiskAtlas {
   hour: number;
   kind: "CURRENT" | "FORECAST";
   limitations: string[];
-  sites: { site: Site; snapshot: SiteRiskSnapshot }[];
+  sites: { site: Site; snapshot: SiteRiskSnapshot; completion?: SiteDataPreview }[];
 }
 export const ATLAS_LAYERS = {
   risk: { name: "Site risk", unit: "/10", low: "0 · Low", high: "10 · Critical" },

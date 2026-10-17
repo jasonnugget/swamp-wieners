@@ -1,3 +1,4 @@
+import { completeSiteData, siteDataPreview } from "../../shared/site-data";
 import type { RiskAtlas } from "../../shared/atlas";
 import type { Site, Snapshot } from "../../shared/types";
 import type { WeatherPoint } from "../../shared/weather";
@@ -7,7 +8,7 @@ import type { StoredProviderRecord } from "./providers";
 
 // One requested frame across every plant. No source HTTP calls and no future
 // timestamps manufactured for source freshness. Current snapshots are unchanged.
-export function riskAtlas(snapshot: Snapshot, store: Store, hour: number, now = Date.now()): RiskAtlas {
+export function riskAtlas(snapshot: Snapshot, store: Store, hour: number, now = Date.now(), completion = false): RiskAtlas {
   const target = hour === 0 ? now : Math.floor(now / 3600000) * 3600000 + hour * 3600000;
   const points = new Map(store.all<WeatherPoint>("environment-weather").map(p => [p.id, p]));
   const reports = snapshot.reports.filter(r => Date.parse(r.createdAt) <= now);
@@ -33,6 +34,9 @@ export function riskAtlas(snapshot: Snapshot, store: Store, hour: number, now = 
   return { version: 1, generatedAt: new Date(now).toISOString(), validAt: new Date(target).toISOString(), hour,
     kind: hour === 0 ? "CURRENT" : "FORECAST",
     limitations: hour === 0 ? [] : ["Weather-driven forecast screening; future detected strikes, gauge stages, fire detections and public sightings are unknown.", "Current unresolved crew holds are assumed to continue; future task states are not work authorization.", "HeatCast/GroundCast remain in current snapshots; this hourly projection uses provider weather and soil inputs, not invented ML predictions."],
-    sites: snapshot.sites.map(site => ({ site, snapshot: frame(site) })),
+    sites: snapshot.sites.map(site => {
+      const risk = frame(site);
+      return { site, snapshot: risk, ...(completion ? { completion: siteDataPreview(completeSiteData(site, risk.observation, target, hour === 0 ? points.get(site.id) : undefined)) } : {}) };
+    }),
   };
 }

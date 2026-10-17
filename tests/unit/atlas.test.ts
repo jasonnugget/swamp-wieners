@@ -99,3 +99,19 @@ test("projected warnings preserve real check timestamps or unknown provenance, n
   assert.equal(run().observation.provenance.fieldEvidence["flood.floodAlert"].fetchedAt, null);
   assert.equal(riskAtlas(snapshot, store, 72, now).sites[0].snapshot.observation.flood.floodAlert, null);
 }));
+
+test("optional demo companions fill every field for every hour without changing authoritative risk, coverage or holds", () => fixture((store, snapshot) => {
+  const before = structuredClone(snapshot);
+  for (const hour of [0, 24, 72]) {
+    const raw = riskAtlas(snapshot, store, hour, now), completed = riskAtlas(snapshot, store, hour, now, true);
+    for (const [index, entry] of completed.sites.entries()) {
+      assert.deepEqual(entry.snapshot, raw.sites[index].snapshot);
+      assert.equal(raw.sites[index].completion, undefined);
+      assert.equal(entry.completion!.usage, "DEMO_ONLY");
+      assert.equal(Object.keys(entry.completion!.fields).length, 34);
+      for (const group of Object.values(entry.completion!.scenario)) for (const value of Object.values(group)) assert.notEqual(value, null);
+      assert.equal(entry.completion!.completeness.notApplicable, 0);
+    }
+  }
+  assert.deepEqual(snapshot, before);
+}));

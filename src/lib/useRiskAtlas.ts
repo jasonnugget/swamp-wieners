@@ -14,7 +14,7 @@ export function useRiskAtlas(enabled: boolean, hour: number, sites: Site[], curr
     setLoading(true); setError("");
     // Coalesce SSE bursts and fast slider gestures into one national request.
     const timer = setTimeout(() => {
-      void fetch(`/api/risk/atlas?hour=${hour}`, { signal: AbortSignal.any([abort.signal, AbortSignal.timeout(25000)]) })
+      void fetch(`/api/risk/atlas?hour=${hour}&completion=1`, { signal: AbortSignal.any([abort.signal, AbortSignal.timeout(25000)]) })
         .then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.error ?? "Risk atlas unavailable"); return data as RiskAtlas; })
         .then(data => { if (!abort.signal.aborted) { if (data.version !== 1 || data.hour !== hour || !Array.isArray(data.sites)) throw new Error("Invalid risk atlas response"); setAtlas(data); } })
         .catch(e => { if (!abort.signal.aborted) setError(e instanceof Error ? e.message : "Risk atlas unavailable"); })

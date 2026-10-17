@@ -20,3 +20,5 @@ Directory READMEs describe the nearby files. These documents explain behavior th
 `assets/frontend-*.jpg` are browser captures for the frontend case study. They document the audited iteration and are maintained with that report; their generated capture data belongs in this parent context.
 
 `assets/supervisor-atlas-*.png` are production-build captures of the redesigned canonical atlas, maintained with [the current UI audit](ui-audit.md). They show persisted provider evidence without injected weather fixtures; the audit documents capture settings and limits.
+
+`assets/supervisor-demo-completion.png` shows the subsequent demo gap-fill controls and synthetic reading labels, maintained with the UI audit.

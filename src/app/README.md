@@ -27,3 +27,5 @@ Homepage and page-introduction copy follows the supplied PlanIT Control SwampHac
 The atlas receives canonical `siteRisks` for immediate/offline state and refreshes through `/api/risk/atlas`. Workspace updates from report creation, triage confirmation and resolution invalidate the batched frame. The priority list uses the same current canonical scores, shows coverage/confidence, and places active holds first. Significant risk comes next; insufficient-data sites precede apparently safe, well-observed sites. Historical model and briefing panels keep their explicit replay/forecast labels.
 
 Site intelligence also renders the selected plant’s current canonical observation and source details through the shared map evidence components. This section is labeled current evidence; the neighboring historical forecasts, model windows and replay decisions retain their own time context.
+
+The current-evidence section mounts `SiteObservationPreview` for the inspected plant. It requests the backend’s demo companion and offers the same source-only switch as Conditions. Hypothetical values do not change the canonical priority list or period-specific decisions.

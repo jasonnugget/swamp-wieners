@@ -31,7 +31,7 @@ import { cacheAssets, loadSnapshot, readCachedSnapshot, request } from "../lib/a
 import SiteMap from "../components/SiteMap";
 import ForecastChart from "../components/ForecastChart";
 import WorkWindows from "../components/WorkWindows";
-import ObservationDetails from "../components/site-map/ObservationDetails";
+import { SiteObservationPreview } from "../components/site-map/ObservationDetails";
 import SourceDetails from "../components/site-map/SourceDetails";
 import LoadingScreen from "./LoadingScreen";
 import HomePage from "./HomePage";
@@ -642,7 +642,7 @@ export default function App() {
               </section>
               {snapshot.siteRisks[site.id] && <section className="site-observation-panel" aria-label="Current environmental evidence">
                 <header><div><h2>Every reading, in context.</h2><p>Current environmental evidence for {site.name}. Model forecasts and replay decisions retain their own time periods above.</p></div><div><strong>{snapshot.siteRisks[site.id].observation.coverage.percent.toFixed(0)}%</strong><p>source coverage</p></div></header>
-                <ObservationDetails observation={snapshot.siteRisks[site.id].observation} timezone={site.timezone}/>
+                <SiteObservationPreview siteId={site.id} observation={snapshot.siteRisks[site.id].observation} timezone={site.timezone}/>
                 <details><summary>Sources & plant record</summary><SourceDetails snapshot={snapshot.siteRisks[site.id]} site={site}/></details>
               </section>}
               <div className="handoff-callout">
