@@ -97,3 +97,9 @@ All plants pass through `server/pipeline/`: batched collection, normalization, h
 Numerical scoring is shared across live, replay and briefing adapters through `shared/risk-scoring.ts`. JEV classifications require confirmation before supplying semantic severity floors; selected crew holds remain independent. [Scoring details](risk-scoring.md) record the formulas and assumptions.
 
 The atlas presentation uses a viewport-filling renderer with floating navigation, region controls, layer dock, forecast filmstrip and a collapsible evidence drawer. Drawer state and motion stay local to map components. GSAP handles scoped visual transitions; it does not change environmental values or the scene’s update pipeline. Details and screenshots are in the [immersive atlas audit](immersive-atlas.md).
+
+## Hypothetical atlas scenarios
+
+The separate simulation mode is browser-local. `shared/simulation.ts` computes idealized moving wind/rain fields, accumulated rainfall and cumulative excess above an assumed drainage rate for actual plant coordinates. `src/features/simulation/` owns configuration, playback, site comparisons and JSON export. `site-map/simulation-scene.ts` owns reusable Three.js overlays; `scenario-geometry.ts` supplies geographic footprints and framing for both renderers. The flat fallback keeps the scenario usable without WebGL.
+
+The scenario contract never enters `SiteRiskSnapshot`, provider records or task policy. Canonical beacons stay current while overlays show hypothetical effects; the inspector presents the newest available workspace/atlas controls separately. A new workspace hold remains visible even if the atlas refresh fails. The simulation does not model terrain, flood depth, storm surge, damage, generation loss or restoration. [Equations and research](atlas-simulation.md) explain the numerical assumptions.

@@ -19,6 +19,8 @@ Local browser calibration uses 240 training, 96 validation, and 192 test samples
 
 WebGPU inference and a complete optimizer update are attempted on the actual device. The interface reports the backend used. WebGL and CPU are explicit fallbacks. Browser capability detection alone is not evidence of successful GPU training.
 
+The atlas [scenario lab](atlas-simulation.md) is a separate deterministic experiment. It uses user-assumed storm tracks, idealized wind/rain profiles and a rainfall-excess integral; it is not a trained hurricane, inundation or outage model. Scenario outputs never train, calibrate or replace HeatCast, GroundCast or canonical task decisions. The equations and their limitations are documented separately from the evaluated models above.
+
 ### Rebuild from sources
 
 ```bash

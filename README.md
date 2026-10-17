@@ -43,6 +43,7 @@ For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter
 - Batched Open-Meteo weather/soil inputs, official NWS alerts, nearby USGS stages, FEMA exposure and public wildlife context for all sites. FIRMS supports keyless regional downloads and optional keyed area queries; lightning modes distinguish unavailable, recorded live events and replay. Source-specific caches, expiry and backoff preserve unknowns on failure.
 - Continuous weather, heat, lightning, flood, wildfire, soil and wildlife channels; dominant risk plus bounded secondary compounding; separate task policy. Ordinary crew reports do not force risk to 10.
 - An authoritative 3D risk atlas with eleven layers, site explanations, coverage/confidence, current overrides and a backend-scored 72-hour timeline loaded on demand for the selected plant.
+- A separate atlas scenario lab with invented hurricane and inland-rain tracks, adjustable wind/rain/drainage assumptions, animated geographic footprints, a 72-hour simulation clock, plant exposure comparisons and JSON export. Rainfall excess is hypothetical runoff generation, not flood depth or an operational forecast; see [the model and limits](docs/atlas-simulation.md).
 
 ## Repository context
 

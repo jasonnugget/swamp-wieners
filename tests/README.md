@@ -14,17 +14,17 @@ Generated screenshots, traces, and reports are ignored. Do not add documentation
 
 ## Latest implementation verification
 
-The reference-driven website redesign was verified on October 17, 2026. The [reference design study](../docs/reference-design.md) records sources, screenshots, accessibility checks and verification limits.
+The atlas scenario lab was verified on October 17, 2026. The [simulation study](../docs/atlas-simulation.md) records sources, equations, screenshots and verification limits. The [reference design study](../docs/reference-design.md) preserves the earlier website redesign checks.
 
 | Check | Recorded result |
 | --- | --- |
-| `npm test` | 140 passed, 0 failed |
-| `npm run test:e2e` | 37 passed, 0 failed, 4.0 minutes |
+| `npm test` | 149 passed, 0 failed |
+| `npm run test:e2e` | 41 passed, 0 failed, 4.7 minutes |
 | `npm run build` | Passed through the full browser suite’s build step; browser-ML bundle-size warning remains |
 | TypeScript | Passed as part of `npm run build` |
 | Lint | No lint script is configured |
 
-The full browser suite returned exit 0. New preview checks cover shared plant selection through atlas navigation and reload, stale/cached unknown readings with retained holds, and missing local geography at 320px. Existing checks retain crew handoff, reporting, model calibration, offline inference, source distinctions, forecast scrubbing and mobile layout. The crew/SSE test selects a plant whose canonical risk is unknown because prior screening checks can leave legitimate provider-cache records after a demo reset.
+The full browser suite returned exit 0. New simulation checks cover canonical beacon and hold separation, JSON export and drainage comparison, phone/keyboard/reduced-motion controls, flat fallback, a newer workspace hold during atlas failure and offline scenario calculation. The nine simulation unit checks cover all 285 plants, geographic motion, bounded fields, accumulation, drainage, peak wind and deterministic results. Existing checks retain crew handoff, reporting, model calibration, offline inference, source distinctions, forecast scrubbing and mobile layout. The crew/SSE test selects a plant whose canonical risk is unknown because prior screening checks can leave legitimate provider-cache records after a demo reset.
 
 These are implementation-run results. Source-adapter fixture tests do not establish live credentials, nationwide coverage or calibrated field-safety performance. The completion command was also run against the local national catalog; its output records actual source/synthetic/N/A counts and source failures. See [provider verification boundaries](../docs/environment-providers.md) and [completion semantics](../docs/site-data-completion.md).
 

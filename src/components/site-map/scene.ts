@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { mapNearPlane } from "./camera";
+import type { ScenarioFrame } from "../../../shared/simulation";
+import { createSimulationOverlay } from "./simulation-scene";
+import { scenarioBounds, type SimulationLayer } from "./scenario-geometry";
 import type { Decision, HazardReport, Site } from "../../../shared/types";
 import { REGION_BOUNDS, type MapRegion } from "../../../shared/weather";
 import {
@@ -23,12 +26,16 @@ export interface SceneData {
   selected: string;
   reports: HazardReport[];
   pin?: { latitude: number; longitude: number };
+  simulation?: ScenarioFrame;
+  simulationLayer?: SimulationLayer;
+  simulationPlaying?: boolean;
 }
 export interface MapScene {
   update(data: SceneData): void;
   fit(): void;
   focus(site: Pick<Site, "latitude" | "longitude">): void;
   region(region: MapRegion): void;
+  frameScenario(frame: ScenarioFrame): void;
   topDown(value: boolean): void;
   rotate(value: boolean): void;
   zoom(factor: number): void;
@@ -132,6 +139,13 @@ export function createMapScene(
     beacons = new THREE.Group(),
     reports = new THREE.Group();
   scene.add(land, beacons, reports);
+  const simulation = callbacks.pin ? undefined : createSimulationOverlay();
+  if (simulation) scene.add(simulation.group);
+  const simulationLabel = document.createElement("div");
+  simulationLabel.className = "scenario-map-label";
+  simulationLabel.dataset.testid = "scenario-map-label";
+  simulationLabel.hidden = true;
+  labels.appendChild(simulationLabel);
   const siteLabels = document.createElement("div");
   labels.appendChild(siteLabels);
   const abort = new AbortController();
@@ -243,6 +257,16 @@ export function createMapScene(
             : new THREE.Vector3(0.8, distance * 0.8, distance * 0.9),
         ),
     );
+  }
+  function frameScenario(frame: ScenarioFrame) {
+    overview = undefined;
+    rotating = false;
+    controls.autoRotate = false;
+    const bounds = scenarioBounds(frame);
+    const center = new THREE.Vector3((bounds.west + bounds.east) / 2, LAND_TOP, (bounds.north + bounds.south) / 2);
+    const availableWidth = camera.aspect > 1.2 ? .72 : .9;
+    const distance = Math.max((bounds.east - bounds.west) / Math.max(camera.aspect * availableWidth, .35), bounds.south - bounds.north, 3) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.3;
+    animateTo(center, center.clone().add(top ? new THREE.Vector3(0, distance, .001) : new THREE.Vector3(0, distance * .85, distance * .72)));
   }
   function resize() {
     const { width, height } = container.getBoundingClientRect();
@@ -379,6 +403,12 @@ export function createMapScene(
   }
   function update(next: SceneData) {
     data = next;
+    simulation?.update(data.simulation, data.simulationLayer ?? "wind", data.sites);
+    simulationLabel.hidden = !data.simulation;
+    simulationLabel.textContent = data.simulation ? `SIMULATED · ${data.simulation.active ? data.simulation.kind === "hurricane" ? "Hurricane" : "Rainfall" : "Track complete"}` : "";
+    canvas.dataset.simulation = data.simulation ? "true" : "false";
+    canvas.dataset.simulationHour = data.simulation ? String(data.simulation.hour) : "";
+    canvas.dataset.simulationLayer = data.simulationLayer ?? "wind";
     canvas.dataset.riskLayer = data.layer ?? "risk";
     canvas.dataset.riskHour = String(data.hour ?? 0);
     const signature = JSON.stringify([data.sites.map(s => [s.id, s.latitude, s.longitude, s.name]), data.sites.map(s => data.decisions[s.id]?.lightningUntil), data.reports, data.pin]);
@@ -656,6 +686,7 @@ export function createMapScene(
         mesh.scale.setScalar(1 + t * 1.6);
         (mesh.material as THREE.MeshBasicMaterial).opacity = base * (1 - t);
       });
+    simulation?.tick(delta, !!data.simulationPlaying && !reduced.matches);
     renderer.render(scene, camera);
     const width = container.clientWidth,
       height = container.clientHeight;
@@ -676,6 +707,13 @@ export function createMapScene(
         priority + Math.round((1 - projected.z) * 100),
       );
     }
+    if (data.simulation) {
+      const center = project(data.simulation.center.latitude, data.simulation.center.longitude);
+      projected.set(center.x, LAND_TOP + .65, center.z).project(camera);
+      const x = (projected.x + 1) * width / 2, y = (1 - projected.y) * height / 2;
+      simulationLabel.style.visibility = projected.z > -1 && projected.z < 1 && x > 0 && x < width && y > 0 && y < height ? "visible" : "hidden";
+      simulationLabel.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
+    }
     canvas.dataset.camera = [
       controls.getAzimuthalAngle(),
       controls.getPolarAngle(),
@@ -694,6 +732,7 @@ export function createMapScene(
     region,
     fit,
     focus,
+    frameScenario,
     resize,
     topDown(value) {
       top = value || !!callbacks.pin;
@@ -743,6 +782,7 @@ export function createMapScene(
       canvas.removeEventListener("pointermove", hover);
       canvas.removeEventListener("pointerleave", leave);
       canvas.removeEventListener("contextmenu", preventMenu);
+      if (simulation) { scene.remove(simulation.group); simulation.dispose(); }
       disposeGroup(scene);
       renderer.dispose();
       renderer.forceContextLoss();

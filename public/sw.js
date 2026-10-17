@@ -1,4 +1,4 @@
-const CACHE = "planit-field-v11";
+const CACHE = "planit-field-v12";
 const CORE = [
   "/",
   "/favicon.svg",

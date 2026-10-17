@@ -231,10 +231,9 @@ export default function App() {
             </div>
           )}
           {offline && (
-            <div className="offline-banner">
+            <div className="offline-banner" role="status">
               <WifiOff weight="light" aria-hidden="true" size={16} />
-              Showing the last saved workspace. Browser inference and training
-              remain available with cached assets. Reconnect to share reports.
+              {page === "atlas" ? "Offline · saved evidence. Verify conditions before work." : "Showing the last saved workspace. Browser inference and training remain available with cached assets. Reconnect to share reports."}
             </div>
           )}
           {page !== "home" && <div className="site-context">

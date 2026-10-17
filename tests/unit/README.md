@@ -8,6 +8,7 @@
 | `engine.test.ts` | Site-local briefing timing, carry-forward reports, duplicate prevention across restart, and timezone boundaries |
 | `data.test.ts` | National plant catalog, preserved fifty-site model cohort, geographic holdouts, chronological samples, feature availability, and Python/JS inference parity |
 | `map-projection.test.ts` | Geographic projection round trips, distinct unknown-risk styling and 24-bit depth separation across zoom scales |
+| `simulation.test.ts` | Deterministic storm exposure, eye/eyewall/footprint geometry, cumulative rain excess, drainage and speed sensitivity, offsets, input bounds and isolation from operational decisions |
 | `windows.test.ts` | Consecutive forecast windows and task-specific thresholds |
 
 Run `npm test` from the root. Tests use Node's test runner through `tsx`; no running API or external service is required. Engine tests create and clean temporary SQLite directories. Artifact tests read bundled public exports rather than ignored raw downloads.

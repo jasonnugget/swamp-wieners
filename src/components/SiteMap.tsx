@@ -11,6 +11,8 @@ import {
   Plus,
   ArrowCounterClockwise as RotateCcw,
   IconContext,
+  Hurricane,
+  GlobeHemisphereWest,
 } from "@phosphor-icons/react";
 import type { Decision, HazardReport, Site } from "../../shared/types";
 import { TASK_LABELS } from "../../shared/policy";
@@ -23,9 +25,12 @@ import { useRiskAtlas } from "../lib/useRiskAtlas";
 import { atlasValue, atlasColor, atlasFraction, ATLAS_LAYERS, type RiskLayer } from "../../shared/atlas";
 import type { SiteRiskSnapshot } from "../../shared/risk";
 import type { MapRegion } from "../../shared/weather";
+import { useSimulation } from "../features/simulation/useSimulation";
+import SimulationControls from "../features/simulation/SimulationControls";
 const EMPTY_RISKS: Record<string, SiteRiskSnapshot> = {};
 import "../styles/site-map.css";
 import "../styles/weather-atlas.css";
+import "../styles/simulation.css";
 
 export default function SiteMap({
   sites,
@@ -71,8 +76,10 @@ export default function SiteMap({
     [hour, setHour] = useState(0),
     [focusedSite, setFocusedSite] = useState<string | null>(null),
     [region, setRegion] = useState<MapRegion>("mainland");
+  const simulation = useSimulation(sites, reducedMotion);
+  const [simulationInspection, setSimulationInspection] = useState(0);
   const atlas = useRiskAtlas(!onPin, 0, sites, risks);
-  const forecast = useRiskAtlas(!onPin && focusedSite === selected && hour > 0, hour, sites, risks, selected);
+  const forecast = useRiskAtlas(!onPin && !simulation.enabled && focusedSite === selected && hour > 0, hour, sites, risks, selected);
   const inspection = hour > 0 ? forecast : atlas;
   const mapDecisions = useMemo(() => onPin ? decisions : Object.fromEntries((atlas.atlas?.sites ?? []).map(({ site, snapshot: r }) => [site.id, {
     index: r.risk, tasks: r.tasks, unknownCount: r.channels.filter(c => c.score === null).length,
@@ -86,9 +93,17 @@ export default function SiteMap({
       return [site.id, { value, color: atlasColor(value, layer), fraction: value === null ? 0 : atlasFraction(value, layer), confidence: frame?.confidence ?? 0, unit: ATLAS_LAYERS[layer].unit, label: ATLAS_LAYERS[layer].name }];
     }));
   }, [onPin, sites, atlas.atlas, layer]);
+  const currentRisks = useMemo(() => {
+    const latest = Object.fromEntries((atlas.atlas?.sites ?? []).map(p => [p.site.id, p.snapshot]));
+    // SSE can deliver a new hold before the separate atlas request succeeds.
+    for (const [id, risk] of Object.entries(risks)) {
+      if (!latest[id] || Date.parse(risk.generatedAt) > Date.parse(latest[id].generatedAt)) latest[id] = risk;
+    }
+    return latest;
+  }, [atlas.atlas, risks]);
   const data = useRef<SceneData>({ sites, decisions: mapDecisions, selected, reports, pin, visuals, hour: 0, layer });
   callbacks.current = { onSelect: inspectSite, onPin };
-  data.current = { sites, decisions: mapDecisions, selected, reports, pin, visuals, hour: 0, layer };
+  data.current = { sites, decisions: mapDecisions, selected, reports, pin, visuals, hour: 0, layer, simulation: simulation.frame, simulationLayer: simulation.layer, simulationPlaying: simulation.playing };
   const active = sites.find((s) => s.id === (hovered ?? selected)) ?? sites[0],
     decision = active ? mapDecisions[active.id] : undefined;
   const heldTasks = decision?.tasks.filter((t) => t.state === "HOLD") ?? [];
@@ -152,7 +167,10 @@ export default function SiteMap({
   }, []);
   useEffect(() => {
     scene.current?.update(data.current);
-  }, [sites, mapDecisions, selected, reports, pin, visuals, layer, ready]);
+  }, [sites, mapDecisions, selected, reports, pin, visuals, layer, ready, simulation.frame, simulation.layer, simulation.playing]);
+  useEffect(() => {
+    if (simulation.enabled && data.current.simulation) scene.current?.frameScenario(data.current.simulation);
+  }, [simulation.enabled, simulation.config.presetId, simulation.config.latitudeOffset, simulation.config.longitudeOffset, simulation.config.radiusKm, ready]);
   useEffect(() => {
     if (previousSelected.current === selected) return;
     previousSelected.current = selected;
@@ -197,6 +215,7 @@ export default function SiteMap({
   }, [expanded]);
 
   function inspectSite(id: string) {
+    if (simulation.enabled) setSimulationInspection(value => value + 1);
     setFocusedSite(id);
     setInspectorOpen(true);
     onSelect(id);
@@ -241,11 +260,19 @@ export default function SiteMap({
     setRotating(value);
     scene.current?.rotate(value);
   }
+  function setSimulationMode(enabled: boolean) {
+    leaveSite();
+    setRotating(false);
+    scene.current?.rotate(false);
+    simulation.setEnabled(enabled);
+    setSimulationInspection(0);
+    if (!enabled) scene.current?.region(region);
+  }
   return (
     <IconContext.Provider value={{ weight: "light" }}>
     <div
       ref={root}
-      className={`map-wrap command-map ${onPin ? "is-pinning" : "weather-atlas"}  ${expanded ? "is-expanded" : ""}`}
+      className={`map-wrap command-map ${onPin ? "is-pinning" : "weather-atlas"} ${simulation.enabled ? "is-simulating" : ""} ${expanded ? "is-expanded" : ""}`}
       data-testid="site-map"
       aria-label={onPin ? "Hazard location map" : "Site risk map"}
     >
@@ -264,6 +291,9 @@ export default function SiteMap({
           reports={reports}
           onPin={onPin}
           pin={pin}
+          simulation={simulation.frame}
+          simulationLayer={simulation.layer}
+          simulationPlaying={simulation.playing}
         />
       )}
       {!ready && (
@@ -275,24 +305,28 @@ export default function SiteMap({
       </div>
       {!onPin && (
         <>
+          <div className="atlas-mode-switch" role="group" aria-label="Atlas mode">
+            <button type="button" aria-pressed={!simulation.enabled} onClick={() => setSimulationMode(false)}><GlobeHemisphereWest size={16} aria-hidden="true"/>Current conditions</button>
+            <button type="button" aria-pressed={simulation.enabled} onClick={() => setSimulationMode(true)}><Hurricane size={17} aria-hidden="true"/>Simulate</button>
+          </div>
           <div className="scene-heading">
             <span className="scene-mode">
               <span />
-              {fallback ? "2D SITE MAP" : "PLANIT / RISK ATLAS"}
+              {simulation.enabled ? "PLANIT / SCENARIO LAB" : fallback ? "2D SITE MAP" : "PLANIT / RISK ATLAS"}
             </span>
-            {standalone ? <h1>Site risk, in perspective.</h1> : <h4>Site risk, in perspective.</h4>}
-            <p>See the conditions. Select a site for its outlook.</p>
+            {standalone ? <h1>{simulation.enabled ? <>What if the<br/>storm shifts?</> : "Site risk, in perspective."}</h1> : <h4>{simulation.enabled ? "Explore a storm scenario." : "Site risk, in perspective."}</h4>}
+            <p>{simulation.enabled ? "Move the track. Explore the exposure. Prepare the next decision." : "See the conditions. Select a site for its outlook."}</p>
           </div>
           <div className="scene-top-actions">
             <button
               type="button"
-              onClick={reset}
+              onClick={() => simulation.frame ? scene.current?.frameScenario(simulation.frame) : reset()}
               disabled={!ready || fallback}
-              aria-label="Fit all sites"
+              aria-label={simulation.enabled ? "Fit storm track" : "Fit all sites"}
               title="Fit the region"
             >
               <RotateCcw aria-hidden="true" size={13} />
-              <span>Fit plants</span>
+              <span>{simulation.enabled ? "Fit storm" : "Fit plants"}</span>
             </button>
             <button
               ref={showcaseButton}
@@ -375,14 +409,18 @@ export default function SiteMap({
           </button>
         )}
       </div>
-      {!onPin && <RiskControls
+      {!onPin && !simulation.enabled && <RiskControls
         data={inspection} currentData={atlas} showTimeline={focusedSite === selected} sites={sites} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
         onLayer={setLayer} onHour={setHour}
         onRegion={selectRegion}
         onSelect={inspectSite}
         inspectorOpen={inspectorOpen} onInspector={open => { if (open) inspectSite(selected); else setInspectorOpen(false); }}
       />}
-      {!onPin && active && (
+      {!onPin && simulation.enabled && <SimulationControls simulation={simulation} sites={sites} selected={selected} risks={currentRisks} stale={atlas.stale} reducedMotion={reducedMotion} inspectRequest={simulationInspection} onSelect={inspectSite} onFrame={() => simulation.frame && scene.current?.frameScenario(simulation.frame)} onCurrent={() => {
+        setSimulationMode(false); inspectSite(selected);
+        requestAnimationFrame(() => root.current?.querySelector<HTMLButtonElement>(".atlas-inspector-close")?.focus());
+      }}/ >}
+      {!onPin && !simulation.enabled && active && (
         <div
           className="scene-site-card"
           role="button" tabIndex={0} aria-label="Inspect selected site"
@@ -415,7 +453,7 @@ export default function SiteMap({
           </div>
         </div>
       )}
-      {!onPin && layer === "risk" && (
+      {!onPin && !simulation.enabled && layer === "risk" && (
         <div className="scene-bottom">
           <div className="scene-legend">
             <span>

@@ -6,7 +6,7 @@
 | --- | --- |
 | [app](app/README.md) | Workspace composition, navigation, selected site, and snapshot lifecycle |
 | [components](components/README.md) | Map, chart, and forecast-window presentation shared by workflows |
-| [features](features/README.md) | Model Lab and crew-report workflows |
+| [features](features/README.md) | Model Lab, crew reporting and isolated atlas scenario workflows |
 | [lib](lib/README.md) | HTTP transport, canonical atlas loading, snapshot caching and service-worker registration |
 | [styles](styles/README.md) | Global theme, layout, responsive, and accessibility rules |
 

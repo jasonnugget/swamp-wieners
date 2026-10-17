@@ -18,3 +18,5 @@ The map uses bundled state outlines with schematic Three.js extrusion and beacon
 Run `npm run build` and the [browser tests](../../tests/e2e/README.md) after map or rendering changes. Window calculations are covered under `tests/unit/`.
 
 The atlas’s `ObservationDetails` and `SourceDetails` are also reused by Site intelligence. They expose the complete normalized record and its provenance; formatting lives in `site-map/observations.ts`. The map canvas fills the viewport behind floating controls. A collapsible evidence drawer overlays the scene and scrolls independently; phones start with it closed.
+
+`SiteMap` also composes the isolated [scenario lab](../features/simulation/README.md). Its optional Three.js/flat overlay draws hypothetical wind, rain and cumulative rainfall-excess effects while keeping canonical plant markers unchanged. The scenario feature owns controls and playback; pure calculations live in `shared/simulation.ts` and never change task policy.

@@ -1,0 +1,162 @@
+import { test, expect } from "@playwright/test";
+import { atlasFrame, atlasSites } from "./risk-fixtures";
+import { readFile } from "node:fs/promises";
+
+test("storm simulation explores exposure without changing current unknowns, holds or canonical beacons", async ({ page }) => {
+  const errors: string[] = [], writes: string[] = [], future: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  page.on("request", request => { if (request.method() !== "GET" && request.url().includes("/api/")) writes.push(request.url()); });
+  const canonical = atlasFrame(0, 5);
+  canonical.sites[1].snapshot.observation.provenance.stale = true;
+  await page.route("**/api/snapshot", async route => {
+    const response = await route.fetch();
+    const snapshot = await response.json();
+    snapshot.siteRisks = Object.fromEntries(canonical.sites.map(p => [p.site.id, p.snapshot]));
+    return route.fulfill({ json: snapshot });
+  });
+  await page.route("**/api/risk/atlas?**", route => {
+    if (new URL(route.request().url()).searchParams.get("hour") !== "0") future.push(route.request().url());
+    return route.fulfill({ json: canonical });
+  });
+  await page.addInitScript(id => localStorage.setItem("planit-site", id), atlasSites[1].id);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/?view=atlas");
+  const canvas = page.locator(".three-map-canvas");
+  await expect(canvas).toHaveAttribute("data-geography", "ready");
+  const beacon = page.locator(`.site-beacon[data-site-id="${atlasSites[1].id}"]`);
+  const value = await beacon.getAttribute("data-value"), builds = await canvas.getAttribute("data-beacon-builds");
+  await page.getByRole("button", { name: "Simulate", exact: true }).click();
+  await expect(canvas).toHaveAttribute("data-simulation", "true");
+  await expect(page.getByRole("group", { name: "Environmental layers" })).toHaveCount(0);
+  await expect(page.getByTestId("scenario-map-label")).toContainText("SIMULATED");
+  await page.getByLabel("Simulation hour", { exact: true }).fill("48");
+  await expect(canvas).toHaveAttribute("data-simulation-hour", "48");
+  await page.getByRole("button", { name: "Rainfall excess", exact: true }).click();
+  await expect(canvas).toHaveAttribute("data-simulation-layer", "runoff");
+  await page.getByRole("button", { name: "Site effects", exact: true }).click();
+  await expect(page.getByLabel("Independent current controls")).toContainText("Current risk unknown");
+  await expect(page.getByLabel("Independent current controls")).toContainText("HOLD");
+  await expect(page.getByLabel("Independent current controls")).toContainText("Cached / stale");
+  await page.getByLabel("Simulation plant", { exact: true }).selectOption(atlasSites[3].id);
+  await expect(page.getByLabel("Independent current controls")).toContainText("Current risk unknown");
+  await page.getByRole("button", { name: "Build a scenario", exact: true }).click();
+  await page.getByLabel("Storm track", { exact: true }).selectOption("gulf-hurricane");
+  await page.getByLabel("Simulation hour", { exact: true }).fill("48");
+  await page.getByRole("button", { name: "Rainfall excess", exact: true }).click();
+  await page.getByRole("slider", { name: /Drainage assumption/ }).fill("0");
+  const exportRun = async () => {
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Export JSON", exact: true }).click();
+    const download = await downloadPromise;
+    return JSON.parse(await readFile((await download.path())!, "utf8"));
+  };
+  const undrained = await exportRun();
+  expect(undrained.mode).toBe("SIMULATED");
+  expect(undrained.sites).toHaveLength(285);
+  expect(undrained.limitations.join(" ")).toContain("not flood-water depth");
+  const affected = Object.values(undrained.impacts).find((impact: any) => impact.runoffMm > 20) as { siteId: string; runoffMm: number };
+  expect(affected).toBeTruthy();
+  await page.getByRole("slider", { name: /Drainage assumption/ }).fill("50");
+  const drained = await exportRun();
+  expect(drained.impacts[affected.siteId].runoffMm).toBe(0);
+  expect(drained.impacts[affected.siteId].accumulatedRainMm).toBe(undrained.impacts[affected.siteId].accumulatedRainMm);
+  await page.getByRole("button", { name: "Play simulation", exact: true }).click();
+  await expect.poll(() => page.getByLabel("Simulation hour", { exact: true }).inputValue()).not.toBe("48");
+  await page.getByRole("button", { name: "Pause simulation", exact: true }).click();
+  await expect(beacon).toHaveAttribute("data-value", value!);
+  await expect(canvas).toHaveAttribute("data-beacon-builds", builds!);
+  expect(future).toEqual([]); expect(writes).toEqual([]);
+  await page.getByRole("button", { name: "Current conditions", exact: true }).click();
+  await expect(canvas).toHaveAttribute("data-simulation", "false");
+  await expect(page.getByLabel("Simulation hour", { exact: true })).toHaveCount(0);
+  await page.getByLabel("Active site").selectOption(atlasSites[1].id);
+  await expect(page.getByLabel("Active policy overrides")).toContainText("STOP WORK");
+  await expect(beacon).toHaveAttribute("data-value", value!);
+  expect(errors).toEqual([]);
+});
+
+test("simulation supports phone controls, reduced motion, keyboard scrubbing and a 2D fallback", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...args: unknown[]) {
+      if (type === "webgl" || type === "webgl2" || type === "experimental-webgl") return null;
+      return getContext.apply(this, [type, ...args] as Parameters<typeof getContext>);
+    } as typeof getContext;
+  });
+  await page.goto("/?view=atlas");
+  await expect(page.getByTestId("flat-map")).toBeVisible();
+  await page.getByRole("button", { name: "Simulate", exact: true }).click();
+  await expect(page.getByTestId("flat-map")).toHaveAttribute("data-simulation", "true");
+  await expect(page.getByRole("button", { name: "Play simulation", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Show scenario controls", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Hide scenario controls", exact: true })).toBeFocused();
+  await page.getByLabel("Storm track", { exact: true }).selectOption("inland-flood");
+  await expect(page.getByRole("button", { name: "Rainfall excess", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("slider", { name: /Peak rainfall rate/ }).fill("60");
+  await page.getByLabel("Storm track", { exact: true }).focus();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Show scenario controls", exact: true })).toBeFocused();
+  await expect(page.locator(".scenario-shell")).toHaveAttribute("inert", "");
+  await page.getByLabel("Simulation hour", { exact: true }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByLabel("Simulation hour", { exact: true })).toHaveValue("24.5");
+  await expect(page.locator(".flat-scenario-overlay")).toHaveCount(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight)).toBe(true);
+  await page.screenshot({ path: "test-results/simulation-mobile-fallback.png" });
+  await page.getByRole("button", { name: "Show scenario controls", exact: true }).click();
+  await page.getByRole("button", { name: "Site effects", exact: true }).click();
+  await page.getByRole("button", { name: "Open current evidence", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Hide site details", exact: true })).toBeFocused();
+  await page.getByRole("button", { name: "Simulate", exact: true }).click();
+  await expect(page.getByLabel("Simulation hour", { exact: true })).toHaveValue("24.5");
+});
+
+test("new workspace holds remain visible when the separate atlas refresh fails", async ({ page }) => {
+  await page.addInitScript(() => {
+    const schedule = window.setInterval.bind(window);
+    window.setInterval = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => schedule(handler, timeout === 15000 ? 1000 : timeout, ...args)) as typeof window.setInterval;
+  });
+  const original = atlasFrame(), newer = structuredClone(original);
+  const selected = atlasSites[3].id;
+  const updated = newer.sites[3].snapshot;
+  updated.generatedAt = new Date(Date.parse(original.sites[3].snapshot.generatedAt) + 1000).toISOString();
+  updated.tasks[0] = { ...updated.tasks[0], state: "HOLD", reasons: ["Fixture crew access closure"] };
+  updated.activeOverrides = [{ id: "fixture-new-crew-hold", hazard: "flood", source: "crew", state: "HOLD", tasks: [updated.tasks[0].task], reason: "Fixture crew access closure", expiresAt: null }];
+  let failed = false;
+  await page.route("**/api/snapshot", async route => {
+    const response = await route.fetch(), snapshot = await response.json();
+    snapshot.siteRisks = Object.fromEntries((failed ? newer : original).sites.map(p => [p.site.id, p.snapshot]));
+    return route.fulfill({ json: snapshot });
+  });
+  await page.route("**/api/risk/atlas?**", route => failed ? route.fulfill({ status: 503, json: { error: "Fixture atlas outage" } }) : route.fulfill({ json: original }));
+  await page.addInitScript(id => localStorage.setItem("planit-site", id), selected);
+  await page.goto("/?view=atlas");
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: "Simulate", exact: true }).click();
+  await page.getByRole("button", { name: "Site effects", exact: true }).click();
+  failed = true;
+  await expect(page.getByLabel("Independent current controls")).toContainText("Fixture crew access closure", { timeout: 15000 });
+  await expect(page.getByLabel("Independent current controls")).toContainText("Current risk unknown");
+  await page.getByLabel("Simulation hour", { exact: true }).fill("0");
+  await expect(page.getByLabel("Independent current controls")).toContainText("HOLD");
+});
+
+test("cached atlas can calculate new scenarios after an offline reload", async ({ page, context }) => {
+  await page.goto("/?view=atlas");
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute("data-geography", "ready");
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute("data-geography", "ready", { timeout: 30000 });
+  await page.getByRole("button", { name: "Simulate", exact: true }).click();
+  await page.getByLabel("Storm track", { exact: true }).selectOption("gulf-hurricane");
+  await page.getByLabel("Simulation hour", { exact: true }).fill("60");
+  await page.getByRole("button", { name: "Rainfall excess", exact: true }).click();
+  await expect.poll(async () => Number(await page.getByTestId("scenario-exposed-count").textContent())).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Site effects", exact: true }).click();
+  await expect(page.getByLabel("Independent current controls")).toContainText("Current risk unknown");
+  await expect(page.getByLabel("Independent current controls")).toContainText("Cached / stale");
+  await context.setOffline(false);
+});

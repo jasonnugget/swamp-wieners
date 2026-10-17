@@ -47,3 +47,9 @@ The evidence shell has an independent close button that remains visible while it
 Land extrusion, lighting and grid colors are schematic presentation. Report pin geometry and policy boundaries retain their original values. Adaptive depth precision, data/source labels, all 34 fields, unknown states and backend scoring remain unchanged. See [the immersive atlas audit](../../../docs/immersive-atlas.md).
 
 The field-intelligence theme uses mineral ocean/fog, pale green land and darker schematic edges for the national view. These are presentation colors only. Risk colors, measurement scales, topology, pin coordinates, projection, camera limits and depth-precision settings are unchanged. The close report-pinning view keeps its dark map. The inspector has a rounded mineral enclosure; its contents remain independently scrollable.
+
+## Simulated weather overlay
+
+`simulation-scene.ts` draws the optional scenario frame from `shared/simulation.ts` in its own Three.js group. The storm eye, spiral bands, rainfall particles, completed/projected track and site exposure rings are simulated presentation; canonical plant beacons retain their current values and materials. Runoff rings show schematic site exposure, never flood extent, water depth or terrain. `scenario-geometry.ts` calculates the geodesic radius outline and projected route bounds for both renderers.
+
+`SceneData.simulation`, `simulationLayer` and `simulationPlaying` control this overlay. `MapScene.frameScenario(frame)` fits the route with its radius. Scrubbing updates existing buffers and transforms; changing the site count only reallocates the instanced exposure rings when capacity grows. Particle and spiral motion runs only during scenario playback, stops for reduced motion, and follows the renderer's offscreen/hidden-tab pause. Overlay resources are disposed with the scene. `FlatMap` accepts the same scenario props and retains plant selection while drawing a static, labeled track and footprint.
