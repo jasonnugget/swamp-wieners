@@ -3,7 +3,7 @@
 **Iteration:** editorial website with a dedicated fullscreen atlas  
 **Audit date:** October 17, 2026  
 **Challenge:** user-supplied text from `PlanIT_Control_SwampHacks_Brief.docx`, PlanIT Control / Sperry Tech  
-**Scope:** current implementation summary plus the original visual-design audit. Browser captures and manual UX findings below predate the canonical risk-atlas migration; they are retained as historical design evidence, not refreshed captures.
+**Scope:** current implementation summary plus the original visual-design audit. The original browser captures and manual UX findings below predate the canonical risk-atlas migration. Current supervisor screenshots and interaction checks are recorded in the [UI audit](ui-audit.md).
 
 ## The problem behind the interface
 
@@ -13,17 +13,17 @@ The design problem is how to get those different kinds of evidence into the same
 
 PlanIT Control organizes that work around real power plant locations used as demonstration job sites. Its interface supports a supervisor reviewing restrictions and a crew member contributing location-specific knowledge. It does not establish that these plants are active construction projects or that its policies are ready for operational deployment.
 
-## The iteration being preserved
+## Visual identity and current supervisor layout
 
-The user identified this frontend as the strongest iteration so far. This pass preserves its layout, artwork, typography, navigation, and motion. The later backend/map work preserves this visual identity while replacing the independent weather path with canonical risk frames, evidence inspection and confidence-aware ranking.
+The user identified this frontend as the strongest iteration so far. The homepage retains its artwork, typography, navigation, and motion. The current supervisor redesign replaces overlapping map controls with a dedicated canvas and a paper evidence panel. Overview, Conditions, and Sources views expose risk, all 34 normalized fields, provider health, model coverage, and plant metadata. On mobile, the panel follows the map rather than covering it. The later backend/map work preserves this visual identity while replacing the independent weather path with canonical risk frames, evidence inspection and confidence-aware ranking.
 
 The website opens with an editorial page. A generative field-line sculpture accompanies a two-line headline, **“The field. In perspective.”** Satoshi typography, warm paper surfaces, copper accents, straight edges, and substantial spacing establish the visual language. The homepage avoids a grid of dashboard statistics or rounded feature cards.
 
-The interactive atlas has its own URL and fills the viewport beneath navigation and site selection. It is not mounted behind the homepage. Site ranking and work decisions belong to a separate Site intelligence page. This separation follows the user’s requested design direction and keeps the opening experience independent of the map renderer. The atlas now opens on Site risk and renders all 285 plants from `/api/risk/atlas`. Eleven measurement/risk layers and the 72-hour slider use the same backend snapshot pipeline. Arbitrary-point weather requests and statewide weather samples are no longer map consumers.
+The interactive atlas has its own URL and fills the viewport beneath navigation and site selection. It is not mounted behind the homepage. The full site ranking remains on Site intelligence; the atlas now includes current task decisions and a short priority preview. This separation follows the user’s requested design direction and keeps the opening experience independent of the map renderer. The atlas now opens on Site risk and renders all 285 plants from `/api/risk/atlas`. Eleven measurement/risk layers and the 72-hour slider use the same backend snapshot pipeline. Arbitrary-point weather requests and statewide weather samples are no longer map consumers.
 
 The design references used in this iteration are [Lusion](https://www.awwwards.com/sites/lusion), for real-time abstract imagery, and [Active Theory V6](https://www.awwwards.com/sites/active-theory-v6), for open typography and immersive navigation. The sculpture is original canvas artwork. Reference-site imagery is not bundled.
 
-### Browser captures
+### Original browser captures
 
 These captures show the original editorial copy/design iteration, before the canonical atlas migration. The atlas image retains superseded weather controls; use the current code and automated risk-atlas tests for present behavior. They use reduced motion so the sculpture and scroll text remain stable. Standard motion includes the animated sculpture, marquee, pinned story heading, and scrubbed word reveals. Weather and safety values in the atlas are application/provider state, not verified on-site observations. No weather fixtures were injected for these captures.
 
@@ -80,7 +80,7 @@ Native links support new tabs and query-string view navigation. Reloads and brow
 | Instant dangerous-condition alerts | Server events refresh connected browsers after changes; holds and countdowns are visible in the workspace. | External feeds poll on schedules. There is no guaranteed instantaneous detection or out-of-browser emergency notification delivery. |
 | Lightning within 10 miles; 30-minute reset | The shared distance/countdown policy supports live detected events and separately labeled replay; the current inspector renders live overrides. | No licensed live network is configured. Demo events stay outside live risk; recorded mode only reads already trusted live events. |
 | Flood warnings after heavy rain near rivers | Live flood scoring combines available rainfall, USGS stage/trend/rolling abnormality, FEMA static exposure and NWS alerts. | Nearby gauges do not verify hydrologic connectivity. FEMA exposure is static; rolling abnormality is not a flood probability or forecast inundation. |
-| Wildfire and wildlife coverage | NWS red flags, credential-gated FIRMS thermal anomalies, crew reports and filtered public iNaturalist context contribute independent evidence. | FIRMS authenticated access remains unverified without a key; anomalies are not fire perimeters. Public wildlife observations are sparse context, not dangerous-encounter predictions. |
+| Wildfire and wildlife coverage | NWS red flags, FIRMS thermal anomalies, crew reports and filtered public iNaturalist context contribute independent evidence. | Keyless regional FIRMS downloads are connected; optional area-API authenticated access remains unverified without a key; anomalies are not fire perimeters. Public wildlife observations are sparse context, not dangerous-encounter predictions. |
 | A next-day report at 6 PM local time | The running server generates one stored briefing per site/date, carries unresolved reports, and supports download. | The Node process must remain running. The prototype creates briefings inside the application; it does not email or text them. |
 | Photo, map pin, shared site memory | Photo upload, geographic pinning, persistent reports, team assignments, affected-task holds, and resolution history work. | The database and uploads belong to this local deployment, not a public cross-owner service. Complete offline report synchronization is not implemented. |
 | Supervisor map and risk ranking | The atlas and priority list use canonical current risk. Holds lead ranking, significant risk follows, and insufficient evidence precedes observed low risk. Selection is shared. | Map and ordered list remain on different views. The atlas opens on Site risk; period-labeled model/replay detail views retain their own periods. |
@@ -153,21 +153,21 @@ Keep this visual system. Prioritize complete keyboard reporting, then caption co
 
 Provider integration and notification delivery should remain separate from that design work. A new headline or map effect cannot close a missing-data or delivery requirement.
 
-## Verification record
+## Historical verification record
 
 The original manual inspection used Chrome 153.0.8010.52 in headless mode with SwiftShader. Captures used reduced motion; automated tests also exercise the standard-motion view. These results establish browser behavior, not GPU performance or field-safety effectiveness.
 
 | Check | Result |
 | --- | --- |
 | Production TypeScript and asset build | Passed through the browser suite’s build step |
-| Latest implementation unit tests | 101 passed, 0 failed (`npm test`) |
-| Latest implementation browser workflows | 19 passed, 0 failed (`npm run test:e2e`, 2.6 minutes) |
+| Pre-redesign implementation unit tests | 101 passed, 0 failed (`npm test`) |
+| Pre-redesign implementation browser workflows | 19 passed, 0 failed (`npm run test:e2e`, 2.6 minutes) |
 | Original manual browser audit | Desktop 1440 × 1000 and mobile 390 × 844; 2 hero lines at each width; page width matched viewport; no captured JavaScript page errors |
 | Original pre-migration atlas bounds | At 1440 × 1000, the map started at y=149, occupied 851px of height, and reached the viewport bottom; the homepage mounted no national map canvas |
 | Original modal keyboard inspection | Focus remained outside the report dialog on opening and after Tab; Escape did not dismiss it, recorded as an open P1 finding |
 | Data and model artifacts | No edits in this pass |
 
-The browser suite covers team assignments, reporting across connected screens, photo upload, pin projection, map controls and fallbacks, nationwide plant selection, canonical measurement/risk layers, timeline frames, geometry reuse, confidence/coverage, crew SSE updates and stale-cache states, loading retry, navigation history, reduced motion, reset confirmation, briefings, independent holds, browser calibration, offline inference, and mobile overflow. These counts are from the preceding implementation validation, not a new test run for this Markdown-only pass. They do not revalidate historical screenshot measurements or close the open accessibility findings above.
+The browser suite covers team assignments, reporting across connected screens, photo upload, pin projection, map controls and fallbacks, nationwide plant selection, canonical measurement/risk layers, timeline frames, geometry reuse, confidence/coverage, crew SSE updates and stale-cache states, loading retry, navigation history, reduced motion, reset confirmation, briefings, independent holds, browser calibration, offline inference, and mobile overflow. These counts are historical. The [verification record](../tests/README.md) and [current UI audit](ui-audit.md) cover the subsequent implementation. They do not revalidate historical screenshot measurements or close the open accessibility findings above.
 
 ## Evidence and implementation references
 

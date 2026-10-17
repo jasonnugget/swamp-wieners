@@ -9,9 +9,10 @@ Adapters collect and validate evidence; they do not calculate the final site-ris
 | `nws.ts` | Official watches, warnings and advisories with exact event names; shared five-minute cache |
 | `nws-screening.ts` | NOAA point/hourly and marine grid forecasts; deterministic heat-index/wind fallback |
 | `usgs-water.ts` | Cached nearby-gauge associations, stage, trend and rolling abnormality percentile |
+| `nwps-water.ts` | Keyless NOAA gauge fallback; same-station stage/trend/history with bounded regional caching |
 | `floodplain.ts` | FEMA NFHL point exposure or validated, reviewed local static records |
-| `firms.ts` | Geographic NASA FIRMS thermal detections; unavailable without `FIRMS_MAP_KEY` |
-| `wildlife.ts` | Filtered recent public iNaturalist sightings with low-confidence contextual relevance |
+| `firms.ts` | NASA FIRMS thermal detections; keyless US regional downloads or optional keyed area queries |
+| `wildlife.ts` | Filtered recent public iNaturalist mammal/reptile sightings with low-confidence contextual relevance |
 | `lightning.ts` | Swappable detector interface, unavailable default, explicitly recorded/live or demo events |
 | `provider.ts` | Typed results, persistent cache, in-flight deduplication, HTTP pacing/timeouts/backoff |
 | `feeds.ts` | Fixed-48-hour-lead model feature collection; official-alert compatibility re-export |
@@ -24,6 +25,8 @@ Open-Meteo supplies current estimates plus 168 past hours and 73 forecast hours.
 The coordinate cache holds up to 1,000 entries for fifteen minutes, deduplicates pending batches and preserves timestamps on stale fallback. HTTP 429 establishes a shared cooldown; `Retry-After` is bounded to one minute through one hour, with a fifteen-minute default. Persistent failed collections remain stale/unknown in scoring. The compatibility weather API still serves fifty sample coordinates; the supervisor map uses `/api/risk/atlas` and never calls those weather routes.
 
 NWS official alerts are separate from continuous weather variables. `nws-screening.ts` resolves grids, converts supported units and preserves issue/fetch/valid times. Marine locations use raw grid duration intervals. These deterministic screenings are not custom-model quantiles. Canonical normalization uses only a fresh matching hour to fill missing heat/wind; replay/forecast-period adapters retain their own selected windows.
+
+Official alert collection shares empty statewide checks across plants and retains their actual fetch times. States with alerts still use precise point queries. Public wildlife queries request at most 100 mammal/reptile records per region; species filtering and explicit truncation metadata remain in place. This bounds payloads without interpreting an empty public search as zero wildlife risk.
 
 USGS, FEMA, FIRMS and wildlife return typed provider evidence with source, mode, confidence, timestamps and status. Missing, failed or expired evidence stays null. A nearby gauge does not verify watershed connectivity; static floodplain exposure does not establish current flooding; a thermal anomaly is not a verified wildfire. Public sightings cannot release crew holds or establish zero wildlife probability. Forecast lightning potential never establishes a detected strike.
 

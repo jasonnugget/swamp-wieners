@@ -1,7 +1,7 @@
 import type { Site } from "../../shared/types";
 import type { ProviderEvidence } from "../../shared/providers";
 import { distanceMiles } from "../../shared/policy";
-import { HOUR, MINUTE, ProviderCache, ProviderHttp, evidence, safely, tile, unavailable } from "./provider";
+import { HOUR, MINUTE, ProviderCache, ProviderHttp, evidence, safely, tile } from "./provider";
 export interface FireObservation { nearestFireMiles: number | null; fireAgeMinutes: number | null; firePower: number | null }
 export interface FireProvider { getFireEvidence(site: Site): Promise<ProviderEvidence<FireObservation>> }
 type Detection = { latitude: number; longitude: number; observedAt: string; power: number | null; confidence: string; type: string | null };
@@ -41,15 +41,21 @@ export class FirmsProvider implements FireProvider {
   constructor(private cache: ProviderCache, private http: ProviderHttp, private mapKey = "", private clock = Date.now) {}
   async getFireEvidence(site: Site): Promise<ProviderEvidence<FireObservation>> {
     const now = this.clock();
-    if (!this.mapKey) return unavailable("NASA FIRMS", now, HOUR, "FIRMS_MAP_KEY is not configured");
     return safely("NASA FIRMS", now, HOUR, async () => {
       const region = tile(site, 4, 100);
-      const cached = await this.cache.get(`firms:VIIRS_NOAA20_NRT:v1:${region.key}`, HOUR, async () => ({ fetchedAt: this.clock(), detections: parseFirms(await this.http.text("NASA FIRMS", `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(this.mapKey)}/VIIRS_NOAA20_NRT/${region.bbox.join(",")}/3`), this.clock()) }));
+      // NASA's published regional downloads need no credential. All plants share
+      // two bounded US files rather than downloading a country file per marker.
+      const downloadRegion = site.state === "AK" ? "Alaska" : "USA_contiguous_and_Hawaii";
+      const sourceUrl = this.mapKey
+        ? `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(this.mapKey)}/VIIRS_NOAA20_NRT/${region.bbox.join(",")}/3`
+        : `https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_${downloadRegion}_48h.csv`;
+      const key = this.mapKey ? `firms:VIIRS_NOAA20_NRT:v1:${region.key}` : `firms:download:NOAA20:v1:${downloadRegion}`;
+      const cached = await this.cache.get(key, HOUR, async () => ({ fetchedAt: this.clock(), detections: parseFirms(await this.http.text("NASA FIRMS", sourceUrl), this.clock()) }));
       const nearby = cached.detections.map(d => ({ ...d, distance: distanceMiles(site, d) })).filter(d => d.distance <= 100 && Date.parse(d.observedAt) <= now && now - Date.parse(d.observedAt) <= 48 * HOUR).sort((a, b) => a.distance - b.distance);
       const nearest = nearby[0];
       return evidence("NASA FIRMS", { nearestFireMiles: nearest?.distance ?? null, fireAgeMinutes: nearest ? (now - Date.parse(nearest.observedAt)) / MINUTE : null, firePower: nearest?.power ?? null }, now, HOUR, {
         fetchedAt: new Date(cached.fetchedAt).toISOString(), validUntil: new Date(cached.fetchedAt + HOUR).toISOString(), observedAt: nearest?.observedAt ?? null, confidence: nearest ? nearest.type === "0" && ["n", "h", "nominal", "high"].includes(nearest.confidence.toLowerCase()) ? 0.6 : 0.35 : 0,
-        details: { product: "VIIRS_NOAA20_NRT", radiusMiles: 100, detections: nearby.slice(0, 20),
+        details: { product: "VIIRS_NOAA20_NRT", access: this.mapKey ? "area-api" : "public-regional-download", radiusMiles: 100, detections: nearby.slice(0, 20),
           interpretation: "Satellite thermal anomalies are potential fire evidence, not verified wildfire perimeters. Empty detections do not establish zero fire risk." },
       });
     });

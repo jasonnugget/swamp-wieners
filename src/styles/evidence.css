@@ -1,0 +1,49 @@
+.observation-details, .source-details { color: #46513d; font-variant-numeric: tabular-nums; }
+.observation-intro { font-size: 12px; line-height: 1.8; color: #5b6852; margin: 19px 0; max-width: 65ch; }
+.observation-group { border-top: 1px solid #d5dccb; }
+.observation-group > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; font-size: 14px; font-weight: 500; color: #3c5032; cursor: pointer; }
+.observation-group > summary > small { font-size: 10px; color: #5b6852; font-weight: 400; white-space: nowrap; }
+.observation-note { font-size: 11px; color: #5b6852; line-height: 1.8; margin: 0 0 12px; max-width: 65ch; }
+.observation-field { border-top: 1px solid #dfe4d5; }
+.observation-field > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; min-height: 44px; cursor: pointer; list-style: none; }
+.observation-field > summary::-webkit-details-marker { display: none; }
+.observation-field > summary > span { font-size: 12px; color: #5b6852; }
+.observation-field > summary > strong { font-size: 12px; font-weight: 500; text-align: right; color: #374b2b; max-width: 54%; }
+.observation-field[data-known="false"] > summary > strong { color: #5b6852; font-weight: 400; }
+.observation-field > summary:hover { background: #e6ebdb; }
+.observation-provenance { background: #e7ecdf; padding: 12px; margin-bottom: 12px; border-radius: 4px; }
+.observation-provenance p { color: #5b6852; font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
+.source-provider { border-top: 1px solid #d5dccb; }
+.source-provider > summary { min-height: 51px; display: flex; gap: 12px; align-items: center; justify-content: space-between; font-size: 12px; cursor: pointer; }
+.source-provider summary > span { display: flex; align-items: center; gap: 8px; }
+.source-provider summary i { width: 6px; height: 6px; border-radius: 50%; background: #a7ac9f; flex: 0 0 auto; }
+.source-provider summary i[data-status="ok"] { background: #7c9565; }
+.source-provider summary i[data-status="error"] { background: #ac784c; }
+.source-provider summary small { font-size: 10px; color: #5b6852; white-space: nowrap; }
+.source-provider summary small[data-status="error"] { color: #8b5832; }
+.source-details dl { margin: 10px 0 16px; }
+.source-details dl > div { display: flex; justify-content: space-between; gap: 14px; padding: 7px 0; font-size: 11px; }
+.source-details dt { color: #5b6852; flex: 0 0 auto; }
+.source-details dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.source-error { padding: 10px; margin-bottom: 14px; background: #ede2cf; font-size: 11px; color: #805d36; line-height: 1.8; overflow-wrap: anywhere; }
+.source-models, .source-site { margin-top: 24px; padding-top: 18px; border-top: 1px solid #d5dccb; }
+.source-details h3 { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #3f5333; }
+.source-models > p, .source-boundary { font-size: 11px; line-height: 1.8; color: #5b6852; }
+.source-boundary { border-top: 1px solid #d5dccb; padding-top: 18px; margin-top: 20px; }
+.site-observation-panel { margin: 44px 0; padding: 26px 30px; background: #e7eadf; border: 1px solid #d2d9c7; border-radius: 8px; }
+.site-observation-panel > header { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
+.site-observation-panel h2 { font-size: 27px; font-weight: 400; letter-spacing: -.8px; color: #354b2b; }
+.site-observation-panel > header p { font-size: 12px; line-height: 1.8; color: #5b6852; margin-top: 8px; }
+.site-observation-panel > header > div:last-child { text-align: right; }
+.site-observation-panel > header > div:last-child strong { font-size: 34px; font-weight: 400; color: #445a34; }
+.site-observation-panel > details { margin-top: 20px; border-top: 1px solid #ccd5be; }
+.site-observation-panel > details > summary { padding-block: 15px; cursor: pointer; color: #4a6039; font-size: 13px; }
+.site-observation-panel .observation-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0 38px; align-items: start; }
+.site-observation-panel .observation-intro { grid-column: 1 / -1; }
+.site-observation-panel .source-provider-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 38px; align-items: start; }
+@media (max-width: 700px) {
+  .site-observation-panel { padding: 22px 18px; }
+  .site-observation-panel > header { align-items: flex-start; }
+  .site-observation-panel h2 { font-size: 23px; }
+  .site-observation-panel .observation-details, .site-observation-panel .source-provider-list { grid-template-columns: 1fr; }
+}

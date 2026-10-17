@@ -12,6 +12,15 @@ export class NwsAlertProvider implements OfficialAlertProvider {
   async getAlerts(site: Site) {
     const now = this.clock();
     return safely<Alert[]>("NOAA/NWS alerts", now, 5 * MINUTE, () => this.cache.get(`nws:alerts:${site.id}:${site.latitude}:${site.longitude}`, 5 * MINUTE, async () => {
+      // A successful empty statewide response supplies an empty alert result
+      // for every point. Use precise point queries whenever state alerts exist.
+      const statewide = await this.cache.get(`nws:state-alerts:v1:${site.state}`, 5 * MINUTE, async () => ({
+        fetchedAt: this.clock(), data: schema.parse(await this.http.json("NOAA/NWS alerts", `https://api.weather.gov/alerts/active?area=${encodeURIComponent(site.state)}`, { Accept: "application/geo+json" })),
+      }));
+      if (!statewide.data.features.length) return evidence("NOAA/NWS alerts", [], now, 5 * MINUTE, {
+        fetchedAt: new Date(statewide.fetchedAt).toISOString(), validUntil: new Date(statewide.fetchedAt + 5 * MINUTE).toISOString(), confidence: 1,
+        details: { sourceUrl: "https://api.weather.gov/alerts/active", scope: `Empty official statewide alert check: ${site.state}`, interpretation: "No active statewide alerts; not absence of environmental hazards" },
+      });
       const data = schema.parse(await this.http.json("NOAA/NWS alerts", `https://api.weather.gov/alerts/active?point=${site.latitude},${site.longitude}`, { Accept: "application/geo+json" }));
       const alerts: Alert[] = data.features.map((f): Alert => {
         const p = f.properties, event = p.event.toLowerCase();

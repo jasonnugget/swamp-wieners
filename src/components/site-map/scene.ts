@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { mapNearPlane } from "./camera";
 import type { Decision, HazardReport, Site } from "../../../shared/types";
 import { REGION_BOUNDS, type MapRegion } from "../../../shared/weather";
 import {
@@ -247,7 +248,6 @@ export function createMapScene(
     const { width, height } = container.getBoundingClientRect();
     if (!width || !height) return;
     camera.aspect = width / height;
-    if (!callbacks.pin) camera.setViewOffset(width, height, width > 900 ? 130 : width > 740 ? 90 : 0, -20, width, height);
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
     if (overview) region(overview, true);
@@ -302,10 +302,16 @@ export function createMapScene(
               color: focal ? "#4b5c5b" : "#3e4b50",
               roughness: 0.8,
               metalness: 0.15,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
             new THREE.MeshStandardMaterial({
               color: "#1c3b38",
               roughness: 0.6,
+              polygonOffset: true,
+              polygonOffsetFactor: 1,
+              polygonOffsetUnits: 1,
             }),
           ]);
           land.add(mesh);
@@ -638,6 +644,11 @@ export function createMapScene(
     controls.autoRotate =
       rotating && !top && !reduced.matches && !move && !down;
     controls.update(delta);
+    const near = mapNearPlane(controls.getDistance());
+    if (camera.near !== near) {
+      camera.near = near;
+      camera.updateProjectionMatrix();
+    }
     if (!reduced.matches)
       pulses.forEach(({ mesh, base }, i) => {
         const t = (now / 2200 + i * 0.13) % 1;

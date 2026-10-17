@@ -5,11 +5,16 @@
 | `index.ts` | Environment loading, HTTP validation/routes, SSE, uploads, feed dispatcher, and shutdown |
 | `engine.ts` | Clock selection, forecast selection, snapshot assembly, and next-day briefing creation |
 | `dev-readiness.ts` | Bounded API health wait used by the Vite development server |
+| `complete-site-data.ts` | Resumable national provider refresh and separate labeled data-completion export |
 | `store.ts` | SQLite JSON-record store and duplicate-safe insertion |
 | [integrations](integrations/README.md) | Environmental providers, fixed-lead model features and JEV |
 | [pipeline](pipeline/README.md) | Collection, normalization, enrichment, scoring, provider scheduling and atlas frames |
 
 Run `npm start` from the repository root after building. The server resolves public assets relative to that root. `npm run dev` starts the API and Vite together; Vite waits for a healthy API response before listening. Startup timeout errors identify the API target and leave the backend logs visible. Runtime records default to `runtime/`. Server settings and optional credentials come from the environment or `.env`; see [.env.example](../.env.example) and [provider operations](../docs/environment-providers.md).
+
+`npm run data:complete` refreshes all plant sources with the same providers and writes a separate demo-only completion export. `--offline` uses persisted records. See [completion semantics and field provenance](../docs/site-data-completion.md); this command does not load synthetic data into canonical risk or policy.
+
+SQLite uses WAL and a five-second busy timeout so the application and bulk collector can finish short concurrent writes without an immediate lock failure.
 
 Persist reports before triage. Preserve independent hazard holds and audit history. Keep demo and real clock behavior distinct. Briefings are immutable snapshots keyed by site and next local date; duplicate-safe insertion prevents repeat delivery after restart. The process must remain active for timers and streaming updates.
 
@@ -27,6 +32,6 @@ All sites use [pipeline](pipeline/README.md), irrespective of model cohort. The 
 
 The engine supplies fresh live frozen-model forecasts and eligible training soil anchors to shared scoring. Historical inputs remain replay-only. JEV classifications are validated and activated by explicit confirmation; confirmation cannot release selected crew holds. See [continuous scoring](../docs/risk-scoring.md).
 
-Independent source polling covers USGS, FEMA, NWS and iNaturalist, with credential-gated FIRMS and explicit lightning modes. Provider caches and records persist under `provider-cache` and `environment-provider`; demo reset preserves them. `DISABLE_EXTERNAL_PROVIDERS=1` disables background source jobs for isolated tests. Site refresh also queues source refreshes and publishes SSE invalidation as each completes. See [provider operations](../docs/environment-providers.md).
+Independent source polling covers USGS, FEMA, NWS and iNaturalist, with keyless FIRMS downloads, optional keyed area queries and explicit lightning modes. Provider caches and records persist under `provider-cache` and `environment-provider`; demo reset preserves them. `DISABLE_EXTERNAL_PROVIDERS=1` disables background source jobs for isolated tests. Site refresh also queues source refreshes and publishes SSE invalidation as each completes. See [provider operations](../docs/environment-providers.md).
 
 `GET /api/risk/atlas?hour=0..72` is the batched supervisor map contract. Current frames reuse `siteRisks`; forecast frames use `pipeline/atlas.ts` and the same scorers, with explicit future-evidence limits. The old weather routes remain compatibility APIs and have no map consumer. See [atlas API details](../docs/api.md#authoritative-supervisor-atlas).

@@ -20,7 +20,9 @@ npm start
 
 Open http://127.0.0.1:3001. SQLite records and photos live in the ignored `runtime/` directory. The API binds to localhost by default. To try a phone on a trusted local network, set `HOST=0.0.0.0` and use the Vite development URL printed for that network. This hackathon prototype has no account authentication; keep it on a trusted network.
 
-Copy [.env.example](.env.example) to `.env` to configure optional providers and Jev access. NASA FIRMS needs `FIRMS_MAP_KEY`; `USGS_API_KEY` is optional. FEMA and public wildlife queries need no key in the implemented adapters. Lightning defaults to unavailable until a trusted source is supplied. See [provider setup and limits](docs/environment-providers.md).
+Copy [.env.example](.env.example) to `.env` to configure optional providers and Jev access. NASA FIRMS uses keyless regional downloads by default; `FIRMS_MAP_KEY` enables smaller area queries; `USGS_API_KEY` is optional. FEMA and public wildlife queries need no key in the implemented adapters. Lightning defaults to unavailable until a trusted source is supplied. See [provider setup and limits](docs/environment-providers.md).
+
+Run `npm run data:complete` to refresh all plants and write a field-by-field [data-completion export](docs/site-data-completion.md) under `runtime/site-data/`. Real values take priority. Missing values receive labeled demo estimates or explicit N/A event fields; synthetic completion never feeds live risk, task policy or model training. Use `npm run data:complete -- --offline` to rebuild the export from existing source records.
 
 For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter calls the official `https://api.typesafe.ai/v1/systemone` endpoint. Jev classifies report text and affected tasks; it does not generate briefings or clear restrictions. No credential is bundled. Without a key, manual reporting remains fully functional and the interface says that Jev is unavailable.
 
@@ -34,7 +36,7 @@ For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter
 - Real HeatCast and GroundCast neural model weights, reproducible NumPy training, chronological evaluation, and a separate ten-site geographic holdout.
 - Browser inference, real local calibration training, loss curves, measured execution time, historical outcome reveal, and sensitivity controls.
 - IndexedDB storage for local model candidates, plus a production service worker and cached workspace for offline model work.
-- Batched Open-Meteo weather/soil inputs, official NWS alerts, nearby USGS stages, FEMA exposure and public wildlife context for all sites. FIRMS is credential-gated; lightning modes distinguish unavailable, recorded live events and replay. Source-specific caches, expiry and backoff preserve unknowns on failure.
+- Batched Open-Meteo weather/soil inputs, official NWS alerts, nearby USGS stages, FEMA exposure and public wildlife context for all sites. FIRMS supports keyless regional downloads and optional keyed area queries; lightning modes distinguish unavailable, recorded live events and replay. Source-specific caches, expiry and backoff preserve unknowns on failure.
 - Continuous weather, heat, lightning, flood, wildfire, soil and wildlife channels; dominant risk plus bounded secondary compounding; separate task policy. Ordinary crew reports do not force risk to 10.
 - An authoritative 3D risk atlas with eleven layers, site explanations, coverage/confidence, current overrides and a backend-scored 72-hour timeline.
 
@@ -74,10 +76,10 @@ External providers + crew evidence
   → supervisor map and canonical site ranking
 ```
 
-The atlas distinguishes raw temperature/rain/wind from scored hazard channels. Unknown values are gray question marks; low-confidence known values are dashed and translucent. The inspector shows risk, coverage, confidence, drivers, evidence, tasks and source metadata. Reports update connected supervisors through SSE; confirmed JEV classifications supply semantic evidence, never final site-risk numbers.
+The atlas distinguishes raw temperature/rain/wind from scored hazard channels. Unknown values are gray question marks; low-confidence known values are dashed and translucent. The inspector’s Overview, Conditions and Sources views show risk, coverage, confidence, drivers, task decisions, all 34 normalized environmental fields, field provenance, provider health, model availability and plant metadata. Desktop uses a dedicated evidence panel beside the canvas; mobile stacks it below the map. Reports update connected supervisors through SSE; confirmed JEV classifications supply semantic evidence, never final site-risk numbers.
 
 Current snapshots use actual system time even during the historical demo. Future frames reuse backend normalization/scoring over available hourly weather, with explicit assumptions for existing controls. Future gauge readings, fires, strikes and wildlife sightings remain unknown; forecast tasks are not work authorization. Historical model replay and stored briefings retain their labeled periods.
 
 The catalog contains 285 operating EIA plants across all fifty states, with at least five per state. The original fifty-site model cohort is preserved; `catalogOnly` means no historical model coverage, not exclusion from environmental collection. Regenerate the catalog with `npm run data:catalog`.
 
-Read [the architecture](docs/architecture.md), [pipeline contract](docs/environment-pipeline.md), [scoring formulas](docs/risk-scoring.md), [provider setup](docs/environment-providers.md), and [atlas API](docs/api.md#authoritative-supervisor-atlas). Compatibility weather routes remain available, but the supervisor map does not call them.
+Read [the architecture](docs/architecture.md), [pipeline contract](docs/environment-pipeline.md), [scoring formulas](docs/risk-scoring.md), [provider setup](docs/environment-providers.md), [atlas API](docs/api.md#authoritative-supervisor-atlas), and [current UI screenshots/audit](docs/ui-audit.md). Compatibility weather routes remain available, but the supervisor map does not call them.

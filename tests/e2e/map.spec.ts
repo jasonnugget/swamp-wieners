@@ -4,6 +4,47 @@ test.beforeEach(async ({ request }) => {
   await request.post("/api/demo/reset", { data: {} });
 });
 
+test("3D depth precision follows national zoom and close report pinning", async ({ page }) => {
+  // Observe the actual projection sent to WebGL, rather than a UI camera label.
+  await page.addInitScript(() => {
+    const state = window as typeof window & { mapDepthNear: Map<HTMLCanvasElement, number> };
+    state.mapDepthNear = new Map();
+    const names = new WeakMap<WebGLUniformLocation, string>();
+    const prototype = WebGL2RenderingContext.prototype;
+    const getLocation = prototype.getUniformLocation;
+    prototype.getUniformLocation = function (program, name) {
+      const location = getLocation.call(this, program, name);
+      if (location) names.set(location, name);
+      return location;
+    };
+    const upload = prototype.uniformMatrix4fv;
+    prototype.uniformMatrix4fv = function (location, transpose, values) {
+      if (location && names.get(location) === "projectionMatrix") {
+        const matrix = Array.from(values);
+        state.mapDepthNear.set(this.canvas as HTMLCanvasElement, matrix[14] / (matrix[10] - 1));
+      }
+      upload.call(this, location, transpose, values);
+    };
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/?view=atlas");
+  const canvas = page.locator(".three-map-canvas").first();
+  await expect(canvas).toHaveAttribute("data-geography", "ready");
+  const near = (target = canvas) => target.evaluate(element =>
+    (window as typeof window & { mapDepthNear: Map<Element, number> }).mapDepthNear.get(element) ?? 0);
+  await expect.poll(() => near()).toBeGreaterThan(0.3);
+  await page.getByRole("button", { name: "All US", exact: true }).click();
+  await expect.poll(() => near()).toBeGreaterThan(1);
+  await page.getByRole("button", { name: "Focus selected site", exact: true }).click();
+  await expect.poll(() => near()).toBeLessThan(0.1);
+  await page.getByRole("button", { name: "Report hazard", exact: true }).first().click();
+  const pinCanvas = page.getByRole("dialog").locator(".three-map-canvas");
+  await expect(pinCanvas).toHaveAttribute("data-ready", "true");
+  await expect.poll(() => near(pinCanvas)).toBeGreaterThan(0);
+  await expect.poll(() => near(pinCanvas)).toBeLessThan(0.01);
+  await page.screenshot({ path: "test-results/map-depth-report-pin.png" });
+});
+
 test("3D map selects real sites, orbits, zooms, and expands for a showcase", async ({
   page,
 }) => {

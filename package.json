@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "data:prepare": ".venv/bin/python scripts/prepare_data.py",
     "data:catalog": ".venv/bin/python scripts/expand_sites.py",
+    "data:complete": "tsx server/complete-site-data.ts",
     "ml:train": "OPENBLAS_NUM_THREADS=2 .venv/bin/python scripts/train.py"
   },
   "dependencies": {

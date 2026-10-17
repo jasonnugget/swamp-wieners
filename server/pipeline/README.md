@@ -17,4 +17,6 @@ See [continuous scoring](../../docs/risk-scoring.md) for thresholds, confidence,
 
 `providers.ts` merges source evidence into normalized observations with per-field metadata. `provider-poller.ts` schedules each source independently, bounds background jobs, persists provider records, and preserves positive strike/alert history across outages. Defaults and credential requirements are in [environmental providers](../../docs/environment-providers.md).
 
+Water evidence prefers USGS and uses NOAA NWPS when the primary source is unavailable. Stage/history always stay tied to one station; `provenance.providers.usgs.source` identifies the actual water source. FIRMS uses shared keyless regional downloads when no area-API key is configured. The separate [completion export](../../docs/site-data-completion.md) reuses these providers but never injects synthetic fields into this operational pipeline.
+
 `atlas.ts` projects one national risk frame for `/api/risk/atlas?hour=0..72`. Hour zero reuses canonical snapshots. Future hours normalize persisted hourly weather and reuse the same scoring/policy functions, with source freshness checked against real request time. Static exposure, known alert expiry and unresolved crew controls retain explicit assumptions; future detections remain unknown. No external requests or invented hourly model outputs are made by this read path.

@@ -12,3 +12,5 @@ These components accept data and callbacks through props. They do not persist re
 The map uses bundled state outlines with schematic Three.js extrusion and beacons scaled to the selected canonical measurement/risk layer. [Map internals](site-map/README.md) cover the scene, reversible projection, and flat fallback. Keep site selection, report pinning, and the offline view functional; avoid required external tiles. Forecast charts keep baseline and outcome lines distinguishable. Work windows are screening views; independent holds and unknown coverage still apply.
 
 Run `npm run build` and the [browser tests](../../tests/e2e/README.md) after map or rendering changes. Window calculations are covered under `tests/unit/`.
+
+The atlas’s `ObservationDetails` and `SourceDetails` are also reused by Site intelligence. They expose the complete normalized record and its provenance; formatting lives in `site-map/observations.ts`. The map canvas and desktop evidence panel occupy separate layout regions, while mobile inspection uses normal page scrolling.

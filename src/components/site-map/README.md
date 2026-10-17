@@ -2,6 +2,8 @@
 
 `scene.ts` owns the Three.js renderer, extruded state geometry, camera controls, projected HTML markers, and pointer raycasting. `FlatMap.tsx` retains selection and pinning when WebGL is unavailable. `projection.ts` defines a reversible local Mercator projection and geographic bounds. `../SiteMap.tsx` connects the scene to React props and accessible controls.
 
+`camera.ts` scales the near clipping plane with camera distance so close report pins and national views retain depth precision. State fill materials use polygon offset to keep coplanar outlines visible. Preserve these depth settings when adjusting zoom limits or surface heights; a fixed close-range near plane makes the grid, halos and outlines flicker at national scale.
+
 State extrusion is schematic. Beacon height represents the selected canonical measurement/risk scale, not terrain elevation. The report-pinning view retains its period-specific decision context. Keep real site/report coordinates, unknown risk labels, and selected-site callbacks intact. A lightning boundary is geodesic and represents ten miles; decorative beacon halos are not distance buffers.
 
 The report form uses a top-down camera. Ground clicks intersect the same projected plane used by the scene and convert back to latitude/longitude. Dragging and multi-touch gestures must not submit a pin. Risk markers select sites without changing report coordinates.
@@ -25,3 +27,11 @@ Current risk uses actual system time. Future frames are backend forecast screeni
 The website mounts the national atlas only in `/?view=atlas`. `SiteMap` accepts `standalone` to use a page-level heading there; report pinning retains its compact embedded presentation. The atlas fills the viewport below the site navigation and selection strip. Showcase mode can cover those controls too, and Escape restores the normal atlas view.
 
 The standalone atlas uses an `h1` for its page title and an `h2` with the `atlas-location-title` class for the inspected location. Styles and tests target that class rather than a fixed heading level.
+
+## Evidence-panel layout
+
+The map has a dedicated viewport beside the desktop inspector; do not compensate for the panel with a camera view offset. On mobile, the inspector follows the map and timeline in document flow. Unselected markers use compact points; selection, hover and keyboard focus reveal their numeric labels.
+
+The inspector has three views: Overview (composite score, seven channels, work decisions and priority preview), Conditions (all 34 canonical fields), and Sources (provider health, timestamps, model coverage and plant record). `observations.ts` defines typed field groups and display formatting. `ObservationDetails.tsx` preserves measured zero, false, unknown values, units and field-level provenance. `SourceDetails.tsx` shows source modes separately and never imports demo completion estimates. These two components also appear in Site intelligence.
+
+The evidence-view buttons use native button semantics and `aria-pressed`; field groups and provenance use native disclosures. Source metadata is presentation only. Do not calculate environmental scores or merge providers in these components. See the [screenshot and interaction audit](../../../docs/ui-audit.md) for the redesigned layout and verification boundaries.

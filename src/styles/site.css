@@ -262,31 +262,6 @@ body input::placeholder, body textarea::placeholder { color: #687b53; }
 .photo-picker:focus-within { outline: 2px solid var(--accent); outline-offset: 5px; }
 .toast { left: 50%; background: #374c2a; color: #f0f5e8; border-color: #829967; border-radius: 0; box-shadow: none; max-width: calc(100% - 32px); width: max-content; }
 .priority-row { content-visibility: auto; contain-intrinsic-size: auto 65px; }
-/* A dedicated, viewport-sized atlas, independent of the homepage. */
-.view-atlas { max-width: none; height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.view-atlas .site-header { flex: 0 0 84px; }
-.view-atlas .main-shell { flex: 1; min-height: 0; }
-.view-atlas main { display: flex; flex-direction: column; height: 100%; padding: 0; overflow: hidden; }
-.view-atlas .site-context { flex: 0 0 65px; margin: 0; padding: 10px 3vw; border: 0; gap: 25px; }
-.atlas-workspace { flex: 1; min-height: 0; position: relative; }
-.view-atlas .atlas-workspace .weather-atlas.command-map { height: 100%; min-height: 0; width: 100%; border: 0; border-radius: 0; font-family: "Satoshi", sans-serif; }
-.weather-atlas.command-map.is-expanded { inset: 0; border-radius: 0; border: 0; }
-.weather-atlas .scene-heading h4, .weather-atlas .atlas-value { font-family: "Satoshi", sans-serif; font-weight: 400; letter-spacing: -.055em; }
-.weather-atlas .scene-heading h4 { font-size: clamp(26px, 2.6vw, 42px); }
-.weather-atlas .scene-heading h1 { font: 400 clamp(26px, 2.6vw, 42px)/1.05 "Satoshi", sans-serif; letter-spacing: -.055em; margin: 12px 0 8px; color: #eee9dd; }
-.weather-atlas :where(.atlas-layer-bar, .atlas-layer-bar button, .atlas-regions button, .atlas-inspector, .atlas-search input, .atlas-search-results, .atlas-timeline, .scene-controls, .scene-site-card, .scene-top-actions button) { border-radius: 0; box-shadow: none; }
-.weather-atlas .scene-top-actions button { border-radius: 0; }
-.weather-atlas .atlas-layer-bar { border-radius: 0; }
-.weather-atlas .atlas-layer-bar button { border-radius: 0; font-family: "Satoshi", sans-serif; }
-.weather-atlas .atlas-inspector { border-radius: 0; box-shadow: none; }
-.weather-atlas .atlas-inspector .atlas-location-title { font-family: "Satoshi", sans-serif; }
-.weather-atlas .atlas-timeline { border-radius: 0; }
-.weather-atlas .atlas-search input { font-family: "Satoshi", sans-serif; border-radius: 0; }
-.weather-atlas .atlas-regions button { border-radius: 0; }
-.weather-atlas .scene-controls, .weather-atlas .scene-site-card { border-radius: 0; }
-.weather-atlas .atlas-time-heading > button:first-child, .weather-atlas .atlas-weather-marker { border-radius: 0; }
-.view-atlas .demo-panel { position: fixed; left: 3vw; right: 3vw; top: 145px; z-index: 100; }
-.view-atlas .error-banner, .view-atlas .offline-banner { margin: 0; flex-shrink: 0; }
 /* The introduction shares the site's typography and abstract field language. */
 .boot-screen { position: relative; min-height: 100dvh; overflow: hidden; color: #2c3126; background: radial-gradient(ellipse at 85% 50%, #d9ccb66b, transparent 50%), #efeee8; display: flex; align-items: center; padding: 120px 7vw; }
 .boot-top, .boot-bottom { position: absolute; left: 5vw; right: 5vw; display: flex; justify-content: space-between; align-items: center; color: #656d59; font: 9px monospace; letter-spacing: 1px; }
@@ -437,19 +412,7 @@ body input::placeholder, body textarea::placeholder { color: #687b53; }
   .lab-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lab-grid { gap: 35px; }
   .modal-overlay { padding: 10px; }
-  .view-atlas .site-header { flex-basis: 78px; }
-  .view-atlas .site-context { flex-basis: 95px; padding: 11px 6vw; gap: 10px; align-content: center; }
-  .view-atlas .source-pill { flex-basis: 100%; }
-  .view-atlas .demo-panel { top: 174px; }
   .view-home .demo-panel { top: 78px; left: 6vw; right: 6vw; max-height: calc(100dvh - 98px); }
-  .weather-atlas .scene-heading h4 { font-size: 28px; }
-  .weather-atlas .scene-heading h1 { font-size: 28px; max-width: 215px; }
-  .weather-atlas .atlas-layer-bar button { font-size: 9px; padding: 9px 8px; }
-  .weather-atlas .atlas-inspector { width: 153px; padding: 12px; bottom: 200px; }
-  .weather-atlas .atlas-inspector .atlas-location-title { font-size: 13px; }
-  .weather-atlas .atlas-value { font-size: 43px; }
-  .weather-atlas .atlas-scale { bottom: 208px; width: 100px; }
-  .weather-atlas .scene-disclosure { bottom: 180px; }
   .boot-screen { padding: 120px 6vw; }
   .boot-top, .boot-bottom { left: 6vw; right: 6vw; font-size: 7px; gap: 20px; line-height: 1.7; }
   .boot-copy h1 { font-size: 19vw; }

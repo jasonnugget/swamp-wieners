@@ -14,14 +14,16 @@ Generated screenshots, traces, and reports are ignored. Do not add documentation
 
 ## Latest implementation verification
 
-The preceding backend/provider/atlas implementation was verified on October 17, 2026:
+The site-data completion, providers, map depth precision and expanded supervisor UI were verified on October 17, 2026:
 
 | Check | Recorded result |
 | --- | --- |
-| `npm test` | 101 passed, 0 failed |
-| `npm run test:e2e` | 19 passed, 0 failed, 2.6 minutes |
-| `npm run build` | Passed through the browser server's build step; bundle-size warning remains |
+| `npm test` | 122 passed, 0 failed |
+| `npm run test:e2e` | 24 passed, 0 failed, 2.8 minutes |
+| `npm run build` | Passed through the full browser suite’s build step; bundle-size warning remains |
 | `npx tsc --noEmit` | Passed |
 | Lint | No lint script is configured |
 
-These are implementation-run results, not a claim that the later Markdown-only audit reran the application suites. Source-adapter fixture tests do not establish live credentials, nationwide coverage or calibrated field-safety performance. See [provider verification boundaries](../docs/environment-providers.md).
+These are implementation-run results. Source-adapter fixture tests do not establish live credentials, nationwide coverage or calibrated field-safety performance. The completion command was also run against the local national catalog; its output records actual source/synthetic/N/A counts and source failures. See [provider verification boundaries](../docs/environment-providers.md) and [completion semantics](../docs/site-data-completion.md).
+
+The [UI audit](../docs/ui-audit.md) includes production screenshots, measured desktop/mobile layout bounds and the manual console-error check. Browser fixtures validate risk ranges and failure states; the manual captures use persisted source evidence.

@@ -27,9 +27,11 @@ export class InaturalistProvider implements WildlifeProvider {
     const now = this.clock();
     return safely("iNaturalist", now, 6 * HOUR, async () => {
       const region = tile(site, 1, 10);
-      const raw = await this.cache.get(`inat:research:v1:${region.key}`, 6 * HOUR, async () => {
+      const raw = await this.cache.get(`inat:research:v2:${region.key}`, 6 * HOUR, async () => {
         const [swlng, swlat, nelng, nelat] = region.bbox;
-        const params = new URLSearchParams({ swlat: String(swlat), swlng: String(swlng), nelat: String(nelat), nelng: String(nelng), per_page: "200", quality_grade: "research", geo: "true", captive: "false", order_by: "observed_on", order: "desc", d1: new Date(now - DAY).toISOString().slice(0, 10) });
+        // Relevant classes only: plant/insect photo records dominated payloads
+        // and exhausted the bounded response limit before any wildlife was read.
+        const params = new URLSearchParams({ swlat: String(swlat), swlng: String(swlng), nelat: String(nelat), nelng: String(nelng), per_page: "100", iconic_taxa: "Mammalia,Reptilia", quality_grade: "research", geo: "true", captive: "false", order_by: "observed_on", order: "desc", d1: new Date(now - DAY).toISOString().slice(0, 10) });
         return { fetchedAt: this.clock(), payload: responseSchema.parse(await this.http.json("iNaturalist", `https://api.inaturalist.org/v1/observations?${params}`)) };
       });
       const data = raw.payload;

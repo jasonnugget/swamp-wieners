@@ -7,7 +7,7 @@
 | `dev-readiness.test.ts` | API startup retries, valid health responses, connection refusal and bounded hung requests |
 | `engine.test.ts` | Site-local briefing timing, carry-forward reports, duplicate prevention across restart, and timezone boundaries |
 | `data.test.ts` | National plant catalog, preserved fifty-site model cohort, geographic holdouts, chronological samples, feature availability, and Python/JS inference parity |
-| `map-projection.test.ts` | Geographic projection round trips and distinct unknown-risk styling |
+| `map-projection.test.ts` | Geographic projection round trips, distinct unknown-risk styling and 24-bit depth separation across zoom scales |
 | `windows.test.ts` | Consecutive forecast windows and task-specific thresholds |
 
 Run `npm test` from the root. Tests use Node's test runner through `tsx`; no running API or external service is required. Engine tests create and clean temporary SQLite directories. Artifact tests read bundled public exports rather than ignored raw downloads.
@@ -25,3 +25,9 @@ The catalog check validates at least five real plants in each of fifty states, v
 `providers.test.ts` mocks source HTTP for USGS/NWS/FEMA/FIRMS/iNaturalist success, missing/malformed data, timeout, non-200, caching and expiry. It also verifies persistent cache restart, source backoff, national bounded scheduling, mode separation, zero versus unknown, normalized metadata and preservation of independent strike/alert controls.
 
 `atlas.test.ts` checks current-frame parity for all plants, forecast scoring and source freshness, actual zero versus null, missing future hours, strike-hold expiry, warning fetch-time provenance, display selectors, continuous colors and supervisor ranking.
+
+`site-data.test.ts` checks real-value precedence, measured zero/false, deterministic location/season fallbacks, all-plant field parity, explicit N/A event fields, source errors, unchanged operational coverage and real hourly-soil midrank. It runs the offline command in isolated SQLite storage to verify JSON/CSV exports and preserved unrelated records. Provider tests also cover shared keyless FIRMS downloads and separate Alaska caching.
+
+NWPS provider tests cover zero/negative stage, sentinel/stale/flow/distance rejection, same-gauge trends and percentiles, incompatible history, timeout/non-200/malformed responses, cache timestamps and fallback without mixed gauge datums. NWS tests verify shared statewide empty checks without retimestamping.
+
+`observation-display.test.ts` verifies all 34 displayed fields against every plant’s canonical shape, preserves zero/false versus unknown, checks moisture/percentile units and negative water-level trends, and formats timestamps in the plant’s time zone.

@@ -213,6 +213,7 @@ export default function SiteMap({
       data-testid="site-map"
       aria-label={onPin ? "Hazard location map" : "Site risk map"}
     >
+      <div className={onPin ? "pin-viewport" : "atlas-map-region"}>
       <div className="scene-vignette" />
       <div ref={container} className="site-map scene-surface" />
       <div ref={labels} className="scene-labels" />
@@ -234,6 +235,7 @@ export default function SiteMap({
           <span>Building your national view…</span>
         </div>
       )}
+      </div>
       {!onPin && (
         <>
           <div className="scene-heading">
@@ -242,7 +244,7 @@ export default function SiteMap({
               {fallback ? "2D SITE MAP" : "PLANIT / RISK ATLAS"}
             </span>
             {standalone ? <h1>Site risk, in perspective.</h1> : <h4>Site risk, in perspective.</h4>}
-            <p>All 50 states. One risk pipeline. Current conditions and 72-hour screening.</p>
+            <p>Environmental intelligence for the next decision.</p>
           </div>
           <div className="scene-top-actions">
             <button
