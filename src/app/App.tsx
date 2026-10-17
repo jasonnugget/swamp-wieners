@@ -1,3 +1,4 @@
+import { ArrowUpRight as AtlasArrow, Broadcast as AtlasBroadcast, MapPinSimple as AtlasPin, CaretDown as AtlasCaret } from "@phosphor-icons/react";
 import { rankSites } from "../../shared/atlas";
 import { lazy, Suspense, useCallback, useEffect, useState, type MouseEvent } from "react";
 import {
@@ -206,14 +207,14 @@ export default function App() {
           {(Object.keys(pageLabels) as Page[]).map(item => <a key={item} href={pageHref(item)} onClick={e => navigateLink(e, item)} aria-current={page === item ? "page" : undefined}>{pageLabels[item]}{item === "reports" && openReports.length > 0 && <span className="report-count">{openReports.length}</span>}</a>)}
         </nav>
         <div className="site-header-actions">
-          <button className="header-report" onClick={() => setReportOpen(true)}>Report hazard<ArrowUpRight size={17} aria-hidden="true" /></button>
-          <button className="demo-control" aria-label="Demo controls" aria-expanded={demoOpen} onClick={() => setDemoOpen(!demoOpen)}><Radio size={17} aria-hidden="true" /></button>
-          <button className="menu-control" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="site-navigation" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}</button>
+          <button className="header-report" onClick={() => setReportOpen(true)}>Report hazard{page === "atlas" ? <AtlasArrow size={17} weight="light" aria-hidden="true"/> : <ArrowUpRight size={17} aria-hidden="true" />}</button>
+          <button className="demo-control" aria-label="Demo controls" aria-expanded={demoOpen} onClick={() => setDemoOpen(!demoOpen)}>{page === "atlas" ? <AtlasBroadcast size={17} weight="light" aria-hidden="true"/> : <Radio size={17} aria-hidden="true" />}</button>
+          <button className="menu-control" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="site-navigation" onClick={() => setMenuOpen(!menuOpen)}>{page === "atlas" ? <span className="atlas-menu-lines" data-open={menuOpen} aria-hidden="true"><i/><i/></span> : menuOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}</button>
         </div>
       </header>
       <div className="main-shell">
         <main id="workspace-content" className="overflow-x-hidden w-full max-w-full" tabIndex={-1}>
-          {page === "home" && <HomePage onNavigate={navigateLink} />}
+          {page === "home" && <HomePage onNavigate={navigateLink} snapshot={snapshot} cached={offline} />}
           {page !== "home" && page !== "atlas" && <div className="page-heading">
             <div><p className="section-caption">PlanIT / {pageLabels[page]}</p><h1>{page === "intelligence" ? "The work ahead." : page === "lab" ? "Know what your model knows." : page === "reports" ? "Local knowledge that stays." : "Tomorrow starts with today."}</h1><p>{page === "intelligence" ? "Review hazards, unknown coverage, and task restrictions before equipment mobilizes." : page === "lab" ? "Explore heat and ground-wetness estimates. Test local calibration without changing operational decisions." : page === "reports" ? "Pin what the crew sees, document affected tasks, and preserve the report for the next shift." : "Next-day conditions, task restrictions, and unresolved reports, prepared at 6 PM site-local time."}</p></div>
             <span className="workspace-connection">{offline ? "Cached workspace" : snapshot.clockMode === "demo" ? "Historical demo" : "Connected"}<span>{date}</span></span>
@@ -236,7 +237,7 @@ export default function App() {
           )}
           {page !== "home" && <div className="site-context">
             <div className="site-selector">
-              <MapPin aria-hidden="true" size={18} />
+              {page === "atlas" ? <AtlasPin size={18} weight="light" aria-hidden="true"/> : <MapPin aria-hidden="true" size={18} />}
               <div>
                 <span>ACTIVE SITE</span>
                 <select
@@ -256,7 +257,7 @@ export default function App() {
                   ))}
                 </select>
               </div>
-              <ChevronDown aria-hidden="true" size={14} />
+              {page === "atlas" ? <AtlasCaret size={14} weight="light" aria-hidden="true"/> : <ChevronDown aria-hidden="true" size={14} />}
             </div>
             <div className="site-meta">
               <span>

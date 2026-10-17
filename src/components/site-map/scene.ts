@@ -71,7 +71,7 @@ export function createMapScene(
     powerPreference: "low-power",
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
-  renderer.setClearColor("#11191d");
+  renderer.setClearColor(callbacks.pin ? "#11191d" : "#101a16");
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.25;
@@ -86,7 +86,7 @@ export function createMapScene(
   canvas.tabIndex = 0;
   container.appendChild(canvas);
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2("#11191d", 0.003);
+  scene.fog = new THREE.FogExp2(callbacks.pin ? "#11191d" : "#101a16", 0.003);
   const camera = new THREE.PerspectiveCamera(38, 1, 0.02, 1000);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
@@ -115,18 +115,18 @@ export function createMapScene(
   const ocean = new THREE.Mesh(
     new THREE.PlaneGeometry(650, 650),
     new THREE.MeshStandardMaterial({
-      color: "#172329",
+      color: callbacks.pin ? "#172329" : "#142018",
       roughness: 0.85,
       metalness: 0.15,
     }),
   );
   ocean.rotation.x = -Math.PI / 2;
-  ocean.position.y = -0.17;
+  ocean.position.y = callbacks.pin ? -0.17 : -0.46;
   scene.add(ocean);
-  const grid = new THREE.GridHelper(250, 125, "#415356", "#2b3d41");
-  grid.position.y = -0.16;
+  const grid = new THREE.GridHelper(250, 125, "#45563b", "#35472d");
+  grid.position.y = callbacks.pin ? -0.16 : -0.45;
   (grid.material as THREE.Material).transparent = true;
-  (grid.material as THREE.Material).opacity = 0.35;
+  (grid.material as THREE.Material).opacity = callbacks.pin ? 0.35 : 0.18;
   scene.add(grid);
   const land = new THREE.Group(),
     beacons = new THREE.Group(),
@@ -219,9 +219,9 @@ export function createMapScene(
     const bounds = REGION_BOUNDS[value];
     const a = project(bounds.north, bounds.west), b = project(bounds.south, bounds.east);
     const center = new THREE.Vector3((a.x + b.x) / 2, LAND_TOP, (a.z + b.z) / 2);
-    const available = 0.83;
-    const distance = Math.max((b.x - a.x) / Math.max(camera.aspect * available, 0.25), b.z - a.z) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.3;
-    const offset = top ? new THREE.Vector3(0, distance, 0.001) : new THREE.Vector3(0, distance * 0.92, distance * 0.65);
+    const available = camera.aspect < 0.8 ? 1.05 : 0.83;
+    const distance = Math.max((b.x - a.x) / Math.max(camera.aspect * available, 0.25), b.z - a.z) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * (camera.aspect < 0.8 ? 1.1 : 1.3);
+    const offset = top ? new THREE.Vector3(0, distance, 0.001) : new THREE.Vector3(0, distance * 0.76, distance * 0.82);
     if (immediate) { controls.target.copy(center); camera.position.copy(center).add(offset); controls.update(); }
     else animateTo(center, center.clone().add(offset));
     canvas.dataset.region = value;
@@ -248,6 +248,7 @@ export function createMapScene(
     const { width, height } = container.getBoundingClientRect();
     if (!width || !height) return;
     camera.aspect = width / height;
+    if (!callbacks.pin) camera.setViewOffset(width, height, width > 1100 ? 125 : 0, height < 850 && width > 760 ? 35 : 0, width, height);
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
     if (overview) region(overview, true);
@@ -290,16 +291,16 @@ export function createMapScene(
             state.properties.name,
           );
           const geometry = new THREE.ExtrudeGeometry(shape, {
-            depth: 0.25,
+            depth: callbacks.pin ? 0.25 : 0.55,
             bevelEnabled: false,
             steps: 1,
             curveSegments: 1,
           });
           geometry.rotateX(-Math.PI / 2);
-          geometry.translate(0, LAND_TOP - 0.25, 0);
+          geometry.translate(0, LAND_TOP - (callbacks.pin ? 0.25 : 0.55), 0);
           const mesh = new THREE.Mesh(geometry, [
             new THREE.MeshStandardMaterial({
-              color: focal ? "#4b5c5b" : "#3e4b50",
+              color: callbacks.pin ? (focal ? "#4b5c5b" : "#3e4b50") : (focal ? "#46523d" : "#3b4937"),
               roughness: 0.8,
               metalness: 0.15,
               polygonOffset: true,
@@ -307,7 +308,7 @@ export function createMapScene(
               polygonOffsetUnits: 1,
             }),
             new THREE.MeshStandardMaterial({
-              color: "#1c3b38",
+              color: callbacks.pin ? "#1c3b38" : "#1f3022",
               roughness: 0.6,
               polygonOffset: true,
               polygonOffsetFactor: 1,
@@ -319,9 +320,9 @@ export function createMapScene(
           const edges = new THREE.LineSegments(
             new THREE.EdgesGeometry(geometry, 30),
             new THREE.LineBasicMaterial({
-              color: focal ? "#8fbea0" : "#3f6960",
+              color: callbacks.pin ? (focal ? "#8fbea0" : "#3f6960") : "#7c9063",
               transparent: true,
-              opacity: focal ? 0.7 : 0.4,
+              opacity: callbacks.pin ? (focal ? 0.7 : 0.4) : 0.48,
             }),
           );
           land.add(edges);

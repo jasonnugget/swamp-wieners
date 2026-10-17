@@ -4,6 +4,8 @@ Run `npm run test:e2e` from the root. Installed Google Chrome is required. `play
 
 | File | Coverage |
 | --- | --- |
+| `home-signals.spec.ts` | Hazard dial zero/null/stale handling; automatic NWS forecast selection, gaps, freshness, wind units and scrubbing; policy board without reports; scan/pause, reduced motion, empty forecasts and phone bounds |
+| `immersive-atlas.spec.ts` | Full-viewport renderer, floating navigation, two-line title, drawer close/reopen/Escape focus, inert hidden content, persistent close control, selected-site summary, mobile bounds and reduced motion |
 | `site-data-preview.spec.ts` | All-plant/current/future completion APIs, source precedence, unchanged operational scores/policy/coverage, synthetic labels, source-only switch and Site intelligence companion |
 | `site-risk-api.spec.ts` | All-site current snapshot parity, observation validation, structured factors/drivers, model availability, provider status, atlas hours 0/72 and invalid query handling |
 | `weather-atlas.spec.ts` | Canonical risk ranges, unknown/low-confidence states, coverage, eleven layers, forecast frames, search/regions, geometry reuse, countdown/reset, stale reads, all 34 observation fields, field provenance, provider/plant inspection, keyboard evidence-view switching and mobile overflow |

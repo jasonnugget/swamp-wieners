@@ -3,6 +3,9 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Pause, Play } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import type { Snapshot } from "../../shared/types";
+import { HazardProfile, WorkReadiness } from "../components/FieldSignals";
+import WeatherOutlook from "../components/WeatherOutlook";
 import FieldSculpture from "../components/FieldSculpture";
 import { pageHref, type Page } from "./navigation";
 
@@ -15,7 +18,9 @@ const features = [
 ];
 const statement = "The forecast shows the heat. The crew knows the access road. A better work decision needs both.";
 
-export default function HomePage({ onNavigate }: {
+export default function HomePage({ onNavigate, snapshot, cached }: {
+  snapshot: Snapshot;
+  cached: boolean;
   onNavigate: (event: MouseEvent<HTMLAnchorElement>, page: Page) => void;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -80,11 +85,11 @@ export default function HomePage({ onNavigate }: {
 
       <section className="home-story" aria-labelledby="story-title">
         <div className="story-layout">
-          <div className="story-heading"><p className="section-caption">From morning mobilization to the next handoff.</p><h2 id="story-title">Stay curious.<br />Stay prepared.</h2><a className="quiet-link" href={pageHref("intelligence")} onClick={e => link(e, "intelligence")}>See site intelligence <ArrowUpRight size={19} aria-hidden="true" /></a></div>
+          <div className="story-heading"><p className="section-caption">From morning mobilization to the next handoff.</p><h2 id="story-title">Stay curious.<br />Stay prepared.</h2><a className="quiet-link" href={pageHref("intelligence")} onClick={e => link(e, "intelligence")}>See site intelligence <ArrowUpRight size={19} aria-hidden="true" /></a><p className="story-data-context">{cached ? "Cached workspace. Reconnect for current evidence." : "Connected workspace · current site risk."}<br/>Automatic environmental screening.</p></div>
           <div className="story-chapters">
-            <article><span className="chapter-word">Observe</span><h3>Know what changes the work.</h3><p>Review weather, heat, lightning, flooding, fire weather, ground wetness, and wildlife reports. Every channel shows its evidence; missing or stale coverage stays unknown.</p><div className="chapter-graphic observation-graphic" aria-hidden="true">{Array.from({ length: 24 }, (_, i) => <i key={i} style={{ transform: `scaleY(${.18 + Math.sin(i * .55) ** 2 * .82})` }} />)}</div><p className="graphic-disclosure">Illustrative signal pattern.</p></article>
-            <article><span className="chapter-word">Understand</span><h3>Turn a signal into a work decision.</h3><p>In lightning replay, each strike within 10 miles restarts the 30-minute hold on outdoor work. Review the hazard index and task restrictions together; independent holds stay in force.</p><div className="chapter-graphic uncertainty-graphic" aria-hidden="true"><i /><i /><i /><i /><span>Evidence before confidence.</span></div></article>
-            <article><span className="chapter-word">Carry forward</span><h3>Leave the next crew a record.</h3><p>At 6 PM local time, PlanIT creates the next day’s safety briefing. Unresolved reports and work restrictions carry forward with source and coverage details.</p><a className="editorial-link" href={pageHref("briefings")} onClick={e => link(e, "briefings")}>View safety briefings <ArrowUpRight size={20} aria-hidden="true" /></a></article>
+            <article><span className="chapter-word">Observe</span><h3>Seven signals.<br/>One wider view.</h3><p>Compare the environmental channels across our plants. A low score only tells part of the story: check how many sites have usable evidence.</p><HazardProfile sites={snapshot.sites} risks={snapshot.siteRisks} paused={paused}/></article>
+            <article><span className="chapter-word">Look ahead</span><h3>Find the hottest hour.<br/>See the wind change.</h3><p>A moving view of the next 24 hours. The warmest available plant is spotlighted automatically. Scrub the curve to inspect the heat and wind before planning the shift.</p><WeatherOutlook sites={snapshot.sites} screenings={snapshot.weatherScreenings ?? {}} paused={paused} cached={cached}/></article>
+            <article><span className="chapter-word">Get ready</span><h3>One tile.<br/>One crew’s next move.</h3><p>Compare installation, mobilization and preparation across the network. Each plant carries its current work decision, including restrictions and unknowns.</p><WorkReadiness sites={snapshot.sites} risks={snapshot.siteRisks} paused={paused}/><a className="editorial-link" href={pageHref("intelligence")} onClick={e => link(e, "intelligence")}>Inspect work decisions <ArrowUpRight size={20} aria-hidden="true" /></a></article>
           </div>
         </div>
       </section>

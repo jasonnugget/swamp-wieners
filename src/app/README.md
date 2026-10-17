@@ -16,7 +16,7 @@ The national catalog includes plants with no historical model coverage. Selectin
 
 The default `/` route is an editorial homepage. `HomePage.tsx` composes the generative hero, horizontal feature accordion, pinned explanation, word reveals, and footer. It uses GSAP, ScrollTrigger, and `@gsap/react`; all scrolling effects have a static reduced-motion version. The ambient-motion control pauses the hero and marquee. `FieldSculpture.tsx` is decorative artwork, separate from weather and model evidence.
 
-`navigation.ts` defines the views and query-string links. `/?view=atlas` opens the national 3D atlas in a viewport-sized workspace beneath the navigation and site selector. The homepage and other working views do not mount the atlas. `/?view=intelligence` contains site ranking, forecasts, restrictions, and hazard evidence; Model Lab, Crew reports, and Safety briefings have their own links. Native links support new tabs, reloads, and browser history. Selected plants remain shared across working views.
+`navigation.ts` defines the views and query-string links. `/?view=atlas` opens the national 3D atlas as a full-screen canvas beneath floating navigation and site selection. The homepage and other working views do not mount the atlas. `/?view=intelligence` contains site ranking, forecasts, restrictions, and hazard evidence; Model Lab, Crew reports, and Safety briefings have their own links. Native links support new tabs, reloads, and browser history. Selected plants remain shared across working views.
 
 `LoadingScreen.tsx` presents an orbital introduction and separate snapshot/model readiness indicators. The introduction lasts at most 1.6 seconds after assets become ready and can be skipped. Reduced-motion users enter when assets are ready. Failed loading exposes a retry action.
 
@@ -29,3 +29,7 @@ The atlas receives canonical `siteRisks` for immediate/offline state and refresh
 Site intelligence also renders the selected plant’s current canonical observation and source details through the shared map evidence components. This section is labeled current evidence; the neighboring historical forecasts, model windows and replay decisions retain their own time context.
 
 The current-evidence section mounts `SiteObservationPreview` for the inspected plant. It requests the backend’s demo companion and offers the same source-only switch as Conditions. Hypothetical values do not change the canonical priority list or period-specific decisions.
+
+The atlas route applies its own floating header, light Phosphor icons and animated menu lines. These are presentation changes only; native links, browser history, report actions and shared site selection remain the same. Other views keep the editorial page header.
+
+The “Stay curious. Stay prepared.” chapters use the existing snapshot for an interactive hazard dial, automatically collected NWS hourly heat/wind outlook and plant-by-plant task-readiness board. The outlook automatically spotlights the warmest usable forecast; optional comparison stays local. `WeatherOutlook.tsx` uses real time, preserves gaps and labels its source. It does not borrow historical model data. No extra provider requests or frontend hazard scoring are introduced. Motion controls pause entrances and forecast scanning. See [the homepage audit](../../docs/home-signals.md).
