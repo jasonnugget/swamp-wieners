@@ -80,7 +80,7 @@ The plant catalog has 285 sites and the frozen historical model cohort remains f
 
 ## Website navigation
 
-The default view is an editorial homepage with decorative canvas artwork and scoped GSAP scroll effects. Query-string links select the dedicated fullscreen atlas, Site intelligence, Model Lab, Crew reports, and Safety briefings. Browser history and reload retain the chosen view. Site intelligence owns the evidence panels and ranking; the homepage does not mount the atlas. Home animation is unrelated to operational weather and model state.
+The default view is an editorial homepage with decorative canvas artwork and scoped GSAP scroll effects. Query-string links select the dedicated fullscreen atlas, Site intelligence, Model Lab, Crew reports, and Safety briefings. Browser history and reload retain the chosen view. The atlas owns a current-risk inspector with Overview, Conditions and Sources views. Site intelligence shares the normalized observation/source components and owns the full site ranking; the homepage does not mount the atlas. Home animation is unrelated to operational weather and model state.
 
 ## Canonical operational environment
 

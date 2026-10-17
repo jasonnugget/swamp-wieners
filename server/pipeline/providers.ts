@@ -4,6 +4,7 @@ import type { SiteObservationV1 } from "../../shared/risk";
 import { providerMetadataSchema } from "../../shared/providers";
 import { ProviderCache, ProviderHttp, MINUTE, HOUR, DAY, evidence, unavailable } from "../integrations/provider";
 import { UsgsWaterProvider, type FloodProvider, type FloodObservation } from "../integrations/usgs-water";
+import { NwpsWaterProvider, FallbackFloodProvider } from "../integrations/nwps-water";
 import { FirmsProvider, type FireProvider, type FireObservation } from "../integrations/firms";
 import { FemaFloodplainProvider, type FloodplainProvider } from "../integrations/floodplain";
 import { InaturalistProvider, type WildlifeProvider, type WildlifeObservation } from "../integrations/wildlife";
@@ -37,7 +38,7 @@ export class EnvironmentalProviders {
 export function createProviders(store: Store, demoClock: () => number): EnvironmentalProviders {
   const cache = new ProviderCache(store), http = new ProviderHttp();
   const mode = process.env.LIGHTNING_MODE ?? "unavailable";
-  return new EnvironmentalProviders(new UsgsWaterProvider(cache, http, process.env.USGS_API_KEY), new FirmsProvider(cache, http, process.env.FIRMS_MAP_KEY),
+  return new EnvironmentalProviders(new FallbackFloodProvider(new UsgsWaterProvider(cache, http, process.env.USGS_API_KEY), new NwpsWaterProvider(cache, http)), new FirmsProvider(cache, http, process.env.FIRMS_MAP_KEY),
     new FemaFloodplainProvider(cache, http, process.env.FLOOD_EXPOSURE_FILE, process.env.FEMA_ENABLED !== "0"), new InaturalistProvider(cache, http),
     mode === "recorded" ? new RecordedLightningProvider(() => store.all<Strike>("strike"), "LIVE") : mode === "demo" ? new RecordedLightningProvider(() => store.all<Strike>("strike"), "DEMO", demoClock) : new UnavailableLightningProvider(), nwsAlertProvider, mode === "demo" ? demoClock : Date.now);
 }

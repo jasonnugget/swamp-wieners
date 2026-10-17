@@ -11,9 +11,10 @@ The endpoint research below was recorded on October 17, 2026. It is historical v
 | USGS OGC API | Connected nearby-stage/trend/rolling-abnormality adapter with cached associations |
 | FEMA NFHL | Connected static point exposure, with an optional reviewed local-file strategy |
 | iNaturalist | Connected sparse public context; crew reports remain primary operational authority |
-| NASA FIRMS | Area-query adapter and mocked tests implemented; authenticated live access requires MAP_KEY and remains unverified |
+| NASA FIRMS | Live keyless US/Alaska regional CSV downloads verified; optional authenticated area API requires MAP_KEY and remains unverified |
 | Lightning | Swappable unavailable/recorded/demo interface; no licensed live network configured |
-| NOAA NWPS / NIFC WFIGS | Researched endpoints only; not connected operational providers |
+| NOAA NWPS | Connected keyless water-gauge fallback with verified local gauge/observed-series requests |
+| NIFC WFIGS | Researched endpoint only; not a connected operational provider |
 
 Later implementation checks reached USGS, FEMA, NWS and iNaturalist at a Louisiana catalog site. These checks are described in [environmental providers](environment-providers.md); they are distinct from the archived request hashes below. They do not establish national suitability or complete hazard detection.
 
@@ -76,7 +77,7 @@ The query returned real incident coordinates in Texas and California. `ModifiedO
 | --- | --- | --- |
 | Animated observed rain | [NOAA radar OGC services](https://opengeo.ncep.noaa.gov/) linked by the NWS API documentation | Inspect capabilities, layer geography, frame times and browser texture loading. This audit checked the documentation, not working radar tiles. Radar reflects observed conditions; it is separate from future rain forecasts. |
 | Satellite soil moisture | [NASA SMAP SPL3SMP_E version 6](https://nsidc.org/data/spl3smp_e/versions/6), daily 9 km product | Earthdata access, quality flags and spatial sampling. Documentation checked; no authenticated download tested. Grid soil moisture does not establish equipment bearing capacity at a construction site. |
-| Satellite fire detections | [NASA FIRMS area API](https://firms.modaps.eosdis.nasa.gov/api/area/) | The regional adapter now handles CSV, quality filters, age and distance with mocked tests. MAP_KEY is still needed for authenticated connectivity; no authenticated query was verified. A thermal anomaly is not a confirmed wildfire. |
+| Satellite fire detections | [NASA FIRMS area API](https://firms.modaps.eosdis.nasa.gov/api/area/) | The adapter handles CSV, quality filters, age and distance, with verified keyless US regional downloads. MAP_KEY is needed only for the optional authenticated area API; no authenticated query was verified. A thermal anomaly is not a confirmed wildfire. |
 | Lightning awareness | [NOAA GOES GLM](https://www.nesdis.noaa.gov/our-satellites/currently-flying/goes-east-west/geostationary-lightning-mapper-glm?page=1) | Satellite product ingestion, latency and coverage checks. GLM measures total lightning, including in-cloud flashes. Do not describe it as verified cloud-to-ground strike locations or assume coverage of all Alaska. Documentation checked; no product ingestion tested. |
 
 ## Integration boundaries

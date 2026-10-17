@@ -6,7 +6,8 @@ import { join } from "node:path";
 import type { Site, Strike } from "../../shared/types";
 import { siteObservationV1Schema } from "../../shared/risk";
 import { ProviderCache, ProviderHttp, MINUTE, HOUR, DAY, evidence, mapConcurrent } from "../../server/integrations/provider";
-import { UsgsWaterProvider } from "../../server/integrations/usgs-water";
+import { UsgsWaterProvider, type FloodObservation } from "../../server/integrations/usgs-water";
+import { NwpsWaterProvider, FallbackFloodProvider } from "../../server/integrations/nwps-water";
 import { FirmsProvider } from "../../server/integrations/firms";
 import { FemaFloodplainProvider } from "../../server/integrations/floodplain";
 import { InaturalistProvider, classifySpecies } from "../../server/integrations/wildlife";
@@ -66,6 +67,72 @@ test("USGS history failure preserves a genuine current zero stage while history 
   const r = await provider.getFloodEvidence(site);
   assert.equal(r.status, "ok"); assert.equal(r.data!.stage, 0); assert.equal(r.data!.stageTrend, null); assert.equal(r.data!.stagePercentile, null);
 });
+function nwpsGauge(primary = 0, unit = "ft", time = iso(-15 * MINUTE)) {
+  return { lid: "TEST1", name: "Test river", latitude: site.latitude, longitude: site.longitude,
+    pedts: { observed: "HGIRG" }, status: { observed: { primary, primaryUnit: unit, validTime: time } } };
+}
+function nwpsSeries() {
+  return { pedts: "HGIRG", primaryUnits: "ft", data: [
+    { validTime: iso(-75 * MINUTE), primary: -1 },
+    ...Array.from({ length: 200 }, (_, i) => ({ validTime: iso(-(i + 2) * HOUR), primary: 0 })),
+  ] };
+}
+test("NWPS fallback preserves current zero stage, same-gauge trend, midrank and cached fetch time", async () => {
+  let time = now, calls = 0;
+  const provider = new NwpsWaterProvider(new ProviderCache(undefined, () => time), new ProviderHttp(async input => {
+    calls++; const url = String(input);
+    if (url.includes("stageflow")) return json(nwpsSeries());
+    const params = new URL(url).searchParams;
+    assert.equal(params.get("srid"), "EPSG_4326"); assert.ok(params.has("bbox.xmin"));
+    return json({ gauges: [nwpsGauge()] });
+  }, () => time, 0), () => time);
+  const first = await provider.getFloodEvidence(site); time += MINUTE;
+  const second = await provider.getFloodEvidence({ ...site, id: "second" });
+  assert.equal(calls, 2); assert.equal(first.fetchedAt, second.fetchedAt);
+  assert.equal(first.data!.stage, 0); assert.equal(first.data!.stageTrend, 0.3048);
+  assert.ok(first.data!.stagePercentile! > 0.49 && first.data!.stagePercentile! < 0.51);
+  const o = normalize(site, undefined, now);
+  applyProviderEvidence(o, site, [{ siteId: site.id, provider: "usgs", evidence: first }], now);
+  assert.equal(o.flood.stage, 0); assert.equal(o.provenance.fieldEvidence["flood.stage"].source, "NOAA NWPS");
+});
+test("NWPS rejects missing sentinels, stale/future gauges, flow units and distant stations", async () => {
+  for (const gauge of [nwpsGauge(-999), nwpsGauge(5, "kcfs"), nwpsGauge(5, "ft", iso(-3 * HOUR)), nwpsGauge(5, "ft", iso(MINUTE)), { ...nwpsGauge(), latitude: site.latitude + 2 }]) {
+    const r = await new NwpsWaterProvider(cache(), http(() => json({ gauges: [gauge] })), clock).getFloodEvidence(site);
+    assert.equal(r.status, "unavailable"); assert.equal(r.data, null);
+  }
+  const negative = await new NwpsWaterProvider(cache(), http(url => json(url.includes("stageflow") ? nwpsSeries() : { gauges: [nwpsGauge(-1)] })), clock).getFloodEvidence(site);
+  assert.equal(negative.data!.stage, -0.3048);
+});
+test("NWPS bad or incompatible history preserves a real current reading without mixed-datum trends", async () => {
+  for (const payload of [{ ...nwpsSeries(), pedts: "OTHER" }, { ...nwpsSeries(), primaryUnits: "m" }, {}]) {
+    const r = await new NwpsWaterProvider(cache(), http(url => json(url.includes("stageflow") ? payload : { gauges: [nwpsGauge(5)] })), clock).getFloodEvidence(site);
+    assert.equal(r.status, "ok"); assert.equal(r.data!.stage, 1.524);
+    assert.equal(r.data!.stageTrend, null); assert.equal(r.data!.stagePercentile, null);
+  }
+});
+test("NWPS missing/malformed/upstream failures remain unknown", async () => {
+  for (const payload of [{}, { gauges: [{}] }]) {
+    const r = await new NwpsWaterProvider(cache(), http(() => json(payload)), clock).getFloodEvidence(site);
+    assert.equal(r.status, "error"); assert.equal(r.data, null);
+  }
+  for (const transport of [http(() => new Response("failed", { status: 503 })), http(() => { throw new DOMException("timeout", "TimeoutError"); })]) {
+    const r = await new NwpsWaterProvider(cache(), transport, clock).getFloodEvidence(site);
+    assert.equal(r.status, "error"); assert.equal(r.data, null);
+  }
+  assert.equal((await new NwpsWaterProvider(cache(), http(() => json({ gauges: [] })), clock).getFloodEvidence(site)).status, "unavailable");
+});
+test("water fallback prefers USGS and never combines fields from different gauges", async () => {
+  const data = { nearestGaugeMiles: 2, stage: 0, stageTrend: null, stagePercentile: null };
+  let calls = 0;
+  const primary = { getFloodEvidence: async () => evidence("USGS", data, now, HOUR) };
+  const secondary = { getFloodEvidence: async () => { calls++; return evidence("NOAA NWPS", { ...data, stage: 8, stagePercentile: 0.8 }, now, HOUR); } };
+  const first = await new FallbackFloodProvider(primary, secondary).getFloodEvidence(site);
+  assert.equal(calls, 0); assert.deepEqual(first.data, data);
+  const failed = { getFloodEvidence: async () => evidence<FloodObservation>("USGS", null, now, HOUR, { status: "error", error: "HTTP 429" }) };
+  const fallback = await new FallbackFloodProvider(failed, secondary).getFloodEvidence(site);
+  assert.equal(calls, 1); assert.equal(fallback.source, "NOAA NWPS");
+  assert.equal(fallback.details.primaryError, "HTTP 429"); assert.equal(fallback.data!.stage, 8);
+});
 test("FIRMS uses regional queries and cached actual fetch time, excluding low-confidence and industrial detections", async () => {
   let time = now, calls = 0;
   const provider = new FirmsProvider(new ProviderCache(undefined, () => time), new ProviderHttp(async input => {
@@ -79,12 +146,23 @@ test("FIRMS uses regional queries and cached actual fetch time, excluding low-co
   assert.equal(first.data!.fireAgeMinutes, 30); assert.equal(second.data!.fireAgeMinutes, 60);
   assert.equal((second.details.detections as unknown[]).length, 1);
 });
-test("FIRMS missing credentials and empty results do not fabricate fire absence", async () => {
+test("FIRMS public downloads work without credentials and empty results do not fabricate fire absence", async () => {
   let calls = 0; const transport = http(() => { calls++; return new Response("latitude,longitude,acq_date,acq_time,frp,confidence\n"); });
   const unconfigured = await new FirmsProvider(cache(), transport, "", clock).getFireEvidence(site);
-  assert.equal(unconfigured.status, "unavailable"); assert.equal(calls, 0);
+  assert.equal(unconfigured.status, "ok"); assert.equal(calls, 1);
+  assert.equal(unconfigured.details.access, "public-regional-download");
   const empty = await new FirmsProvider(cache(), transport, "placeholder", clock).getFireEvidence(site);
   assert.equal(empty.status, "ok"); assert.equal(empty.data!.nearestFireMiles, null);
+});
+test("FIRMS public US downloads are shared across plants, with a separate Alaska cache", async () => {
+  const urls: string[] = [];
+  const provider = new FirmsProvider(cache(), http(url => { urls.push(url); return new Response(csv); }), "", clock);
+  await provider.getFireEvidence(site);
+  await provider.getFireEvidence({ ...site, id: "other", latitude: 40, longitude: -90 });
+  await provider.getFireEvidence({ ...site, id: "alaska", state: "AK", latitude: 65, longitude: -148 });
+  assert.equal(urls.length, 2);
+  assert.match(urls[0], /J1_VIIRS_C2_USA_contiguous_and_Hawaii_48h.csv$/);
+  assert.match(urls[1], /J1_VIIRS_C2_Alaska_48h.csv$/);
 });
 test("FEMA distinguishes mapped true/false, unmapped unknown and verified static fallback", async () => {
   for (const [features, expected] of [[fema.features, true], [[{ attributes: { FLD_ZONE: "X", SFHA_TF: "F" } }], false], [[], null]] as const) {
@@ -109,8 +187,11 @@ test("FEMA caches lookups and unavailable static records stay unknown", async ()
 });
 test("wildlife filters ordinary, old, future, obscured and imprecise observations while preserving species/source metadata", async () => {
   let calls = 0;
-  const provider = new InaturalistProvider(cache(), http(() => {
+  const provider = new InaturalistProvider(cache(), http(url => {
     calls++;
+    const params = new URL(url).searchParams;
+    assert.equal(params.get("iconic_taxa"), "Mammalia,Reptilia");
+    assert.equal(params.get("per_page"), "100");
     return json({ total_results: 6, results: [sighting("Alligator mississippiensis"), sighting("Passer domesticus", 2), { ...sighting("Ursus arctos", 3), obscured: true }, { ...sighting("Ursus arctos", 4), time_observed_at: iso(-2 * DAY) }, { ...sighting("Ursus arctos", 5), time_observed_at: iso(HOUR) }, { ...sighting("Ursus arctos", 6), positional_accuracy: 2000 }] });
   }), clock);
   const result = await provider.getWildlifeEvidence(site); await provider.getWildlifeEvidence(site);
@@ -132,9 +213,22 @@ test("NWS preserves event semantics, assigns hazards, caches success and accepts
   let calls = 0;
   const provider = new NwsAlertProvider(cache(), http(() => { calls++; return json({ features: ["Flash Flood Warning", "Red Flag Warning", "Heat Advisory"].map((event, i) => ({ id: String(i), properties: { event, headline: "County message", severity: "Severe", expires: iso(HOUR) } })) }); }), clock);
   const result = await provider.getAlerts(site); await provider.getAlerts(site);
-  assert.equal(calls, 1); assert.deepEqual(result.data!.map(a => a.category), ["flood", "wildfire", "heat"]);
+  assert.equal(calls, 2); assert.deepEqual(result.data!.map(a => a.category), ["flood", "wildfire", "heat"]);
   assert.equal(result.data![0].event, "Flash Flood Warning");
   assert.equal((await new NwsAlertProvider(cache(), http(() => json({ features: [] })), clock).getAlerts(site)).status, "ok");
+});
+test("NWS empty statewide checks are shared and retain original fetch times across plants", async () => {
+  let time = now, calls = 0;
+  const provider = new NwsAlertProvider(new ProviderCache(undefined, () => time), new ProviderHttp(async url => {
+    assert.ok(new URL(String(url)).searchParams.has("area")); calls++;
+    return json({ features: [] });
+  }, () => time, 0), () => time);
+  const a = await provider.getAlerts(site); time += MINUTE;
+  const b = await provider.getAlerts({ ...site, id: "second" });
+  assert.equal(calls, 1); assert.equal(a.fetchedAt, b.fetchedAt);
+  assert.equal(a.validUntil, b.validUntil); assert.deepEqual(b.data, []);
+  time += 5 * MINUTE;
+  await provider.getAlerts(site); assert.equal(calls, 2);
 });
 
 for (const failure of ["malformed", "timeout", "non200"] as const) {

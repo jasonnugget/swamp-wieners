@@ -8,7 +8,7 @@ export class Store {
     mkdirSync(directory, { recursive: true });
     this.db = new DatabaseSync(join(directory, "planit.sqlite"));
     this.db.exec(
-      `PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS records (kind TEXT NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(kind,id));`,
+      `PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS records (kind TEXT NOT NULL, id TEXT NOT NULL, value TEXT NOT NULL, PRIMARY KEY(kind,id));`,
     );
   }
   all<T>(kind: string): T[] {

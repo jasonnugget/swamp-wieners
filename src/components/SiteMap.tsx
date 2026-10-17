@@ -240,6 +240,7 @@ export default function SiteMap({
       data-testid="site-map"
       aria-label={onPin ? "Hazard location map" : "Site risk map"}
     >
+      <div className={onPin ? "pin-viewport" : "atlas-map-region"}>
       <div className="scene-vignette" />
       <div ref={container} className="site-map scene-surface" />
       <div ref={labels} className="scene-labels" />
@@ -261,6 +262,7 @@ export default function SiteMap({
           <span>Building your national view…</span>
         </div>
       )}
+      </div>
       {!onPin && (
         <>
           <div className="scene-heading">
@@ -364,7 +366,7 @@ export default function SiteMap({
         )}
       </div>
       {!onPin && <RiskControls
-        data={inspection} showTimeline={focusedSite === selected} sites={sites} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
+        data={inspection} currentData={atlas} showTimeline={focusedSite === selected} sites={sites} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
         onLayer={setLayer} onHour={setHour}
         onRegion={selectRegion}
         onSelect={inspectSite}

@@ -6,7 +6,7 @@ Keep shared colors and typography consistent with the existing CSS variables and
 
 Run `npm run build` after import or asset-path changes. Run the browser layout check for desktop and 390-pixel mobile widths; screenshots are generated under ignored `test-results/`.
 
-`weather-atlas.css` defines the national explorer's dark surfaces, Barlow Condensed display font, layer toolbar, inspector, timeline, scales, and responsive layout. Scope these rules to the atlas so report pinning keeps its compact controls. The atlas lives in its own fullscreen view; site ranking belongs to Site intelligence.
+`weather-atlas.css` defines the national explorer’s charcoal map, Satoshi typography, layer toolbar, paper evidence panel, timeline, scales, and responsive layout. The canvas occupies its own region beside the desktop panel. At widths up to 900px, the evidence panel follows the map in normal page flow. Scope these rules to the atlas so report pinning keeps its compact controls. The atlas includes a three-site priority preview; the full ranking remains in Site intelligence.
 
 ## Editorial website theme
 
@@ -14,4 +14,6 @@ Run `npm run build` after import or asset-path changes. Run the browser layout c
 
 GSAP motion is scoped to `HomePage.tsx`. The field sculpture has its own canvas animation, pauses outside the viewport or in a hidden tab, and observes reduced motion. The stylesheet keeps text fully visible and removes transforms for reduced-motion users. Do not animate an ancestor of fullscreen maps or dialogs with transforms, which would change their fixed-position containing block.
 
-The selected-site forecast slider spans the bottom of the map. The atlas inspector contains canonical risk channels, coverage/confidence, task states, source details and stop-work controls. It scrolls within the map on desktop/mobile. Unknown beacons use the existing gray with a question mark; low-confidence known values also use dashed, translucent markers; continuous risk colors interpolate the existing lime/amber/coral palette.
+The selected-site forecast slider spans the bottom of the map and appears only while focusing a plant. The atlas inspector also contains canonical risk channels, coverage/confidence, task states, source details and stop-work controls. It scrolls independently on desktop and follows the map in the mobile page. `evidence.css` styles the shared 34-field observation inspector and provider/model/plant details used by both the atlas and Site intelligence. Keep its source labels, units, unknown readings and native disclosure controls intact.
+
+Unknown beacons use the existing gray with a question mark; low-confidence known values also use dashed, translucent markers; continuous risk colors interpolate the existing lime/amber/coral palette.

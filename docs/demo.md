@@ -11,7 +11,7 @@
 7. Open **Site intelligence** to show canonical priority ranking: active holds first, then significant known risk, then insufficient evidence ahead of well-observed low-risk sites. Period-labeled forecast/replay detail panels remain distinct from current atlas snapshots.
 8. Open **Showcase**, fit plants, orbit or switch to overhead, then exit with Escape. Site selection is shared across working views.
 
-Weather and public feeds may be unavailable or rate-limited. Show their actual status. FIRMS needs a server-side MAP_KEY. No licensed live lightning detector is configured by default; recorded mode does not create events. A real detected lightning hold is displayed in the current inspector with its distance and countdown. The UI waits for backend confirmation before clearing it.
+Weather and public feeds may be unavailable or rate-limited. Show their actual status. FIRMS uses keyless regional downloads by default; a server-side MAP_KEY enables area queries. No licensed live lightning detector is configured by default; recorded mode does not create events. A real detected lightning hold is displayed in the current inspector with its distance and countdown. The UI waits for backend confirmation before clearing it.
 
 ## Historical model, lightning replay and briefing demonstration
 

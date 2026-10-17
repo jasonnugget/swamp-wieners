@@ -1,155 +1,197 @@
-@font-face {
-  font-family: "Barlow Condensed";
-  src: url("/fonts/BarlowCondensed-SemiBold.ttf") format("truetype");
-  font-weight: 600;
-  font-display: swap;
-}
-.overview-grid:has(.weather-atlas) { grid-template-columns: minmax(0, 1fr); }
-.weather-atlas.command-map { height: 760px; background: #11191d; color: #dce2dd; border-radius: 14px; }
-.weather-atlas .scene-vignette { background: linear-gradient(180deg, #10171ce8, #10171c00 42%, #10171c00 62%, #10171cda); box-shadow: none; }
-.weather-atlas .scene-heading { top: 27px; left: 28px; }
-.weather-atlas .scene-mode { font: 9px monospace; letter-spacing: 2px; color: #a0aaa8; }
-.weather-atlas .scene-mode > span { background: #d8bb85; box-shadow: none; }
-.weather-atlas .scene-heading h4 { font: 600 46px/1.05 "Barlow Condensed", sans-serif; letter-spacing: -0.8px; margin: 12px 0 8px; color: #eee9dd; }
-.weather-atlas .scene-heading p { font-size: 11px; color: #a1aeac; max-width: 390px; }
-.weather-atlas .scene-top-actions { top: 29px; right: 26px; }
-.weather-atlas .scene-top-actions button { background: #19252bee; color: #d8dfdc; border: 1px solid #a8b3ae26; border-radius: 30px; padding: 11px 14px; font-size: 10px; box-shadow: inset 0 1px #ffffff08; }
-.weather-atlas button { transition: background 250ms cubic-bezier(.32,.72,0,1), color 250ms cubic-bezier(.32,.72,0,1), transform 250ms cubic-bezier(.32,.72,0,1); }
-.weather-atlas button:active { transform: translateY(1px); }
-.weather-atlas button:focus-visible, .weather-atlas input:focus-visible { outline: 2px solid #dcc18c; outline-offset: 3px; }
-.atlas-layer-bar { position: absolute; z-index: 6; top: 137px; left: 26px; right: 26px; display: flex; width: fit-content; max-width: calc(100% - 52px); padding: 5px; gap: 3px; background: #101a20e8; border: 1px solid #c6d3ca1a; border-radius: 12px; box-shadow: inset 0 1px #ffffff07; overflow-x: auto; }
-.atlas-layer-bar button { background: transparent; color: #aab7b5; padding: 11px 14px; border-radius: 7px; font-size: 11px; white-space: nowrap; min-height: 42px; }
-.atlas-layer-bar small { font: 9px monospace; color: #768a8e; margin-right: 9px; }
-.atlas-layer-bar button[aria-pressed="true"] { background: #303c3f; color: #f0e5cc; box-shadow: inset 0 1px #ffffff0a; }
-.atlas-layer-bar button[aria-pressed="true"] small { color: #ddc18f; }
-.atlas-layer-bar button:hover { background: #28373d; }
-.atlas-regions { position: absolute; z-index: 5; top: 203px; left: 28px; display: flex; gap: 4px; }
-.atlas-regions button { background: #162229cc; border: 1px solid #c6d3ca12; border-radius: 4px; color: #8fa3a4; font: 10px monospace; padding: 9px 11px; }
-.atlas-regions button[aria-pressed="true"] { color: #e7dbc0; background: #3b3e37; border-color: #d6bd8033; }
-.atlas-inspector { position: absolute; z-index: 6; right: 26px; top: 242px; width: 250px; padding: 19px; background: #111c24f0; border: 1px solid #a8bcc024; border-radius: 13px; box-shadow: inset 0 1px #ffffff09, 0 16px 45px #0c171c55; }
-.atlas-inspector-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.atlas-inspector-top > span { color: #a7b5af; font: 8px monospace; letter-spacing: 1px; }
-.atlas-inspector-top > button { background: none; color: #d6c08f; font-size: 9px; padding: 3px 0; }
-.atlas-inspector .atlas-location-title { font-size: 16px; font-weight: 500; letter-spacing: -.4px; color: #e2e7df; margin-top: 17px; line-height: 1.4; }
-.atlas-coordinate { font: 9px monospace; color: #7f969a; margin-top: 7px; }
-.atlas-value { display: flex; align-items: baseline; gap: 7px; font: 600 70px/1.1 "Barlow Condensed", sans-serif; font-variant-numeric: tabular-nums; color: #e9d7b6; margin-top: 16px; }
-.atlas-value > span { font: 14px monospace; color: #acbdbb; }
-.atlas-value.is-loading { color: #798a8d; }
-.atlas-condition { color: #b4c3bd; font-size: 11px; margin: 7px 0 20px; }
-.atlas-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 15px; border-top: 1px solid #adc1c01a; padding-top: 15px; }
-.atlas-metrics dt { color: #81999b; font-size: 9px; }
-.atlas-metrics dd { color: #d3ddd4; font: 12px monospace; margin: 5px 0 0; }
-.atlas-search { position: relative; margin-top: 17px; }
-.atlas-search label { display: block; color: #859a9a; font: 9px monospace; margin-bottom: 7px; }
-.atlas-search input { display: block; width: 100%; background: #1c2b32; border: 1px solid #adc1c023; color: #d7e1dc; padding: 10px; border-radius: 5px; font: 10px "DM Sans", sans-serif; }
-.atlas-search-results { position: absolute; top: 100%; left: 0; right: 0; background: #192931; border: 1px solid #acb6a939; border-radius: 6px; padding: 4px; box-shadow: 0 10px 25px #0d171b66; }
-.atlas-search-results button { display: flex; justify-content: space-between; width: 100%; text-align: left; background: none; color: #c7d5d1; padding: 11px 8px; font-size: 11px; }
-.atlas-search-results button:hover { background: #2c3e43; }
-.atlas-search > p, .atlas-error { color: #d3b18a; font-size: 10px; line-height: 1.6; margin-top: 10px; }
-.atlas-freshness { font: 8px/1.6 monospace; color: #8ea8a2; margin-top: 14px; }
-.atlas-inspector > a { display: inline-block; color: #899c9b; font-size: 8px; margin-top: 6px; }
-.atlas-timeline { position: absolute; z-index: 6; bottom: 66px; left: 26px; right: 310px; padding: 16px 18px 12px; background: #142027e8; border: 1px solid #afc4c01f; border-radius: 12px; box-shadow: inset 0 1px #ffffff08; }
-.atlas-time-heading { display: flex; align-items: center; gap: 13px; }
-.atlas-time-heading > button:first-child { width: 33px; height: 33px; background: #d7c094; color: #1a282b; border-radius: 50%; font-size: 19px; }
-.atlas-time-heading > div { flex: 1; min-width: 0; }
-.atlas-time-heading span { display: block; color: #dfcba6; font: 10px monospace; }
-.atlas-time-heading strong { display: block; color: #9db2b1; font: 10px monospace; margin-top: 4px; }
-.atlas-time-heading .atlas-now { background: none; color: #b8c5be; font-size: 9px; padding: 8px 0; }
-.atlas-timeline input { display: block; width: 100%; height: 4px; accent-color: #e6c79a; margin-top: 18px; cursor: pointer; }
-.atlas-time-ticks { display: flex; justify-content: space-between; font: 8px monospace; color: #879da0; margin-top: 10px; }
-.atlas-scale { position: absolute; z-index: 5; right: 28px; bottom: 74px; width: 245px; padding: 0 7px; }
-.atlas-scale > span { color: #b1c0b9; font: 9px monospace; }
-.atlas-scale i { display: block; height: 5px; border-radius: 3px; margin-top: 10px; background: linear-gradient(90deg,#739bb8,#a9c7bc,#e8d09b,#d98c68,#bd655c); }
-.atlas-scale i[data-layer="rain"] { background: linear-gradient(90deg,#344c51,#79a99b,#9fc9b0,#c9d6ad,#ead09a); }
-.atlas-scale i[data-layer="wind"] { background: linear-gradient(90deg,#4d6070,#82aab7,#b6cbd0,#d5c8a5,#d89b7d); }
-.atlas-scale i[data-layer="risk"] { background: linear-gradient(90deg,#c9ee8d,#f0c477,#ff9676); }
-.atlas-scale > div { display: flex; justify-content: space-between; font: 8px monospace; color: #92a6a4; margin-top: 8px; }
-.atlas-coverage { position: absolute; z-index: 5; bottom: 15px; left: 28px; right: 28px; font: 8px/1.8 monospace; color: #819898; pointer-events: none; }
-.weather-atlas .scene-controls { right: 310px; bottom: 207px; background: #15242bed; border-color: #bac9bd24; }
-.weather-atlas .scene-controls button { color: #b6c7c1; }
-.weather-atlas svg { stroke-width: 1.25; }
-.weather-atlas .scene-controls button:hover { color: #e7d1a4; background: #38443f; }
-.weather-atlas .scene-site-card { left: 26px; bottom: 207px; width: min(300px, calc(100% - 380px)); background: #15242bed; border-color: #c2cec021; border-radius: 10px; }
-.weather-atlas .scene-disclosure { left: 28px; bottom: 184px; font: 8px monospace; color: #8da3a5; }
+/* Supervisor workspace: a dedicated map viewport beside a readable evidence panel. */
+.app-shell.view-atlas { max-width: none; height: 100dvh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.view-atlas .site-header { flex: 0 0 76px; margin-inline: 32px; }
+.view-atlas .main-shell { flex: 1; min-height: 0; }
+.view-atlas main { display: flex; flex-direction: column; height: 100%; padding: 0; overflow: hidden; }
+.view-atlas .site-context { flex: 0 0 60px; margin: 0; padding: 10px 32px; border: 0; gap: 24px; }
+.view-atlas .site-context .source-pill { margin-left: auto; }
+.view-atlas .demo-panel { position: fixed; left: 32px; right: 32px; top: 132px; z-index: 100; }
+.view-atlas .error-banner, .view-atlas .offline-banner { margin: 0; flex-shrink: 0; }
+.atlas-workspace { flex: 1; min-height: 0; position: relative; }
+.weather-atlas.command-map { --inspector-width: clamp(340px, 28vw, 420px); --map-gap: 28px; height: 840px; background: #111c20; color: #dae1d8; font-family: "Satoshi", sans-serif; }
+.view-atlas .atlas-workspace .weather-atlas.command-map { height: 100%; min-height: 0; width: 100%; border: 0; border-radius: 0; }
+.atlas-map-region { position: absolute; inset: 188px var(--inspector-width) 164px 0; }
+.weather-atlas .scene-vignette { background: linear-gradient(180deg, #111c20b3, transparent 20%, transparent 85%, #111c20a6); box-shadow: none; }
+.weather-atlas .scene-heading { top: 27px; left: var(--map-gap); }
+.weather-atlas .scene-mode { font: 10px "Satoshi", sans-serif; letter-spacing: 1.9px; color: #a6b5ac; }
+.weather-atlas .scene-mode > span { background: #d2bc91; box-shadow: none; }
+.weather-atlas .scene-heading :is(h1,h4) { font: 400 clamp(27px, 2.6vw, 42px)/1.1 "Satoshi", sans-serif; letter-spacing: -.055em; margin: 12px 0 7px; color: #f0eee4; }
+.weather-atlas .scene-heading p { color: #a0b0a7; font-size: 12px; max-width: 400px; }
+.weather-atlas .scene-top-actions { top: 29px; right: calc(var(--inspector-width) + var(--map-gap)); gap: 8px; }
+.weather-atlas .scene-top-actions button { padding: 11px 12px; border: 1px solid #91a39b40; background: #1b2b2f; border-radius: 6px; color: #dce4dc; font-size: 11px; min-height: 42px; }
+.weather-atlas .scene-top-actions button:hover { background: #2b3c3e; }
+.weather-atlas button:focus-visible, .weather-atlas input:focus-visible, .weather-atlas summary:focus-visible { outline: 2px solid #ba7851; outline-offset: 3px; }
+.weather-atlas button { transition: background-color 180ms ease, color 180ms ease; }
 .weather-atlas .scene-bottom { display: none; }
-.weather-atlas .scene-warning { top: 247px; left: 28px; right: 310px; background: #28342f; }
-.weather-atlas.is-expanded { inset: 10px; border-radius: 18px; height: auto; border-color: #9cb0ad2b; }
-.weather-atlas.is-expanded .scene-heading h4 { font-size: 54px; }
-.weather-atlas.is-expanded .scene-heading { left: 37px; top: 32px; }
-.weather-atlas.is-expanded .scene-top-actions { right: 32px; top: 34px; }
-.weather-atlas.is-expanded .atlas-inspector { width: 280px; top: 240px; right: 32px; }
-.weather-atlas.is-expanded .atlas-layer-bar { left: 37px; }
-.weather-atlas.is-expanded .atlas-regions { left: 39px; }
-.weather-atlas.is-expanded .atlas-timeline { left: 37px; right: 344px; }
-.weather-atlas.is-expanded .scene-controls { right: 344px; }
-.weather-atlas.is-expanded .scene-site-card { left: 37px; width: 300px; bottom: 210px; }
-.weather-atlas.is-expanded .atlas-scale { right: 38px; width: 270px; }
-.weather-atlas.is-expanded .scene-disclosure { left: 39px; }
-@media (min-width: 1450px) { .weather-atlas.is-expanded .scene-heading h4 { font-size: 64px; } }
-@media (max-width: 740px) {
-  .weather-atlas.command-map { height: 750px; }
-  .weather-atlas .scene-heading, .weather-atlas.is-expanded .scene-heading { left: 17px; top: 24px; }
-  .weather-atlas .scene-mode { font-size: 7px; letter-spacing: 1.4px; }
-  .weather-atlas .scene-heading h4, .weather-atlas.is-expanded .scene-heading h4 { font-size: 31px; max-width: 215px; margin-top: 10px; }
-  .weather-atlas .scene-heading p { font-size: 8px; max-width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .weather-atlas .scene-top-actions, .weather-atlas.is-expanded .scene-top-actions { top: 19px; right: 12px; }
-  .weather-atlas .scene-top-actions button, .weather-atlas.is-expanded .scene-top-actions button { padding: 9px; }
-  .atlas-layer-bar, .weather-atlas.is-expanded .atlas-layer-bar { top: 132px; left: 15px; right: 15px; max-width: calc(100% - 30px); }
-  .atlas-layer-bar button { font-size: 10px; padding: 9px 11px; }
-  .atlas-layer-bar small { display: none; }
-  .atlas-regions, .weather-atlas.is-expanded .atlas-regions { top: 194px; left: 17px; right: 17px; gap: 3px; }
-  .atlas-regions button { padding: 9px 8px; font-size: 9px; }
-  .atlas-inspector, .weather-atlas.is-expanded .atlas-inspector { top: auto; bottom: 211px; right: 15px; width: 170px; padding: 14px; }
-  .atlas-inspector .atlas-location-title { font-size: 13px; margin-top: 12px; }
-  .atlas-inspector-top > span { font-size: 6px; }
-  .atlas-inspector-top > button { font-size: 8px; }
-  .atlas-value { font-size: 51px; margin-top: 10px; }
-  .atlas-coordinate { font-size: 8px; }
-  .atlas-condition { font-size: 9px; margin-bottom: 8px; }
-  .atlas-metrics, .atlas-search { display: none; }
-  .atlas-freshness { font-size: 7px; margin-top: 6px; }
-  .atlas-timeline, .weather-atlas.is-expanded .atlas-timeline { left: 15px; right: 15px; bottom: 67px; padding: 12px; }
-  .atlas-time-heading { gap: 9px; }
-  .atlas-time-heading strong { font-size: 8px; }
-  .atlas-time-heading .atlas-now { font-size: 8px; }
-  .atlas-scale, .weather-atlas.is-expanded .atlas-scale { left: 16px; right: auto; bottom: 216px; width: 103px; padding: 0; }
-  .atlas-scale > span { font-size: 7px; }
-  .atlas-scale > div { font-size: 7px; }
-  .atlas-coverage { bottom: 15px; left: 17px; right: 17px; font-size: 6px; }
-  .weather-atlas .scene-controls, .weather-atlas.is-expanded .scene-controls { left: 15px; right: auto; top: 244px; bottom: auto; }
-  .weather-atlas .scene-site-card, .weather-atlas.is-expanded .scene-site-card { display: none; }
-  .weather-atlas .scene-disclosure, .weather-atlas.is-expanded .scene-disclosure { bottom: 190px; left: 17px; font-size: 6px; max-width: calc(100% - 34px); }
-  .weather-atlas .scene-warning { left: 15px; right: 15px; top: 237px; font-size: 8px; }
-  .atlas-weather-marker { font-size: 8px; padding: 4px; }
-  .weather-atlas.is-expanded { inset: 5px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .weather-atlas button { transition: none; }
-  .atlas-weather-marker { will-change: auto; }
-}
-
-/* Canonical risk evidence uses the existing atlas surfaces and palette. */
-.atlas-inspector, .weather-atlas.is-expanded .atlas-inspector { max-height: calc(100% - 400px); overflow: auto; overscroll-behavior: contain; }
-.atlas-channels { margin-top: 16px; }
-.atlas-channels details { border-bottom: 1px solid #adc1c01a; padding: 7px 0; }
-.atlas-channels summary { display: flex; justify-content: space-between; cursor: pointer; font-size: 11px; }
-.atlas-channels p, .atlas-drivers p, .atlas-sources p { font-size: 10px; line-height: 1.6; margin-top: 6px; color: #acbfbb; overflow-wrap: anywhere; }
-.atlas-drivers { margin: 12px 0; }
-.atlas-overrides { border: 1px solid #ff9676; padding: 10px; margin: 12px 0; color: #ffb49a; font-size: 11px; }
-.atlas-overrides p { margin-top: 6px; line-height: 1.5; }
-.atlas-overrides time { font-variant-numeric: tabular-nums; }
-.atlas-tasks { margin-top: 12px; font-size: 10px; }
-.atlas-tasks > div { display: flex; gap: 12px; justify-content: space-between; padding: 6px 0; }
-.atlas-tasks dd { margin: 0; color: #e9d7b6; }
-.atlas-scale small { color: #9cabb4; font: 8px monospace; display: block; margin-top: 6px; }
-.atlas-scale i { background: linear-gradient(90deg,#c9ee8d,#dce18b,#f0c477,#f4ab76,#ff9676,#df656c); }
-.atlas-sources { margin-top: 12px; font-size: 10px; }
-.site-beacon.is-unknown { border-style: dashed; opacity: .7; }
-@media (max-width: 740px) {
-  .atlas-inspector, .weather-atlas.is-expanded .atlas-inspector { width: min(225px, calc(100% - 80px)); max-height: calc(100% - 440px); bottom: 210px; }
-  .atlas-inspector .atlas-metrics { display: grid; }
-  .atlas-channels { margin-top: 10px; }
-}
-
+.atlas-layer-bar { position: absolute; z-index: 6; top: 117px; left: var(--map-gap); right: calc(var(--inspector-width) + var(--map-gap)); display: flex; gap: 3px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #53615a transparent; border-block: 1px solid #a1b5a529; padding: 5px 0; }
+.atlas-layer-bar button { flex: 0 0 auto; white-space: nowrap; background: transparent; color: #a9b8ae; padding: 10px 11px; min-height: 40px; border-radius: 4px; font-size: 11px; }
+.atlas-layer-bar button[aria-pressed="true"] { background: #e0d5bb; color: #25342e; }
+.atlas-layer-bar button:hover:not([aria-pressed="true"]) { background: #26373a; color: #f1f0e7; }
+.atlas-layer-bar button[data-kind="measurement"] { border-bottom: 1px dotted #93a59a; }
+.atlas-regions { position: absolute; z-index: 5; top: 179px; left: var(--map-gap); display: flex; gap: 4px; }
+.atlas-regions button { min-height: 34px; padding: 7px 11px; background: transparent; border: 1px solid transparent; border-radius: 4px; color: #a7b7ae; font-size: 10px; }
+.atlas-regions button[aria-pressed="true"] { color: #e1d5b9; border-color: #87988b55; background: #223237; }
+.atlas-regions button:hover { color: #f3eddd; }
+.atlas-network-status { position: absolute; top: 188px; right: calc(var(--inspector-width) + var(--map-gap)); display: flex; gap: 16px; color: #a0b2a6; font: 10px "Satoshi", sans-serif; z-index: 4; }
+.atlas-network-status span { white-space: nowrap; }
+.atlas-network-status span:first-child { display: flex; align-items: center; gap: 6px; }
+.atlas-network-status i { width: 5px; height: 5px; border-radius: 50%; background: #bbccb2; }
+.weather-atlas .scene-controls { right: calc(var(--inspector-width) + var(--map-gap)); bottom: 164px; background: #1a2a2e; border: 1px solid #879e8e44; border-radius: 6px; padding: 5px; }
+.weather-atlas .scene-controls button { color: #ced9cf; width: 34px; height: 34px; }
+.weather-atlas .scene-controls button:hover { background: #30433d; }
+.weather-atlas .scene-site-card { left: var(--map-gap); bottom: 166px; width: min(300px, calc(100% - var(--inspector-width) - 110px)); border: 1px solid #9daf9a30; border-radius: 5px; background: #142429ed; padding: 13px; }
+.weather-atlas .scene-site-card strong { font-size: 12px; }
+.weather-atlas .scene-site-card p { color: #a9b9ac; font-size: 10px; line-height: 1.5; }
+.weather-atlas .scene-site-card > div > span { font-size: 7px; letter-spacing: .7px; }
+.weather-atlas .scene-site-score { font-size: 25px; }
+.weather-atlas .scene-disclosure { left: var(--map-gap); bottom: 140px; color: #9cad9f; font: 9px "Satoshi", sans-serif; }
+.weather-atlas .scene-warning { top: 222px; left: var(--map-gap); right: calc(var(--inspector-width) + var(--map-gap)); z-index: 7; background: #314038; color: #eedbbc; }
+.weather-atlas .site-beacon { width: 9px; height: 9px; border: 1px solid #e6eadc90; color: #e9f1df; background: var(--beacon-color); font-size: 0; box-shadow: 0 0 0 3px #14272b55; opacity: .95; }
+.weather-atlas .site-beacon::before { content: ""; position: absolute; inset: -8px; }
+.weather-atlas .site-beacon.is-unknown { background: #546864; border: 1px dashed #a8bab2; opacity: .7; }
+.weather-atlas .site-beacon.has-low-confidence { border-style: dashed; opacity: .75; }
+.weather-atlas .site-beacon:is(.is-selected,:hover,:focus-visible) { width: 29px; height: 29px; font-size: 9px; background: #253d35; color: #ecf1da; border: 1px solid #d9e7bd; box-shadow: 0 0 0 5px #d3f7a018; opacity: 1; }
+.atlas-scale { position: absolute; right: calc(var(--inspector-width) + 80px); bottom: 172px; width: 150px; z-index: 5; pointer-events: none; }
+.atlas-scale > span { color: #b5c2b4; font-size: 9px; }
+.atlas-scale i { display: block; height: 4px; border-radius: 2px; margin: 8px 0 6px; background: linear-gradient(90deg,#c9ee8d,#dce18b,#f0c477,#f4ab76,#ff9676,#df656c); }
 .atlas-scale i[data-layer="temperature"] { background: linear-gradient(90deg,#739bb8,#a9c7bc,#e8d09b,#d98c68,#bd655c); }
-.site-beacon.has-low-confidence, .flat-beacon.has-low-confidence { border-style: dashed; opacity: .7; }
+.atlas-scale > div { display: flex; justify-content: space-between; font-size: 9px; color: #b0bcae; }
+.atlas-scale small { display: block; margin-top: 6px; font-size: 9px; color: #9dad9f; }
+.atlas-timeline { position: absolute; z-index: 6; left: var(--map-gap); right: calc(var(--inspector-width) + var(--map-gap)); bottom: 31px; padding: 15px 18px 12px; background: #1c2c30; border: 1px solid #8caa972d; border-radius: 7px; }
+.atlas-time-heading { display: flex; gap: 12px; align-items: center; }
+.atlas-time-heading > button:first-child { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; background: #d9c8a5; color: #213831; border-radius: 4px; }
+.atlas-time-heading > div { flex: 1; min-width: 0; }
+.atlas-time-heading span { color: #e3e6d9; font-size: 11px; }
+.atlas-time-heading b { margin-left: 9px; font-size: 10px; color: #d6c8a9; font-weight: 500; }
+.atlas-time-heading strong { display: block; font-size: 10px; color: #9eb2a4; margin-top: 4px; font-weight: 400; }
+.atlas-time-heading .atlas-now { background: transparent; color: #d1d8c8; font-size: 10px; min-height: 36px; padding-inline: 5px; }
+.atlas-timeline input { display: block; width: 100%; height: 4px; margin: 16px 0 10px; accent-color: #d9c8a5; cursor: pointer; }
+.atlas-time-ticks { display: flex; justify-content: space-between; color: #b3beb1; font-size: 9px; font-variant-numeric: tabular-nums; }
+.atlas-coverage { position: absolute; bottom: 9px; left: var(--map-gap); right: calc(var(--inspector-width) + var(--map-gap)); color: #9caf9e; font-size: 9px; display: flex; justify-content: space-between; gap: 10px; z-index: 5; pointer-events: none; }
+/* The side panel never covers the renderer or its geographic hit targets. */
+.atlas-inspector { position: absolute; right: 0; top: 0; bottom: 0; width: var(--inspector-width); padding: 25px 26px; z-index: 7; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #b8baad #f2f1ea; color: #2c352d; background: #f2f1ea; border-left: 1px solid #dcdfd1; font-variant-numeric: tabular-nums; }
+.atlas-inspector-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.atlas-inspector-top > span { font-size: 9px; letter-spacing: 1.3px; color: #5b6852; }
+.atlas-inspector-top > button { display: flex; gap: 6px; align-items: center; background: transparent; color: #59654e; font-size: 11px; min-height: 32px; }
+.atlas-search { position: relative; margin: 18px 0 24px; }
+.atlas-search > svg { position: absolute; left: 12px; top: 13px; color: #5b6852; pointer-events: none; }
+.atlas-search input { width: 100%; padding: 12px 12px 12px 36px; border: 1px solid #d8dbcd; background: #e9ebe1; border-radius: 5px; color: #2c352d; font: 12px "Satoshi", sans-serif; }
+.atlas-search input::placeholder { color: #5b6852; }
+.atlas-search-results { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 10; border: 1px solid #c6ccbc; padding: 5px; background: #faf9f3; box-shadow: 0 8px 24px #35482c15; border-radius: 5px; }
+.atlas-search-results button { display: block; width: 100%; text-align: left; padding: 12px; color: #30392c; background: transparent; border-radius: 3px; font-size: 12px; }
+.atlas-search-results button:hover { background: #e5e8da; }
+.atlas-site-id { font-size: 10px; letter-spacing: 1.4px; color: #5b6852; margin-bottom: 9px; }
+.atlas-inspector .atlas-location-title { font: 500 29px/1.12 "Satoshi", sans-serif; letter-spacing: -.9px; color: #29352b; margin: 0; text-wrap: pretty; }
+.atlas-coordinate { font-size: 11px; color: #5b6852; margin-top: 9px; }
+.atlas-risk-hero { display: flex; justify-content: space-between; align-items: center; margin: 26px 0 15px; }
+.atlas-risk-hero > div > span { font-size: 11px; color: #5b6852; }
+.atlas-risk-hero strong { display: block; font: 450 54px/1.16 "Satoshi", sans-serif; letter-spacing: -2.6px; color: #2b392b; margin-top: 6px; }
+.atlas-risk-hero strong small { font-size: 17px; letter-spacing: -.3px; color: #5b6852; font-weight: 400; }
+.atlas-risk-mark { width: 54px; height: 54px; border: 2px solid; border-radius: 50%; display: grid; place-items: center; outline: 1px solid #dde0d2; outline-offset: 6px; margin-right: 7px; }
+.atlas-risk-mark span { width: 11px; height: 11px; border-radius: 50%; }
+.atlas-layer-reading { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid #d9dece; }
+.atlas-layer-reading > span { font-size: 11px; color: #5b6852; }
+.atlas-layer-reading strong { font-size: 17px; font-weight: 500; color: #34452e; white-space: nowrap; }
+.atlas-layer-reading small { font-size: 11px; font-weight: 400; margin-left: 4px; color: #5b6852; }
+.atlas-layer-reading p { font-size: 10px; color: #5b6852; }
+.atlas-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px 0 20px; border-top: 1px solid #d9dece; }
+.atlas-metrics > div + div { border-left: 1px solid #d9dece; padding-left: 17px; }
+.atlas-metrics dt { font-size: 11px; color: #5b6852; }
+.atlas-metrics dd { font-size: 25px; line-height: 1.5; letter-spacing: -.9px; color: #3d4b32; margin: 1px 0; }
+.atlas-metrics small { font-size: 10px; color: #5b6852; }
+.atlas-detail-views { display: flex; gap: 4px; border-bottom: 1px solid #cbd2bf; margin: 0 -2px; position: sticky; top: 0; z-index: 4; background: #f2f1ea; padding-top: 8px; }
+.atlas-detail-views button { flex: 1; min-height: 44px; background: transparent; color: #5b6852; border-bottom: 2px solid transparent; font-size: 12px; }
+.atlas-detail-views button[aria-pressed="true"] { color: #293c28; border-color: #566e43; }
+.atlas-detail-views button:hover { color: #293c28; background: #e6e9dc; }
+.atlas-detail-views small { font-size: 9px; margin-left: 5px; padding: 2px 4px; border-radius: 3px; background: #e0e5d5; }
+.atlas-detail-content[hidden] { display: none; }
+.atlas-section-label { display: block; font-size: 10px; letter-spacing: .8px; color: #5b6852; }
+.atlas-drivers { padding: 20px 0 16px; }
+.atlas-drivers strong { font-size: 22px; font-weight: 500; letter-spacing: -.6px; color: #34432c; }
+.atlas-drivers p + p { color: #5b6852; font-size: 11px; line-height: 1.7; margin-top: 5px; }
+.atlas-channels details { border-top: 1px solid #d9dece; }
+.atlas-channels summary { display: grid; grid-template-columns: 76px minmax(24px,1fr) 55px 12px; gap: 13px; align-items: center; min-height: 44px; list-style: none; cursor: pointer; font-size: 12px; color: #47543a; }
+.atlas-channels summary::-webkit-details-marker { display: none; }
+.atlas-channels summary strong { text-align: right; font-size: 12px; font-weight: 500; }
+.atlas-channels details[open] summary > svg { transform: rotate(90deg); }
+.atlas-channel-meter { height: 4px; background: #dfe3d5; border-radius: 2px; overflow: hidden; }
+.atlas-channel-meter i { display: block; height: 100%; border-radius: 2px; }
+.atlas-channel-evidence { padding-bottom: 12px; }
+.atlas-channel-evidence p { color: #5b6852; font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
+.atlas-overrides { margin: 6px 0 18px; border-left: 3px solid #a64c32; background: #f1dfd4; color: #713e2b; padding: 14px; }
+.atlas-overrides strong { font-size: 11px; letter-spacing: 1.1px; color: #8b3823; }
+.atlas-overrides p { font-size: 12px; line-height: 1.6; margin-top: 6px; }
+.atlas-overrides time { font-variant-numeric: tabular-nums; font-size: 17px; font-weight: 600; }
+.atlas-work-decisions { margin-top: 25px; }
+.atlas-work-decisions h3, .atlas-section-heading h3 { font-size: 14px; font-weight: 500; color: #3b4b30; }
+.atlas-tasks { margin-top: 9px; }
+.atlas-tasks > div { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; border-bottom: 1px solid #d9dece; font-size: 12px; color: #59664b; }
+.atlas-tasks dd { font-size: 9px; padding: 5px 7px; border-radius: 3px; margin: 0; background: #e0e4d8; color: #5b6852; }
+.atlas-tasks dd[data-state="HOLD"] { background: #ecd8ce; color: #8d3f2a; }
+.atlas-tasks dd[data-state="RESTRICTED"] { background: #eee0c7; color: #7b5b2d; }
+.atlas-tasks dd[data-state="AVAILABLE"] { background: #dce5cf; color: #4f663e; }
+.atlas-priorities { margin-top: 25px; }
+.atlas-section-heading { display: flex; justify-content: space-between; align-items: center; color: #5b6852; padding-bottom: 9px; }
+.atlas-priorities button { width: 100%; display: flex; gap: 12px; justify-content: space-between; align-items: center; text-align: left; color: #435236; background: transparent; padding: 12px 0; border-top: 1px solid #d9dece; font-size: 12px; }
+.atlas-priorities button:hover { background: #e7ebdc; }
+.atlas-priorities small { display: block; font-size: 10px; color: #5b6852; margin-top: 5px; }
+.atlas-priorities strong { font-size: 20px; font-weight: 400; }
+.atlas-freshness { padding-top: 20px; margin-top: 20px; border-top: 1px solid #d9dece; font-size: 10px; line-height: 1.8; color: #5b6852; }
+.atlas-error, .atlas-limitation { color: #875a32; font-size: 11px; line-height: 1.7; margin-top: 12px; }
+.weather-atlas.command-map.is-expanded { inset: 0; border-radius: 0; border: 0; }
+@media (max-width: 1250px) {
+  .weather-atlas.command-map { --map-gap: 22px; }
+  .weather-atlas .scene-heading :is(h1,h4) { font-size: 30px; }
+  .weather-atlas .scene-top-actions button > span { display: none; }
+  .atlas-network-status { gap: 10px; }
+  .atlas-network-status span:last-child { display: none; }
+  .atlas-scale { width: 115px; }
+}
+@media (max-width: 900px) {
+  .app-shell.view-atlas { height: auto; min-height: 100dvh; overflow: visible; }
+  .view-atlas .site-header { flex: 0 0 76px; margin-inline: 22px; }
+  .view-atlas .main-shell { flex: none; }
+  .view-atlas main { display: block; height: auto; overflow: visible; }
+  .view-atlas .site-context { min-height: 76px; padding: 13px 22px; margin: 0; gap: 12px; flex-wrap: wrap; }
+  .view-atlas .site-context .source-pill { flex-basis: 100%; margin-left: 0; font-size: 10px; }
+  .view-atlas .site-meta { display: none; }
+  .atlas-workspace { flex: none; }
+  .view-atlas .atlas-workspace .weather-atlas.command-map, .weather-atlas.command-map { height: auto; min-height: 0; --map-gap: 18px; }
+  .weather-atlas .scene-heading { top: 25px; }
+  .weather-atlas .scene-heading :is(h1,h4) { font-size: 28px; }
+  .weather-atlas .scene-heading p { font-size: 11px; max-width: 270px; }
+  .weather-atlas .scene-top-actions { top: 21px; right: 17px; }
+  .weather-atlas .scene-top-actions button { min-height: 36px; padding: 9px; }
+  .weather-atlas .scene-mode { font-size: 8px; }
+  .atlas-layer-bar { top: 122px; right: var(--map-gap); }
+  .atlas-regions { top: 181px; }
+  .atlas-map-region { top: 210px; bottom: auto; left: 0; right: 0; height: 300px; }
+  .atlas-network-status { top: 506px; left: 18px; right: 18px; gap: 14px; font-size: 9px; }
+  .atlas-network-status span:last-child { display: block; }
+  .atlas-inspector { position: relative; inset: auto; width: 100%; margin-top: 672px; padding: 25px 22px; max-height: none; overflow: visible; border-left: 0; border-top: 1px solid #d2d8c7; }
+  .atlas-inspector .atlas-location-title { max-width: none; font-size: 30px; }
+  .atlas-detail-views { top: 0; }
+  .atlas-risk-hero { margin-top: 23px; }
+  .atlas-risk-hero strong { font-size: 54px; }
+  .atlas-timeline { top: 544px; bottom: auto; left: 18px; right: 18px; padding: 13px 14px; }
+  .atlas-time-heading strong { font-size: 9px; }
+  .atlas-time-heading span { font-size: 10px; }
+  .atlas-time-heading .atlas-now { font-size: 9px; }
+  .atlas-coverage { top: 650px; bottom: auto; left: 18px; right: 18px; font-size: 8px; }
+  .atlas-coverage > span { display: none; }
+  .atlas-scale { right: 67px; top: 430px; bottom: auto; width: 110px; }
+  .atlas-scale > span, .atlas-scale > div, .atlas-scale small { font-size: 8px; }
+  .weather-atlas .scene-controls { top: 244px; bottom: auto; right: 17px; }
+  .weather-atlas .scene-controls button { width: 32px; height: 32px; }
+  .weather-atlas .scene-site-card { display: none; }
+  .weather-atlas .scene-disclosure { display: none; }
+  .weather-atlas .scene-warning { top: 220px; left: 18px; right: 18px; font-size: 10px; }
+  .weather-atlas.command-map.is-expanded { position: fixed; overflow: auto; height: 100dvh; }
+  .weather-atlas .site-beacon:not(.is-selected):not(:hover):not(:focus-visible) { width: 7px; height: 7px; }
+}
+@media (prefers-reduced-motion: reduce) { .weather-atlas button { transition: none; } }
+.atlas-search .sr-only { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+.atlas-layer-reading { flex-wrap: wrap; }
+.atlas-layer-reading > p { flex-basis: 100%; }
+.atlas-inspector { scroll-padding-block: 64px; }
+.atlas-inspector :is(summary,button,input) { scroll-margin-block: 64px; }
