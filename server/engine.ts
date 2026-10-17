@@ -193,6 +193,7 @@ export class Engine {
   reset() {
     for (const k of [
       "report",
+      "report-request",
       "strike",
       "alert",
       "briefing",

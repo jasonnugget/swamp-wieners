@@ -35,3 +35,7 @@ NWPS provider tests cover zero/negative stage, sentinel/stale/flow/distance reje
 `observation-display.test.ts` verifies all 34 displayed fields against every plant’s canonical shape, preserves zero/false versus unknown, checks moisture/percentile units and negative water-level trends, and formats timestamps in the plant’s time zone.
 
 Atlas regression tests compare frames with and without demo companions at hours 0, 24 and 72, for all 285 plants. Every companion field must be non-null while the original snapshot, risk, source coverage and policy remain identical.
+
+`mobile-report.test.ts` checks native report validation, deliberate pin confirmation, photo requirements and retry identity without bundling native modules.
+
+`mobile-sync.test.ts` covers silent background updates, manual refresh during an in-flight request, coalesced invalidations, failed reads and late-response disposal. It verifies that clock ticks preserve map-data identity while hazards, resolutions, rosters, sites and clock-mode changes still propagate.

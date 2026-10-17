@@ -4,7 +4,7 @@ import express from "express";
 import { responseCompression } from "./http";
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { Store } from "./store";
 import { Engine } from "./engine";
@@ -81,6 +81,18 @@ app.get("/api/sites/:id/risk", (req, res) => {
   return res.json(engine.snapshot(req.params.id).siteRisks[req.params.id]);
 });
 app.get("/api/snapshot", (_req, res) => res.json(engine.snapshot()));
+app.get("/api/crew/workspace", (req, res) => {
+  const query = z.object({ siteId: z.string().min(1).optional() }).safeParse(req.query);
+  if (!query.success) return res.status(400).json({ error: "Choose a valid site ID." });
+  const siteId = query.data.siteId ?? engine.sites[0].id;
+  if (!engine.sites.some(site => site.id === siteId)) return res.status(404).json({ error: "Site not found." });
+  const workspace: import("../shared/crew").CrewWorkspace = {
+    version: 1, siteId, now: new Date(engine.now()).toISOString(), clockMode: engine.clockMode(),
+    sites: engine.sites, teams: store.all<CrewTeam>("team"),
+    reports: store.all<HazardReport>("report").filter(report => report.siteId === siteId),
+  };
+  res.json(workspace);
+});
 const screeningPending = new Map<string, Promise<void>>();
 function refreshScreening(site: Site): Promise<void> {
   const pending = screeningPending.get(site.id);
@@ -179,6 +191,7 @@ app.post("/api/teams", (req, res) => {
   return res.status(input.id ? 200 : 201).json(team);
 });
 const reportSchema = z.object({
+  clientRequestId: z.string().uuid().optional(),
   teamId: z.string().uuid().optional(),
   siteId: z.string(),
   category: z.enum(
@@ -204,7 +217,16 @@ app.post("/api/reports", (req, res) => {
     return res
       .status(400)
       .json({ error: parsed.error.issues.map((i) => i.message).join("; ") });
-  const { photo, ...input } = parsed.data;
+  const { photo, clientRequestId, ...input } = parsed.data;
+  const fingerprint = clientRequestId ? createHash("sha256").update(JSON.stringify(parsed.data)).digest("hex") : undefined;
+  if (clientRequestId) {
+    const receipt = store.get<{ reportId: string; fingerprint: string }>("report-request", clientRequestId);
+    const existing = receipt && store.get<HazardReport>("report", receipt.reportId);
+    if (existing) {
+      if (receipt.fingerprint !== fingerprint) return res.status(409).json({ error: "This report request was already used for different details. Check site history before starting a new report." });
+      return res.status(201).json(existing);
+    }
+  }
   if (!engine.sites.some((s) => s.id === input.siteId))
     return res.status(404).json({ error: "Site not found" });
   const team = input.teamId ? store.get<CrewTeam>("team", input.teamId) : undefined;
@@ -227,7 +249,16 @@ app.post("/api/reports", (req, res) => {
     writeFileSync(join(directory, "uploads", imageId), bytes);
     photoUrl = `/uploads/${imageId}`;
   }
-  const report = engine.report({ ...input, teamName: team?.name, photoUrl });
+  let report: HazardReport;
+  store.db.exec("BEGIN IMMEDIATE");
+  try {
+    report = engine.report({ ...input, teamName: team?.name, photoUrl });
+    if (clientRequestId) store.put("report-request", clientRequestId, { reportId: report.id, fingerprint });
+    store.db.exec("COMMIT");
+  } catch (error) {
+    store.db.exec("ROLLBACK");
+    throw error;
+  }
   broadcast();
   res.status(201).json(report);
   void triage(report).then((result) => {
