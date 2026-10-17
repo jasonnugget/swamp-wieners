@@ -1,0 +1,10 @@
+node_modules/
+dist/
+runtime/
+.venv/
+.env
+data/raw/
+data/training.npz
+test-results/
+playwright-report/
+__pycache__/

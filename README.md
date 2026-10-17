@@ -24,7 +24,7 @@ Copy `.env.example` to `.env` to configure optional Jev access. Set `TYPESAFE_AP
 
 ## What is implemented
 
-- Fifty EIA plant locations, a ranked supervisor map, seven visible hazard channels, and an evidence-backed 0–10 index.
+- Fifty EIA plant locations, an interactive Three.js supervisor map with risk beacons and an expanded showcase, seven visible hazard channels, and an evidence-backed 0–10 index.
 - Equipment mobilization, outdoor installation, and sheltered preparation restrictions. Missing coverage stays unknown.
 - Photo reports with map pins, immediate task holds, streaming updates to other screens, manual confirmation of Jev suggestions, and resolutions that preserve history.
 - Lightning replay with the 10-mile rule and a 30-minute countdown reset by the latest qualifying strike. Strike timestamps persist in SQLite.

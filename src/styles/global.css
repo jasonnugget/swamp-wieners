@@ -635,41 +635,6 @@ main {
 .map-panel .panel-heading {
   border-bottom: 1px solid #e9ede3;
 }
-.map-wrap {
-  position: relative;
-  isolation: isolate;
-  height: 340px;
-  background: #e6ece1;
-  overflow: hidden;
-}
-.site-map {
-  height: 100%;
-  width: 100%;
-}
-.maplibregl-map {
-  font-family: "DM Sans", sans-serif;
-}
-.map-dot {
-  width: 26px;
-  height: 26px;
-  border-radius: 100%;
-  border: 2px solid #fff;
-  font-size: 9px;
-  font-weight: 650;
-  box-shadow: 0 2px 4px #24392525;
-  transition: box-shadow 0.2s;
-}
-.map-dot:hover {
-  box-shadow: 0 0 0 5px #9cbd6a55;
-  z-index: 5;
-}
-.map-dot.selected {
-  width: 34px;
-  height: 34px;
-  box-shadow: 0 0 0 7px #aac67345;
-  border-width: 3px;
-  font-size: 11px;
-}
 .safe {
   background: #edf4e5;
   color: #69834d;
@@ -686,42 +651,11 @@ main {
   background: #eef0eb;
   color: #909b87;
 }
-.map-dot.safe {
-  background: #9cb972;
-  color: #fff;
-}
-.map-dot.warning {
-  background: #d4ac66;
-  color: #fff;
-}
-.map-dot.danger {
-  background: #b87654;
-  color: #fff;
-}
-.map-dot.unknown {
-  background: #a4b09b;
-  color: #fff;
-}
-.map-key {
-  position: absolute;
-  left: 17px;
-  bottom: 24px;
-  display: flex;
-  gap: 13px;
-  background: #fffffff0;
-  border: 1px solid #dbe4d3;
-  padding: 8px 11px;
-  border-radius: 5px;
-  font-size: 8px;
-  color: #7e8e72;
-}
-.map-key span,
 .legend span {
   display: flex;
   align-items: center;
   gap: 5px;
 }
-.map-key i,
 .legend i {
   display: inline-block;
   width: 6px;
@@ -748,34 +682,6 @@ main {
   border-radius: 2px !important;
   width: 10px !important;
 }
-.map-credit {
-  position: absolute;
-  bottom: 4px;
-  left: 10px;
-  font-size: 7px;
-  color: #99a590;
-}
-.map-label {
-  position: absolute;
-  color: #9cac91;
-  font-size: 10px;
-  pointer-events: none;
-}
-.label-florida {
-  right: 19%;
-  top: 38%;
-  transform: rotate(55deg);
-  font-size: 8px;
-  letter-spacing: 2px;
-}
-.label-gulf {
-  left: 27%;
-  top: 67%;
-  font-family: Georgia, serif;
-  color: #9eafa0;
-  font-size: 12px;
-  font-style: italic;
-}
 .map-footer {
   padding: 13px 18px;
   display: flex;
@@ -791,19 +697,6 @@ main {
 .map-footer span {
   margin-left: auto;
   white-space: nowrap;
-}
-.maplibregl-ctrl-bottom-right {
-  bottom: 20px !important;
-  right: 9px !important;
-}
-.maplibregl-ctrl-group {
-  box-shadow: 0 1px 3px #314b3020 !important;
-  border: 1px solid #d6e0cd !important;
-  border-radius: 6px !important;
-}
-.maplibregl-ctrl-group button {
-  width: 26px !important;
-  height: 26px !important;
 }
 .priorities-panel .panel-heading {
   padding-bottom: 13px;
@@ -1903,11 +1796,6 @@ legend {
 .pin-map .map-wrap {
   height: 100%;
 }
-.pin-map .map-label,
-.pin-map .map-key,
-.pin-map .map-credit {
-  display: none;
-}
 .coordinates {
   font-size: 9px;
   color: #a2af94;
@@ -1927,21 +1815,6 @@ legend {
   color: #9aa98a;
   line-height: 1.8;
 }
-.report-pin {
-  background: #b98050;
-  color: white;
-  width: 22px;
-  height: 25px;
-  display: grid;
-  place-items: center;
-  border-radius: 6px 6px 6px 0;
-  font-weight: 700;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 7px #24352140;
-}
-.report-pin.draft {
-  background: #607d42;
-}
 @media (min-width: 1550px) {
   main {
     padding: 40px 50px 0;
@@ -1949,9 +1822,6 @@ legend {
   .overview-grid,
   .detail-grid {
     grid-template-columns: minmax(0, 1.9fr) minmax(310px, 1fr);
-  }
-  .map-wrap {
-    height: 395px;
   }
   .priority-list {
     height: 358px;
@@ -2243,9 +2113,6 @@ legend {
   .overview-grid,
   .detail-grid {
     grid-template-columns: 1fr;
-  }
-  .map-wrap {
-    height: 330px;
   }
   .priority-list {
     height: 240px;
@@ -2569,21 +2436,6 @@ legend {
     transition: none !important;
   }
 }
-.map-fit {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  background: #fffffff0;
-  border: 1px solid #d6e0cd;
-  border-radius: 5px;
-  color: #7d916b;
-  padding: 7px 10px;
-  font-size: 8px;
-  box-shadow: 0 2px 6px #29482a08;
-}
-.pin-map .map-fit {
-  display: none;
-}
 .work-windows {
   padding: 0 22px 17px;
 }
@@ -2649,7 +2501,4 @@ legend {
   font-size: 8px;
   color: #abb69d;
   margin-top: 9px;
-}
-.pin-map .label-gulf {
-  display: none;
 }

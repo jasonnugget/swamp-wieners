@@ -6,7 +6,7 @@
 src/
   main.tsx                 React entrypoint
   app/                     Workspace composition, navigation, and selected site
-  components/              Shared map, chart, and work-window views
+  components/              Shared Three.js map, chart, and work-window views
   features/
     model-lab/             Browser inference, local training, and evaluation UI
     reports/               Photo reporting, pinning, triage review, and history
@@ -49,7 +49,7 @@ In real mode, a ten-second dispatcher starts up to five feed refreshes in parall
 
 The Model Lab is lazy loaded. It loads frozen weights into TensorFlow.js and attempts WebGPU, WebGL, then CPU as needed. Local training fits a separate residual correction; operational server decisions continue using frozen weights. IndexedDB stores calibration candidates with site, target, model version, and training provenance.
 
-The production build emits `asset-manifest.json`. The service worker precaches the app shell, lazy ML code, map worker, fonts, data, and models. `src/lib/api.ts` stores the last snapshot in localStorage. Offline reload uses cached assets and snapshot data; it does not recreate a server or queue complete reports. A failed submission preserves the description only.
+The production build emits `asset-manifest.json`. The service worker precaches the app shell, lazy ML code, Three.js scene chunks, fonts, data, and models. `src/lib/api.ts` stores the last snapshot in localStorage. Offline reload uses cached assets and snapshot data; it does not recreate a server or queue complete reports. A failed submission preserves the description only.
 
 ## Generated and local directories
 
@@ -64,3 +64,9 @@ The production build emits `asset-manifest.json`. The service worker precaches t
 | `__pycache__/` | Python bytecode caches |
 
 These directories are ignored. Their context belongs here or in their maintained parent's README, not in generated files.
+
+## 3D map interaction
+
+The regional view extrudes bundled state polygons on a local Mercator plane. Risk beacons use the supplied hazard index for height and color; the extrusion is schematic, not terrain. Selected sites synchronize with the rest of the workspace. Orbit, zoom, focus, overhead, and expanded showcase controls affect presentation only.
+
+Report maps use a top-down camera and raycast ground clicks back to latitude/longitude. Panning does not submit a pin. Open crew reports remain visible, and active lightning holds draw a geodesic ten-mile boundary. A flat interactive fallback preserves selection and pinning if WebGL cannot initialize. Renderer resources are disposed on unmount; animation respects reduced motion and pauses offscreen.

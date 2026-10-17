@@ -1,0 +1,58 @@
+// A local Mercator plane keeps site coordinates and click-to-pin reversible.
+// Scene units are schematic, not terrain elevation or survey coordinates.
+const RADIUS = 6378137;
+const UNIT_METERS = 180000;
+const CENTER_LONGITUDE = -86.5;
+const CENTER_LATITUDE = 29.5;
+const radians = Math.PI / 180;
+const mercatorY = (latitude: number) =>
+  RADIUS * Math.log(Math.tan(Math.PI / 4 + (latitude * radians) / 2));
+const centerY = mercatorY(CENTER_LATITUDE);
+
+export function project(latitude: number, longitude: number) {
+  return {
+    x: (RADIUS * (longitude - CENTER_LONGITUDE) * radians) / UNIT_METERS,
+    z:
+      -(mercatorY(Math.max(-85, Math.min(85, latitude))) - centerY) /
+      UNIT_METERS,
+  };
+}
+
+export function unproject(x: number, z: number) {
+  const longitude = CENTER_LONGITUDE + (x * UNIT_METERS) / RADIUS / radians;
+  const latitude =
+    (2 * Math.atan(Math.exp((centerY - z * UNIT_METERS) / RADIUS)) -
+      Math.PI / 2) /
+    radians;
+  return { latitude, longitude };
+}
+
+export function riskColor(risk: number | null | undefined) {
+  return risk == null
+    ? "#9cabb4"
+    : risk >= 8
+      ? "#ff9676"
+      : risk >= 5
+        ? "#f0c477"
+        : "#c9ee8d";
+}
+
+export const REGION = { west: -94.5, east: -78.5, south: 23.7, north: 34.5 };
+export const LAND_TOP = 0.16;
+
+export interface StateGeometry {
+  features: {
+    properties: { name: string };
+    geometry:
+      | { type: "Polygon"; coordinates: number[][][] }
+      | { type: "MultiPolygon"; coordinates: number[][][][] };
+  }[];
+}
+
+export function statePolygons(
+  geometry: StateGeometry["features"][number]["geometry"],
+) {
+  return geometry.type === "Polygon"
+    ? [geometry.coordinates]
+    : geometry.coordinates;
+}

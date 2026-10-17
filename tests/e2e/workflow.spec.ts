@@ -28,16 +28,14 @@ test("report changes another screen, survives the briefing, resolves with histor
   await page
     .getByLabel("What happened?")
     .fill("Standing water blocks the equipment access road.");
-  await page
-    .getByLabel("Attach photo")
-    .setInputFiles({
-      name: "hazard.png",
-      mimeType: "image/png",
-      buffer: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jR1sAAAAASUVORK5CYII=",
-        "base64",
-      ),
-    });
+  await page.getByLabel("Attach photo").setInputFiles({
+    name: "hazard.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jR1sAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  });
   await page.getByRole("button", { name: "Share report", exact: true }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(
@@ -121,6 +119,14 @@ test("models run and calibration trains real weights in browser, including offli
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   await context.setOffline(true);
   await page.reload();
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute(
+    "data-ready",
+    "true",
+  );
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute(
+    "data-geography",
+    "ready",
+  );
   await expect(
     page.getByRole("heading", { name: "A clearer picture. A safer shift." }),
   ).toBeVisible();
@@ -154,7 +160,14 @@ test("dashboard and mobile report are usable without horizontal overflow", async
   });
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.goto("/");
-  await expect(page.locator(".maplibregl-canvas")).toBeVisible();
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute(
+    "data-ready",
+    "true",
+  );
+  await expect(page.locator(".three-map-canvas")).toHaveAttribute(
+    "data-geography",
+    "ready",
+  );
   await page.waitForTimeout(1500);
   expect(mapErrors).toEqual([]);
   await page.screenshot({ path: "test-results/dashboard.png", fullPage: true });

@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 export default defineConfig({
+  optimizeDeps: {
+    include: ["three", "three/addons/controls/OrbitControls.js"],
+  },
   plugins: [
     react(),
     {
