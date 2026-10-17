@@ -6,11 +6,14 @@ import type { Store } from "../store";
 import { siteRisk } from "./index";
 import type { StoredProviderRecord } from "./providers";
 
-// One requested frame across every plant. No source HTTP calls and no future
+// One requested frame across the supplied sites. No source HTTP calls and no future
 // timestamps manufactured for source freshness. Current snapshots are unchanged.
 export function riskAtlas(snapshot: Snapshot, store: Store, hour: number, now = Date.now(), completion = false): RiskAtlas {
   const target = hour === 0 ? now : Math.floor(now / 3600000) * 3600000 + hour * 3600000;
-  const points = new Map(store.all<WeatherPoint>("environment-weather").map(p => [p.id, p]));
+  const weather = snapshot.sites.length === 1
+    ? [store.get<WeatherPoint>("environment-weather", snapshot.sites[0].id)].filter((p): p is WeatherPoint => !!p)
+    : store.all<WeatherPoint>("environment-weather");
+  const points = new Map(weather.map(p => [p.id, p]));
   const reports = snapshot.reports.filter(r => Date.parse(r.createdAt) <= now);
   const alerts = store.all<import("../../shared/types").Alert>("alert").filter(a => a.mode === "live");
   const strikes = store.all<import("../../shared/types").Strike>("strike").filter(s => s.mode === "live" && Date.parse(s.time) <= now);

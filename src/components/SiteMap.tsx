@@ -65,8 +65,11 @@ export default function SiteMap({
     callbacks = useRef({ onSelect, onPin });
   const [layer, setLayer] = useState<RiskLayer>("risk"),
     [hour, setHour] = useState(0),
+    [focusedSite, setFocusedSite] = useState<string | null>(null),
     [region, setRegion] = useState<MapRegion>("mainland");
-  const atlas = useRiskAtlas(!onPin, hour, sites, risks);
+  const atlas = useRiskAtlas(!onPin, 0, sites, risks);
+  const forecast = useRiskAtlas(!onPin && focusedSite === selected && hour > 0, hour, sites, risks, selected);
+  const inspection = hour > 0 ? forecast : atlas;
   const mapDecisions = useMemo(() => onPin ? decisions : Object.fromEntries((atlas.atlas?.sites ?? []).map(({ site, snapshot: r }) => [site.id, {
     index: r.risk, tasks: r.tasks, unknownCount: r.channels.filter(c => c.score === null).length,
     lightningUntil: r.activeOverrides.find(o => o.source === "lightning" && o.state === "HOLD")?.expiresAt ?? null,
@@ -79,9 +82,9 @@ export default function SiteMap({
       return [site.id, { value, color: atlasColor(value, layer), fraction: value === null ? 0 : atlasFraction(value, layer), confidence: frame?.confidence ?? 0, unit: ATLAS_LAYERS[layer].unit, label: ATLAS_LAYERS[layer].name }];
     }));
   }, [onPin, sites, atlas.atlas, layer]);
-  const data = useRef<SceneData>({ sites, decisions: mapDecisions, selected, reports, pin, visuals, hour, layer });
-  callbacks.current = { onSelect, onPin };
-  data.current = { sites, decisions: mapDecisions, selected, reports, pin, visuals, hour, layer };
+  const data = useRef<SceneData>({ sites, decisions: mapDecisions, selected, reports, pin, visuals, hour: 0, layer });
+  callbacks.current = { onSelect: inspectSite, onPin };
+  data.current = { sites, decisions: mapDecisions, selected, reports, pin, visuals, hour: 0, layer };
   const active = sites.find((s) => s.id === (hovered ?? selected)) ?? sites[0],
     decision = active ? mapDecisions[active.id] : undefined;
   const heldTasks = decision?.tasks.filter((t) => t.state === "HOLD") ?? [];
@@ -112,7 +115,7 @@ export default function SiteMap({
                   }
                 : {}),
               hover: setHovered,
-              interact: () => setRotating(false),
+              interact: () => { setRotating(false); leaveSite(); },
               ready: () => {
                 if (!cancelled) setReady(true);
               },
@@ -144,12 +147,13 @@ export default function SiteMap({
   }, []);
   useEffect(() => {
     scene.current?.update(data.current);
-  }, [sites, mapDecisions, selected, reports, pin, visuals, hour, layer, ready]);
+  }, [sites, mapDecisions, selected, reports, pin, visuals, layer, ready]);
   useEffect(() => {
     if (previousSelected.current === selected) return;
     previousSelected.current = selected;
     const site = sites.find((s) => s.id === selected);
     if (site) {
+      setFocusedSite(site.id);
       scene.current?.focus(site);
       scene.current?.rotate(false);
       setRotating(false);
@@ -186,7 +190,29 @@ export default function SiteMap({
     };
   }, [expanded]);
 
+  function inspectSite(id: string) {
+    setFocusedSite(id);
+    onSelect(id);
+  }
+  function leaveSite() {
+    setFocusedSite(null);
+    setHour(0);
+  }
+  function selectRegion(next: MapRegion) {
+    leaveSite();
+    setRegion(next);
+    setRotating(false);
+    scene.current?.rotate(false);
+    const site = sites.find(s => next === "alaska" ? s.state === "AK" : next === "hawaii" ? s.state === "HI" : !["AK", "HI"].includes(s.state));
+    if (site) {
+      // Region navigation updates workspace context without focusing a plant.
+      previousSelected.current = site.id;
+      onSelect(site.id);
+    }
+    scene.current?.region(next);
+  }
   function reset() {
+    leaveSite();
     scene.current?.rotate(false);
     setRotating(false);
     scene.current?.fit();
@@ -204,6 +230,7 @@ export default function SiteMap({
       scene.current?.topDown(false);
     }
     const value = !rotating;
+    if (value) leaveSite();
     setRotating(value);
     scene.current?.rotate(value);
   }
@@ -223,7 +250,7 @@ export default function SiteMap({
           decisions={mapDecisions}
           visuals={visuals}
           selected={selected}
-          onSelect={onSelect}
+          onSelect={inspectSite}
           reports={reports}
           onPin={onPin}
           pin={pin}
@@ -244,7 +271,7 @@ export default function SiteMap({
               {fallback ? "2D SITE MAP" : "PLANIT / RISK ATLAS"}
             </span>
             {standalone ? <h1>Site risk, in perspective.</h1> : <h4>Site risk, in perspective.</h4>}
-            <p>Environmental intelligence for the next decision.</p>
+            <p>Current conditions nationwide. Select a site for 72-hour screening.</p>
           </div>
           <div className="scene-top-actions">
             <button
@@ -320,7 +347,7 @@ export default function SiteMap({
           disabled={!ready || fallback}
           aria-label="Zoom out"
           title="Zoom out"
-          onClick={() => scene.current?.zoom(1.33)}
+          onClick={() => { leaveSite(); scene.current?.zoom(1.33); }}
         >
           <Minus aria-hidden="true" size={16} />
         </button>
@@ -331,7 +358,7 @@ export default function SiteMap({
             aria-label="Focus selected site"
             title="Fly to selected site"
             onClick={() => {
-              if (active) scene.current?.focus(active);
+              if (active) { inspectSite(active.id); scene.current?.focus(active); }
             }}
           >
             <Crosshair aria-hidden="true" size={15} />
@@ -339,10 +366,10 @@ export default function SiteMap({
         )}
       </div>
       {!onPin && <RiskControls
-        data={atlas} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
+        data={inspection} currentData={atlas} showTimeline={focusedSite === selected} sites={sites} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
         onLayer={setLayer} onHour={setHour}
-        onRegion={(next) => { setRegion(next); setRotating(false); scene.current?.rotate(false); scene.current?.region(next); }}
-        onSelect={onSelect}
+        onRegion={selectRegion}
+        onSelect={inspectSite}
       />}
       {!onPin && active && (
         <div
@@ -358,7 +385,7 @@ export default function SiteMap({
           </div>
           <div>
             <span>
-              {hovered ? "INSPECT SITE" : hour ? "FORECAST SITE RISK" : "CURRENT SITE RISK"} · EIA {active.id}
+              {hovered ? "INSPECT SITE · CURRENT" : "CURRENT SITE RISK"} · EIA {active.id}
             </span>
             <strong>{active.name}</strong>
             <p>

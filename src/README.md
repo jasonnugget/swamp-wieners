@@ -14,4 +14,4 @@ Import contracts and pure calculations from `shared/`. Operational decisions com
 
 Check frontend changes with `npm run build`; run `npm run test:e2e` for interactions, browser ML, asset loading, and offline behavior.
 
-The supervisor reads canonical `SiteRiskSnapshot` frames through `/api/risk/atlas`. `shared/atlas.ts` supplies display selectors and ranking only; numerical hazard scoring stays on the backend. The current map can reuse cached workspace `siteRisks` offline with stale labels. See [map responsibilities](components/site-map/README.md).
+The supervisor reads current canonical `SiteRiskSnapshot` frames through `/api/risk/atlas`; future frames load on demand for the selected site using `siteId`. `shared/atlas.ts` supplies display selectors and ranking only; numerical hazard scoring stays on the backend. The current map can reuse cached workspace `siteRisks` offline with stale labels. See [map responsibilities](components/site-map/README.md).

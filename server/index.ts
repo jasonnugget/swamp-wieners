@@ -1,6 +1,7 @@
 import { completeSiteData, siteDataPreview } from "../shared/site-data";
 import { riskAtlas } from "./pipeline/atlas";
 import express from "express";
+import { responseCompression } from "./http";
 import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -48,6 +49,7 @@ const hazardProviders = createProviders(store, () => engine.now());
 const providerPoller = new ProviderPoller(store, engine.sites, hazardProviders, broadcast);
 const app = express();
 app.disable("x-powered-by");
+app.use(responseCompression);
 app.use(express.json({ limit: "6mb" }));
 const clients = new Set<express.Response>();
 function broadcast() {
@@ -76,7 +78,7 @@ app.get("/api/health", (_req, res) =>
 app.get("/api/sites/risks", (_req, res) => res.json(engine.snapshot().siteRisks));
 app.get("/api/sites/:id/risk", (req, res) => {
   if (!engine.sites.some(s => s.id === req.params.id)) return res.status(404).json({ error: "Site not found" });
-  return res.json(engine.snapshot().siteRisks[req.params.id]);
+  return res.json(engine.snapshot(req.params.id).siteRisks[req.params.id]);
 });
 app.get("/api/snapshot", (_req, res) => res.json(engine.snapshot()));
 const screeningPending = new Map<string, Promise<void>>();
@@ -123,13 +125,15 @@ app.get("/api/weather/point", async (req, res) => {
   return points[0] ? res.json(points[0]) : res.status(503).json({ error: "Weather unavailable at this location. Try another point or retry." });
 });
 app.get("/api/risk/atlas", (req, res) => {
-  const parsed = z.object({ hour: z.coerce.number().int().min(0).max(72).default(0), completion: z.enum(["0", "1"]).default("0") }).safeParse(req.query);
+  const parsed = z.object({ hour: z.coerce.number().int().min(0).max(72).default(0), siteId: z.string().min(1).optional(), completion: z.enum(["0", "1"]).default("0") }).safeParse(req.query);
   if (!parsed.success) return res.status(400).json({ error: "Risk frame hour must be an integer from 0 to 72." });
   res.setHeader("Cache-Control", "no-store");
-  res.json(riskAtlas(engine.snapshot(), store, parsed.data.hour, Date.now(), parsed.data.completion === "1"));
+  const { hour, siteId, completion } = parsed.data;
+  if (siteId && !engine.sites.some(site => site.id === siteId)) return res.status(404).json({ error: "Site not found." });
+  res.json(riskAtlas(engine.snapshot(siteId), store, hour, Date.now(), completion === "1"));
 });
 app.get("/api/sites/:id/data-completion", (req, res) => {
-  const snapshot = engine.snapshot(), site = snapshot.sites.find(s => s.id === req.params.id);
+  const snapshot = engine.snapshot(req.params.id), site = snapshot.sites.find(s => s.id === req.params.id);
   if (!site) return res.status(404).json({ error: "Unknown plant." });
   res.setHeader("Cache-Control", "no-store");
   res.json(siteDataPreview(completeSiteData(site, snapshot.siteRisks[site.id].observation, Date.now(), store.get<import("../shared/weather").WeatherPoint>("environment-weather", site.id))));

@@ -49,7 +49,8 @@ export class Engine {
           ),
         };
   }
-  snapshot(): Snapshot {
+  snapshot(siteId?: string): Snapshot {
+    const sites = siteId ? this.sites.filter(site => site.id === siteId) : this.sites;
     const now = this.now(),
       reports = this.store.all<HazardReport>("report"),
       strikes = this.store.all<Strike>("strike").filter(s => this.clockMode() === "demo" ? s.mode !== "live" : s.mode === "live"),
@@ -60,12 +61,13 @@ export class Engine {
         ),
       forecasts = this.forecasts(),
       weatherScreenings = Object.fromEntries(this.store.all<WeatherScreening>("weather-screening").map(s => [s.siteId, s]));
-    const points = Object.fromEntries(this.store.all<WeatherPoint>("environment-weather").map(p => [p.id, p]));
+    const weather = siteId ? [this.store.get<WeatherPoint>("environment-weather", siteId)].filter((p): p is WeatherPoint => !!p) : this.store.all<WeatherPoint>("environment-weather");
+    const points = Object.fromEntries(weather.map(p => [p.id, p]));
     const providerRecords = this.store.all<StoredProviderRecord>("environment-provider");
     const liveNow = Date.now();
     const liveAlerts = this.store.all<Alert>("alert");
     const liveStrikes = this.store.all<Strike>("strike");
-    const risks = Object.fromEntries(this.sites.map(site => {
+    const risks = Object.fromEntries(sites.map(site => {
       const checked = this.store.get<{ ok: boolean; checkedAt: string }>("feed", `${site.id}:nws`);
       const collection = this.store.get<{ ok: boolean; message: string }>("feed", `${site.id}:environment`);
       return [site.id, siteRisk(site, points[site.id], liveNow, reports, liveStrikes,
@@ -75,7 +77,7 @@ export class Engine {
       siteRisks: Object.fromEntries(Object.entries(risks).map(([id, r]) => [id, r.snapshot])),
       now: new Date(now).toISOString(),
       clockMode: this.clockMode(),
-      sites: this.sites,
+      sites,
       teams: this.store.all<CrewTeam>("team"),
       forecasts,
       weatherScreenings,
@@ -84,7 +86,7 @@ export class Engine {
       alerts,
       briefings: this.store.all<Briefing>("briefing"),
       decisions: Object.fromEntries(
-        this.sites.map((s) => [
+        sites.map((s) => [
           s.id,
           this.clockMode() === "real" ? risks[s.id].decision : decide(
             s,

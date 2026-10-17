@@ -24,7 +24,9 @@ The catalog check validates at least five real plants in each of fifty states, v
 
 `providers.test.ts` mocks source HTTP for USGS/NWS/FEMA/FIRMS/iNaturalist success, missing/malformed data, timeout, non-200, caching and expiry. It also verifies persistent cache restart, source backoff, national bounded scheduling, mode separation, zero versus unknown, normalized metadata and preservation of independent strike/alert controls.
 
-`atlas.test.ts` checks current-frame parity for all plants, forecast scoring and source freshness, actual zero versus null, missing future hours, strike-hold expiry, warning fetch-time provenance, display selectors, continuous colors and supervisor ranking.
+`atlas.test.ts` checks scoped engine snapshots/forecast parity and current-frame parity for all plants, forecast scoring and source freshness, actual zero versus null, missing future hours, strike-hold expiry, warning fetch-time provenance, display selectors, continuous colors and supervisor ranking.
+
+`http.test.ts` verifies large-JSON gzip negotiation, payload preservation, uncompressed fallback when gzip is refused, and unbuffered SSE.
 
 `site-data.test.ts` checks real-value precedence, measured zero/false, deterministic location/season fallbacks, all-plant field parity, fully populated hypothetical event/gauge fields with unchanged observed nulls, source errors, unchanged operational coverage and real hourly-soil midrank. It runs the offline command in isolated SQLite storage to verify JSON/CSV exports and preserved unrelated records. Provider tests also cover shared keyless FIRMS downloads and separate Alaska caching.
 

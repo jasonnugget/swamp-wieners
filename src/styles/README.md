@@ -14,7 +14,7 @@ Run `npm run build` after import or asset-path changes. Run the browser layout c
 
 GSAP motion is scoped to `HomePage.tsx`. The field sculpture has its own canvas animation, pauses outside the viewport or in a hidden tab, and observes reduced motion. The stylesheet keeps text fully visible and removes transforms for reduced-motion users. Do not animate an ancestor of fullscreen maps or dialogs with transforms, which would change their fixed-position containing block.
 
-The atlas inspector also contains canonical risk channels, coverage/confidence, task states, source details and stop-work controls. It scrolls independently on desktop and follows the map in the mobile page. `evidence.css` styles the shared 34-field observation inspector and provider/model/plant details used by both the atlas and Site intelligence. Keep its source labels, units, unknown readings and native disclosure controls intact.
+The selected-site forecast slider spans the bottom of the map and appears only while focusing a plant. The atlas inspector also contains canonical risk channels, coverage/confidence, task states, source details and stop-work controls. It scrolls independently on desktop and follows the map in the mobile page. `evidence.css` styles the shared 34-field observation inspector and provider/model/plant details used by both the atlas and Site intelligence. Keep its source labels, units, unknown readings and native disclosure controls intact.
 
 Unknown beacons use the existing gray with a question mark; low-confidence known values also use dashed, translucent markers; continuous risk colors interpolate the existing lime/amber/coral palette.
 

@@ -3,6 +3,7 @@
 | File/directory | Responsibility |
 | --- | --- |
 | `index.ts` | Environment loading, HTTP validation/routes, SSE, uploads, feed dispatcher, and shutdown |
+| `http.ts` | Negotiated compression for JSON and static assets; streaming events bypass compression |
 | `engine.ts` | Clock selection, forecast selection, snapshot assembly, and next-day briefing creation |
 | `dev-readiness.ts` | Bounded API health wait used by the Vite development server |
 | `complete-site-data.ts` | Resumable national provider refresh and separate labeled data-completion export |
@@ -34,6 +35,6 @@ The engine supplies fresh live frozen-model forecasts and eligible training soil
 
 Independent source polling covers USGS, FEMA, NWS and iNaturalist, with keyless FIRMS downloads, optional keyed area queries and explicit lightning modes. Provider caches and records persist under `provider-cache` and `environment-provider`; demo reset preserves them. `DISABLE_EXTERNAL_PROVIDERS=1` disables background source jobs for isolated tests. Site refresh also queues source refreshes and publishes SSE invalidation as each completes. See [provider operations](../docs/environment-providers.md).
 
-`GET /api/risk/atlas?hour=0..72` is the batched supervisor map contract. Current frames reuse `siteRisks`; forecast frames use `pipeline/atlas.ts` and the same scorers, with explicit future-evidence limits. The old weather routes remain compatibility APIs and have no map consumer. See [atlas API details](../docs/api.md#authoritative-supervisor-atlas).
+`GET /api/risk/atlas?hour=0..72` supports optional `siteId`; selected-site requests construct and score only that plant. The supervisor loads the current national map and requests future frames only for the selected site. Current frames reuse `siteRisks`; forecast frames use `pipeline/atlas.ts` and the same scorers, with explicit future-evidence limits. The old weather routes remain compatibility APIs and have no map consumer. See [atlas API details](../docs/api.md#authoritative-supervisor-atlas).
 
 The atlas accepts `completion=1` to include a compact, demo-only filled-data companion per plant. `GET /api/sites/:id/data-completion` returns one for Site intelligence. Read paths reuse persisted evidence and never inject hypothetical values into observations or scores. See [the endpoint contract](../docs/api.md#demo-data-completion).

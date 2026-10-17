@@ -14,7 +14,7 @@ Run `npm run test:e2e` from the root. Installed Google Chrome is required. `play
 | `workflow.spec.ts` | Photo handoff across screens, independent replay lightning holds, briefing carry-forward, report resolution, browser training/inference, offline reload and mobile layout |
 | `redesign.spec.ts` | Loading/retry, editorial homepage, navigation/history, reduced motion, feature keyboard controls, atlas bounds and reset confirmation |
 
-The atlas tests reject any `/api/weather/*` request from the supervisor. Layer changes read one existing frame; slider changes request one batched national frame. The real crew-submission test verifies SSE updates to the supervisor's beacon, risk, evidence, holds and priority list. JEV and live lightning fixtures do not claim authenticated provider connectivity.
+The atlas tests reject any `/api/weather/*` request from the supervisor. Layer changes read one existing frame; slider changes request only the selected plant. Tests cover hiding the slider in overviews, restoring it through explicit site focus, stopping playback on exit, switching plants, visited-frame reuse and future failures while the map remains current. The real crew-submission test verifies SSE updates to the supervisor's beacon, risk, evidence, holds and priority list. JEV and live lightning fixtures do not claim authenticated provider connectivity.
 
 The isolated server sets `DISABLE_NWS_SCREENING=1`, `DISABLE_ENVIRONMENT_COLLECTION=1` and `DISABLE_EXTERNAL_PROVIDERS=1`. These flags disable their respective background jobs; explicit refresh requests can still collect. Tests use deterministic fixtures or existing persisted inputs. Actual source checks are recorded separately in [provider documentation](../../docs/environment-providers.md).
 
@@ -25,3 +25,7 @@ The scene-module failure test blocks service workers so interception reaches the
 Screenshots/traces go to ignored `test-results/`. Keep fixtures in maintained directories; do not commit test databases or uploads. Preserve offline checks after lazy-import, Three.js, static-URL or service-worker changes. See [verification context](../README.md) for the latest recorded run.
 
 `cache-recovery.spec.ts` seeds pre-canonical and pre-structured-evidence snapshots, verifies a recoverable loading/error screen during an outage, then retries successfully without clearing the crew profile. It also forces browser storage quota errors and verifies fresh API state still opens the homepage. The offline workflow covers the versioned cache on a prepared production build.
+
+Cold browser runs allow up to thirty seconds for map assets and live snapshot propagation, while the offline package downloads. The checks still require complete geography, actual inference results and report-driven risk updates.
+
+If the host’s software GPU stalls after initialization, run `PLAYWRIGHT_ML_CPU=1 npm run test:e2e` to verify actual CPU inference/training and offline persistence. This opt-in makes GPU contexts unavailable only to the test’s Model Lab and retains graphics for the offline atlas check. Application backend selection and model calculations remain unchanged. A CPU run does not establish GPU support.

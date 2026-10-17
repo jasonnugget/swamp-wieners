@@ -41,7 +41,10 @@ test("synthetic gaps are labeled, reversible and available across sites, forecas
   page.on("request", request => requests.push(request.url()));
   await page.route("**/api/sites/*/screening", r => r.fulfill({ status: 503, json: { error: "No fixture screening" } }));
   await page.route("**/api/risk/atlas?**", route => {
-    const frame = atlasFrame(Number(new URL(route.request().url()).searchParams.get("hour")));
+    const query = new URL(route.request().url()).searchParams;
+    const frame = atlasFrame(Number(query.get("hour")));
+    const siteId = query.get("siteId");
+    if (siteId) frame.sites = frame.sites.filter(entry => entry.site.id === siteId);
     for (const entry of frame.sites) entry.completion = siteDataPreview(completeSiteData(entry.site, entry.snapshot.observation, Date.parse(frame.validAt)));
     return route.fulfill({ json: frame });
   });

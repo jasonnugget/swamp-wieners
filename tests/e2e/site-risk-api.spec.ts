@@ -73,3 +73,20 @@ test("risk atlas batches every site, preserves current parity, and validates the
   for (const hour of ["-1", "73", "1.5", "invalid"])
     expect((await request.get(`/api/risk/atlas?hour=${hour}`)).status()).toBe(400);
 });
+
+
+test("selected-site forecast returns one site and rejects unknown sites", async ({ request }) => {
+  const snapshot: Snapshot = await (await request.get("/api/snapshot")).json();
+  for (const hour of [0, 24, 72]) {
+    const response = await request.get(`/api/risk/atlas?hour=${hour}&siteId=${snapshot.sites[0].id}&completion=1`);
+    expect(response.status()).toBe(200);
+    const frame = await response.json();
+    expect(frame.hour).toBe(hour);
+    expect(frame.sites).toHaveLength(1);
+    expect(frame.sites[0].site.id).toBe(snapshot.sites[0].id);
+    expect(frame.sites[0].completion.usage).toBe("DEMO_ONLY");
+    expect(Object.keys(frame.sites[0].completion.fields)).toHaveLength(34);
+    expect(siteObservationV1Schema.safeParse(frame.sites[0].snapshot.observation).success).toBeTruthy();
+  }
+  expect((await request.get("/api/risk/atlas?hour=24&siteId=nonexistent")).status()).toBe(404);
+});

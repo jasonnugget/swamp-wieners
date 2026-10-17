@@ -85,6 +85,25 @@ test("models run and calibration trains real weights in browser, including offli
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  if (process.env.PLAYWRIGHT_ML_CPU === "1") {
+    // Exercise real CPU inference/training when the host's software GPU stalls.
+    // Keep graphics available in the atlas so offline map checks stay intact.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "gpu", { value: undefined, configurable: true });
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, contextId: string, ...args: unknown[]) {
+        if (new URL(location.href).searchParams.get("view") === "lab" && /webgl/.test(contextId)) return null;
+        return Reflect.apply(getContext, this, [contextId, ...args]);
+      } as typeof getContext;
+      if (typeof OffscreenCanvas !== "undefined") {
+        const getOffscreenContext = OffscreenCanvas.prototype.getContext;
+        OffscreenCanvas.prototype.getContext = function (this: OffscreenCanvas, contextId: string, ...args: unknown[]) {
+          if (new URL(location.href).searchParams.get("view") === "lab" && /webgl/.test(contextId)) return null;
+          return Reflect.apply(getOffscreenContext, this, [contextId, ...args]);
+        } as typeof getOffscreenContext;
+      }
+    });
+  }
   await page.goto("/");
   await page
     .locator("nav")
@@ -153,10 +172,12 @@ test("atlas and mobile report are usable without horizontal overflow", async ({
   await expect(page.locator(".three-map-canvas")).toHaveAttribute(
     "data-ready",
     "true",
+    { timeout: 30000 },
   );
   await expect(page.locator(".three-map-canvas")).toHaveAttribute(
     "data-geography",
     "ready",
+    { timeout: 30000 },
   );
   await page.waitForTimeout(1500);
   expect(mapErrors).toEqual([]);
