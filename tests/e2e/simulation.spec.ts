@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectSite, pickSite } from "./atlas-site";
 import { atlasFrame, atlasSites } from "./risk-fixtures";
 import { readFile } from "node:fs/promises";
 
@@ -69,7 +70,7 @@ test("storm simulation explores exposure without changing current unknowns, hold
   await page.getByRole("button", { name: "Current conditions", exact: true }).click();
   await expect(canvas).toHaveAttribute("data-simulation", "false");
   await expect(page.getByLabel("Simulation hour", { exact: true })).toHaveCount(0);
-  await page.getByLabel("Active site").selectOption(atlasSites[1].id);
+  await pickSite(page, atlasSites[1].id);
   await expect(page.getByLabel("Active policy overrides")).toContainText("STOP WORK");
   await expect(beacon).toHaveAttribute("data-value", value!);
   expect(errors).toEqual([]);

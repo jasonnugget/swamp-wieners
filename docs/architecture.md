@@ -8,7 +8,6 @@ src/
   app/                     Editorial homepage, linked working views, and selected site
   components/              Shared Three.js map, chart, and work-window views
   features/
-    model-lab/             Browser inference, local training, and evaluation UI
     reports/               Photo reporting, pinning, triage review, and history
   lib/                     API transport and browser snapshot cache
   styles/                  Application-wide visual rules
@@ -48,11 +47,9 @@ Independent two-second dispatchers collect batched Open-Meteo inputs and schedul
 
 A compatibility ten-second dispatcher runs only in real mode, with up to five feed jobs. It checks alert eligibility after two minutes but delegates to the same cached five-minute NWS provider; it is not a separate alert engine. Fixed-lead model weather becomes due after fifteen minutes. These are scheduling targets, not freshness or latency guarantees. The process must remain running for collection, SSE and briefing generation.
 
-## Browser ML and offline state
+## Offline state
 
-The Model Lab is lazy loaded. It loads frozen weights into TensorFlow.js and attempts WebGPU, WebGL, then CPU as needed. Local training fits a separate residual correction; operational server decisions continue using frozen weights. IndexedDB stores calibration candidates with site, target, model version, and training provenance.
-
-The production build emits `asset-manifest.json`. The service worker precaches the app shell, lazy ML code, Three.js scene chunks, fonts, data, and models. `src/lib/api.ts` stores the last snapshot in localStorage. Offline reload uses cached assets and snapshot data; it does not recreate a server or queue complete reports. A failed submission preserves the description only.
+The production build emits `asset-manifest.json`. The service worker precaches the app shell, Three.js scene chunks, fonts, data, and models. `src/lib/api.ts` stores the last snapshot in localStorage. Offline reload uses cached assets and snapshot data; it does not recreate a server or queue complete reports. A failed submission preserves the description only.
 
 ## Generated and local directories
 
@@ -80,7 +77,7 @@ The plant catalog has 285 sites and the frozen historical model cohort remains f
 
 ## Website navigation
 
-The default view is an editorial homepage with decorative canvas artwork and scoped GSAP scroll effects. Query-string links select the dedicated fullscreen atlas, Site intelligence, Model Lab, Crew reports, and Safety briefings. Browser history and reload retain the chosen view. The atlas owns a current-risk inspector with Overview, Conditions and Sources views. Site intelligence shares the normalized observation/source components and owns the full site ranking; the homepage does not mount the atlas. Home animation is unrelated to operational weather and model state.
+The default view is an editorial homepage with decorative canvas artwork and scoped GSAP scroll effects. Query-string links select the dedicated fullscreen atlas, Site intelligence, Crew reports, and Safety briefings. Browser history and reload retain the chosen view. The atlas owns a current-risk inspector with Overview, Conditions and Sources views. Site intelligence shares the normalized observation/source components and owns the full site ranking; the homepage does not mount the atlas. Home animation is unrelated to operational weather and model state.
 
 ## Canonical operational environment
 

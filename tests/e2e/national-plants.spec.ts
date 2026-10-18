@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectSite, pickSite } from "./atlas-site";
 import type { Site } from "../../shared/types";
 
 test("national catalog selects plants outside the model cohort and supports reporting without fabricated forecasts", async ({ page, request }) => {
@@ -13,13 +14,12 @@ test("national catalog selects plants outside the model cohort and supports repo
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/?view=atlas");
-  await page.getByLabel("Active site").selectOption(california.id);
-  await expect(page.getByText("Canonical site risk · live environmental evidence", { exact: true })).toBeVisible();
+  await pickSite(page, california.id);
+  await expect(page.locator(".atlas-location-title")).toContainText(california.name);
   await page.getByRole("button", { name: "Site risk", exact: true }).click();
   await expect(page.locator(".site-beacon")).toHaveCount(285);
-  await expect(page.locator(".scene-site-card")).toContainText(california.name);
-  await page.getByRole("navigation").getByRole("link", { name: /Model Lab/ }).click();
-  await expect(page.getByRole("heading", { name: "No historical model coverage at this plant" })).toBeVisible();
+  await expect(page.locator(".atlas-location-title")).toContainText(california.name);
+  await page.getByRole("navigation").getByRole("link", { name: /Crew reports/ }).click();
   await page.getByRole("button", { name: "Report hazard", exact: true }).first().click();
   const modal = page.getByRole("dialog");
   await expect(modal.getByLabel("Report plant")).toHaveValue(california.id);
@@ -29,10 +29,12 @@ test("national catalog selects plants outside the model cohort and supports repo
   const saved = await (await request.get("/api/snapshot")).json();
   expect(saved.reports[0].siteId).toBe(california.id);
   expect(saved.decisions[california.id].tasks.find((t: { task: string }) => t.task === "mobilization").state).toBe("HOLD");
+  await expect(page.locator(".report-card").first()).toContainText(california.name);
+  await page.goto("/?view=atlas");
   for (const state of ["AK", "HI"]) {
     const plant = snapshot.sites.find((s: Site) => s.state === state) as Site;
-    await page.getByLabel("Active site").selectOption(plant.id);
-    await expect(page.getByRole("heading", { name: "No historical model coverage at this plant" })).toBeVisible();
+    await pickSite(page, plant.id);
+    await expectSite(page, plant.id);
   }
   expect(errors).toEqual([]);
 });
@@ -66,17 +68,13 @@ test("official forecast screening gives CA, AK and HI numeric map risks and stal
   await page.getByRole("button", { name: "Site risk", exact: true }).click();
   for (const state of ["CA", "AK", "HI"]) {
     const plant = plants.find(p => p.state === state)!;
-    await page.getByLabel("Active site").selectOption(plant.id);
-    await expect(page.getByText("Canonical site risk · live environmental evidence", { exact: true })).toBeVisible();
-    await page.getByRole("navigation").getByRole("link", { name: "Site intelligence", exact: true }).click();
-    await expect(page.getByText("NOAA forecast · next 24 hours", { exact: true })).toBeVisible();
-    await page.getByRole("navigation").getByRole("link", { name: "3D Atlas", exact: true }).click();
-    await page.getByRole("button", { name: "Site risk", exact: true }).click();
+    await pickSite(page, plant.id);
+    await expect(page.locator(".atlas-location-title")).toContainText(plant.name);
     await expect(page.locator(".site-beacon.is-selected")).toHaveText("6.3");
   }
   stale = true;
   await page.reload();
-  await expect(page.getByText("Canonical site risk · live environmental evidence", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "All sites by risk" })).toBeVisible();
   await page.getByRole("button", { name: "Site risk", exact: true }).click();
   await expect(page.locator(".site-beacon.is-selected")).toHaveText("?");
 });

@@ -3,7 +3,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import { categories, taskOptions, type CrewDraft } from "./report-input";
 
 export interface CrewProfile { name: string; teamId: string; siteId: string; server: string }
-export const storageKeys = { profile: "planit-crew-profile-v1", draft: "planit-crew-draft-v1", cache: "planit-crew-workspace-v1" };
+export const storageKeys = { profile: "planit-crew-profile-v1", draft: "planit-crew-draft-v1", cache: "planit-crew-workspace-v1", dismissedAlerts: "planit-crew-dismissed-alerts-v1" };
 export async function readStored<T>(key: string): Promise<T | undefined> {
   try { const raw = await AsyncStorage.getItem(key); return raw ? JSON.parse(raw) as T : undefined; } catch { return undefined; }
 }

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectSite, pickSite } from "./atlas-site";
 
 test("loading screen reports readiness, supports retry, and opens the editorial homepage", async ({ page }) => {
   let release!: () => void;
@@ -40,15 +41,14 @@ test("homepage, dedicated atlas, history, and mobile navigation preserve working
   expect(bounds.x).toBe(0);
   expect(bounds.width).toBe(1440);
   expect(bounds.y + bounds.height).toBe(1000);
-  const site = page.getByLabel("Active site");
-  await site.selectOption("55433");
-  await page.getByRole("navigation").getByRole("link", { name: "Site intelligence", exact: true }).click();
-  await expect(site).toHaveValue("55433");
-  await expect(page.getByRole("heading", { name: "What can the crew do?" })).toBeVisible();
+  await pickSite(page, "55433");
+  await page.getByRole("navigation").getByRole("link", { name: "Safety briefings", exact: true }).click();
+  await expect(page.getByLabel("Active site")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Tomorrow starts with today." })).toBeVisible();
   await expect(map).toHaveCount(0);
   await page.goBack();
   await expect(map).toBeVisible();
-  await expect(site).toHaveValue("55433");
+  await expectSite(page, "55433");
   await page.getByRole("button", { name: "Open showcase mode" }).click();
   const expanded = (await map.boundingBox())!;
   expect(expanded.y).toBe(0);
@@ -61,10 +61,11 @@ test("homepage, dedicated atlas, history, and mobile navigation preserve working
   expect(await title.evaluate(el => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight))).toBeLessThanOrEqual(2.1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: "test-results/editorial-home-mobile.png" });
-  for (const name of ["3D Atlas", "Site intelligence", "Safety briefings", "Crew reports"]) {
+  for (const name of ["3D Atlas", "Safety briefings", "Crew reports"]) {
     await page.getByRole("button", { name: "Open navigation", exact: true }).click();
     await page.getByRole("navigation").getByRole("link", { name, exact: name !== "Crew reports" }).click();
-    await expect(site).toHaveValue("55433");
+    if (name === "3D Atlas") await expectSite(page, "55433");
+    else await expect(page.getByLabel("Active site")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   expect(errors).toEqual([]);
@@ -92,7 +93,7 @@ test("demo reset waits for confirmation and cancellation leaves records untouche
     resets++;
     await route.fulfill({ json: snapshot });
   });
-  await page.goto("/?view=intelligence");
+  await page.goto("/?view=briefings");
   await page.getByRole("button", { name: "Demo controls", exact: true }).click();
   page.once("dialog", dialog => dialog.dismiss());
   await page.getByRole("button", { name: "Reset demo", exact: true }).click();
@@ -121,9 +122,9 @@ test("homepage crew notes keep accepted evidence and report links scoped to the 
   await expect(notes).not.toContainText("Visual audit only: observation from another site.");
   await expect(notes.getByRole("img", { name: "Original crew hazard photo" })).toHaveAttribute("src", /^\/uploads\//);
   await notes.getByRole("link", { name: "Open crew reports", exact: true }).click();
-  await expect(page.getByLabel("Active site")).toHaveValue("621");
   await expect(page.getByRole("heading", { name: "Visual audit only: access road observation.", exact: true })).toBeVisible();
-  await page.getByLabel("Active site").selectOption("55433");
+  await page.goto("/?view=atlas");
+  await pickSite(page, "55433");
   await page.getByRole("navigation").getByRole("link", { name: "Home", exact: true }).click();
   await expect(notes.locator(".crew-note")).toHaveCount(1);
   await expect(notes).toContainText("Visual audit only: observation from another site.");

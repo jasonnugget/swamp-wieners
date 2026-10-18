@@ -20,6 +20,9 @@ import { siteRisk } from "./pipeline";
 import { describeHazard, hazardEvidence, HAZARD_KEYS, HAZARD_NAMES, type HazardEvidence } from "../shared/hazard-model";
 import { RISK_CONFIG } from "../shared/risk-config";
 import { Store } from "./store";
+import { detectUrgentHazards, type UrgentAlert } from "../shared/urgent";
+import type { FleetBriefing } from "../shared/fleet-briefing";
+import { geminiConfigured } from "./integrations/gemini";
 
 export class Engine {
   constructor(
@@ -61,6 +64,15 @@ export class Engine {
   hazardFor(site: Site, date: string, now: number, forecasts = this.hazardForecasts()): HazardEvidence | null {
     return hazardEvidence(forecasts[site.id], site.id, date, now, RISK_CONFIG.hazardModel.fetchTtlHours);
   }
+  // ML inputs for scoring one site at time `at`. Freshness is checked against real `now`;
+  // a day's HazardCast output covers every hour of that day, and the latest issued day
+  // stands in once the daily forecast runs out.
+  modelContext(site: Site, at: number, now: number, forecasts = this.forecasts(), hazardForecasts = this.hazardForecasts()) {
+    const real = this.clockMode() === "real", date = localParts(at, site.timezone).date;
+    const latest = hazardForecasts[site.id]?.days.map(d => d.date).filter(d => d <= date).sort().at(-1) ?? date;
+    return { mlAvailable: !!this.bundledForecasts[site.id], context: { forecast: real ? forecasts[site.id] : undefined, soilThresholds: site.heldOut ? undefined : this.models.soilThresholds[site.id],
+      hazard: real ? this.hazardFor(site, latest, now, hazardForecasts) : null } };
+  }
   // The operating day a demo decision covers: the bundled forecast day when near, else tomorrow after 6 PM.
   decisionDate(site: Site, now: number) {
     const first = this.forecasts()[site.id]?.hours[0];
@@ -92,11 +104,11 @@ export class Engine {
     const risks = Object.fromEntries(sites.map(site => {
       const checked = this.store.get<{ ok: boolean; checkedAt: string }>("feed", `${site.id}:nws`);
       const collection = this.store.get<{ ok: boolean; message: string }>("feed", `${site.id}:environment`);
+      const ml = this.modelContext(site, liveNow, liveNow, forecasts, hazardForecasts);
       return [site.id, siteRisk(site, points[site.id], liveNow, reports, liveStrikes,
-        liveAlerts, !!this.bundledForecasts[site.id], weatherScreenings[site.id], checked?.ok ? checked.checkedAt : undefined, collection && !collection.ok ? collection.message : undefined, { forecast: this.clockMode() === "real" ? forecasts[site.id] : undefined, soilThresholds: site.heldOut ? undefined : this.models.soilThresholds[site.id],
-          hazard: this.clockMode() === "real" ? this.hazardFor(site, localParts(liveNow, site.timezone).date, liveNow, hazardForecasts) : null }, providerRecords.filter(r => r.siteId === site.id))];
+        liveAlerts, ml.mlAvailable, weatherScreenings[site.id], checked?.ok ? checked.checkedAt : undefined, collection && !collection.ok ? collection.message : undefined, ml.context, providerRecords.filter(r => r.siteId === site.id))];
     }));
-    return {
+    const result: Snapshot = {
       siteRisks: Object.fromEntries(Object.entries(risks).map(([id, r]) => [id, r.snapshot])),
       now: new Date(now).toISOString(),
       clockMode: this.clockMode(),
@@ -146,20 +158,63 @@ export class Engine {
           .filter((f) => known.has(f.id.split(":")[0]))
           .map((f) => [f.id, f]),
       ),
+      fleetBriefings: this.store.all<FleetBriefing>("fleet-briefing").sort((a, b) => b.localDate.localeCompare(a.localDate)),
+      geminiConfigured: geminiConfigured(),
+      urgentAlerts: [],
+      alertHistory: [],
     };
+    result.urgentAlerts = this.urgentAlerts(sites, result, now);
+    // Demo replays can rewind the clock, so alerts "from the future" are left out.
+    result.alertHistory = this.store.all<UrgentAlert>("hazard-alert")
+      .filter(a => known.has(a.siteId) && Date.parse(a.firedAt) <= now)
+      .sort((a, b) => Date.parse(b.firedAt) - Date.parse(a.firedAt) || Number(a.kind === "hold") - Number(b.kind === "hold")).slice(0, 50);
+    return result;
+  }
+  // Edge-triggered: the first detection is stored with its time; later refreshes reuse it.
+  urgentAlerts(sites: Site[], snap: Pick<Snapshot, "strikes" | "alerts" | "siteRisks" | "decisions">, now: number): UrgentAlert[] {
+    return detectUrgentHazards(sites, snap, now).map(candidate => {
+      const fired: UrgentAlert = { ...candidate, firedAt: new Date(now).toISOString() };
+      this.store.insert("hazard-alert", candidate.id, fired);
+      const stored = this.store.get<UrgentAlert>("hazard-alert", candidate.id)!;
+      return { ...candidate, firedAt: stored.firedAt };
+    });
   }
   tick() {
     const due = this.sites.flatMap(site => {
       const local = localParts(this.now(), site.timezone);
       if (local.hour < 18) return [];
       const localDate = nextDate(local.date), id = `${site.id}:${localDate}`;
-      return this.store.get("briefing", id) ? [] : [{ site, localDate, id }];
+      return this.finalBriefing(id) ? [] : [{ site, localDate, id, early: false }];
     });
     // An idle scheduler must not score the entire live catalog every five seconds.
     if (!due.length) return false;
+    return this.writeBriefings(due);
+  }
+  /**
+   * Briefs every site for its next local day now, whatever the hour. Sites past 6 PM get their
+   * normal briefing; earlier ones are marked early and replaced by the scheduler at 6 PM.
+   * Returns the work day most sites share, which the fleet PDF covers.
+   */
+  briefNow(): string {
+    const due = this.sites.map(site => {
+      const local = localParts(this.now(), site.timezone), localDate = nextDate(local.date);
+      return { site, localDate, id: `${site.id}:${localDate}`, early: local.hour < 18 };
+    });
+    this.writeBriefings(due.filter(d => !this.finalBriefing(d.id)));
+    const counts = new Map<string, number>();
+    for (const d of due) counts.set(d.localDate, (counts.get(d.localDate) ?? 0) + 1);
+    return [...counts].sort((a, b) => b[1] - a[1] || b[0].localeCompare(a[0]))[0][0];
+  }
+  /** A scheduled (6 PM or later) briefing is final; early on-demand ones may be replaced. */
+  private finalBriefing(id: string) {
+    const existing = this.store.get<Briefing>("briefing", id);
+    return Boolean(existing && !existing.early);
+  }
+  private writeBriefings(due: { site: Site; localDate: string; id: string; early: boolean }[]) {
+    if (!due.length) return false;
     const snap = this.snapshot(), hazardForecasts = this.hazardForecasts();
     let changed = false;
-    for (const { site, localDate, id } of due) {
+    for (const { site, localDate, id, early } of due) {
       const reports = snap.reports.filter(
         (r) => r.siteId === site.id && r.status === "open",
       );
@@ -197,6 +252,7 @@ export class Engine {
         forecastMode: forecast?.mode ?? (nextScreening ? "live" : "historical"),
         decision,
         reportIds: reports.map((r) => r.id),
+        ...(early ? { early } : {}),
         text: [
           `${site.name} · next-day safety briefing · ${localDate}`,
           `Hazard index: ${decision.index ?? "unknown"}/10 (${decision.unknownCount} channels unknown)${hazard ? `; OverallCast ${Math.round(hazard.day.overall.probability * 100)}% chance of warning-level weather (${hazard.mode} learned forecast)` : "; learned HazardCast forecast unavailable"}.`,
@@ -210,7 +266,9 @@ export class Engine {
           `Forecast coverage: ${nextScreening?.hours.length ?? nextHours.length} hourly records. Source: ${nextScreening ? "NOAA/NWS forecast screening" : forecast?.mode ?? "unavailable"}. Policy: ${decision.policyVersion}.`,
         ].join("\n"),
       };
-      changed = this.store.insert("briefing", id, briefing) || changed;
+      // Early briefings are drafts; the 6 PM run and later on-demand runs overwrite them.
+      this.store.put("briefing", id, briefing);
+      changed = true;
     }
     return changed;
   }
@@ -238,6 +296,8 @@ export class Engine {
       "strike",
       "alert",
       "briefing",
+      "fleet-briefing",
+      "hazard-alert",
       "forecast",
       "hazard-forecast",
       "feed",

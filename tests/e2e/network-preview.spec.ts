@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectSite, pickSite } from "./atlas-site";
 import type { Snapshot } from "../../shared/types";
 import { atlasFrame } from "./risk-fixtures";
 
@@ -18,8 +19,8 @@ test("homepage plant selection follows the crew into the atlas and survives a re
   await expect(preview.getByRole("img")).toHaveAccessibleName(new RegExp(`${hawaii.state} selected`));
 
   await page.getByRole("link", { name: "Explore the atlas", exact: true }).click();
-  await expect(page.getByLabel("Active site")).toHaveValue(hawaii.id);
-  await page.getByLabel("Active site").selectOption(alaska.id);
+  await expectSite(page, hawaii.id);
+  await pickSite(page, alaska.id);
   await page.getByRole("navigation").getByRole("link", { name: "Home", exact: true }).click();
   await expect(selector).toHaveValue(alaska.id);
   await expect(preview.locator(".network-selected-location strong")).toHaveText(alaska.name);

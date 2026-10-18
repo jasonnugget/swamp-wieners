@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Compass,
   Crosshair,
   Stack as Layers3,
   ArrowsOut as Maximize2,
@@ -15,8 +14,6 @@ import {
   GlobeHemisphereWest,
 } from "@phosphor-icons/react";
 import type { Decision, HazardReport, Site } from "../../shared/types";
-import { TASK_LABELS } from "../../shared/policy";
-import { riskColor } from "./site-map/projection";
 import type { MapScene, SceneData } from "./site-map/scene";
 import FlatMap from "./site-map/FlatMap";
 import RiskControls from "./site-map/RiskControls";
@@ -74,12 +71,11 @@ export default function SiteMap({
     callbacks = useRef({ onSelect, onPin });
   const [layer, setLayer] = useState<RiskLayer>("risk"),
     [hour, setHour] = useState(0),
-    [focusedSite, setFocusedSite] = useState<string | null>(null),
     [region, setRegion] = useState<MapRegion>("mainland");
   const simulation = useSimulation(sites, reducedMotion);
   const [simulationInspection, setSimulationInspection] = useState(0);
   const atlas = useRiskAtlas(!onPin, 0, sites, risks);
-  const forecast = useRiskAtlas(!onPin && !simulation.enabled && focusedSite === selected && hour > 0, hour, sites, risks, selected);
+  const forecast = useRiskAtlas(!onPin && !simulation.enabled && hour > 0, hour, sites, risks, selected);
   const inspection = hour > 0 ? forecast : atlas;
   const mapDecisions = useMemo(() => onPin ? decisions : Object.fromEntries((atlas.atlas?.sites ?? []).map(({ site, snapshot: r }) => [site.id, {
     index: r.risk, tasks: r.tasks, unknownCount: r.channels.filter(c => c.score === null).length,
@@ -104,9 +100,7 @@ export default function SiteMap({
   const data = useRef<SceneData>({ sites, decisions: mapDecisions, selected, reports, pin, visuals, hour: 0, layer });
   callbacks.current = { onSelect: inspectSite, onPin };
   data.current = { sites, decisions: mapDecisions, selected, reports, pin, visuals, hour: 0, layer, simulation: simulation.frame, simulationLayer: simulation.layer, simulationPlaying: simulation.playing };
-  const active = sites.find((s) => s.id === (hovered ?? selected)) ?? sites[0],
-    decision = active ? mapDecisions[active.id] : undefined;
-  const heldTasks = decision?.tasks.filter((t) => t.state === "HOLD") ?? [];
+  const active = sites.find((s) => s.id === (hovered ?? selected)) ?? sites[0];
 
   useEffect(() => {
     let cancelled = false;
@@ -177,7 +171,6 @@ export default function SiteMap({
     if (!onPin) setInspectorOpen(true);
     const site = sites.find((s) => s.id === selected);
     if (site) {
-      setFocusedSite(site.id);
       scene.current?.focus(site);
       scene.current?.rotate(false);
       setRotating(false);
@@ -216,12 +209,10 @@ export default function SiteMap({
 
   function inspectSite(id: string) {
     if (simulation.enabled) setSimulationInspection(value => value + 1);
-    setFocusedSite(id);
     setInspectorOpen(true);
     onSelect(id);
   }
   function leaveSite() {
-    setFocusedSite(null);
     setHour(0);
   }
   function selectRegion(next: MapRegion) {
@@ -299,7 +290,7 @@ export default function SiteMap({
       {!ready && (
         <div className="scene-loading">
           <Layers3 aria-hidden="true" size={24} />
-          <span>Building your national view…</span>
+          <span className="visually-hidden">Building your national view…</span>
         </div>
       )}
       </div>
@@ -309,14 +300,7 @@ export default function SiteMap({
             <button type="button" aria-pressed={!simulation.enabled} onClick={() => setSimulationMode(false)}><GlobeHemisphereWest size={16} aria-hidden="true"/>Current conditions</button>
             <button type="button" aria-pressed={simulation.enabled} onClick={() => setSimulationMode(true)}><Hurricane size={17} aria-hidden="true"/>Simulate</button>
           </div>
-          <div className="scene-heading">
-            <span className="scene-mode">
-              <span />
-              {simulation.enabled ? "PLANIT / SCENARIO LAB" : fallback ? "2D SITE MAP" : "PLANIT / RISK ATLAS"}
-            </span>
-            {standalone ? <h1>{simulation.enabled ? <>What if the<br/>storm shifts?</> : "Site risk, in perspective."}</h1> : <h4>{simulation.enabled ? "Explore a storm scenario." : "Site risk, in perspective."}</h4>}
-            <p>{simulation.enabled ? "Move the track. Explore the exposure. Prepare the next decision." : "See the conditions. Select a site for its outlook."}</p>
-          </div>
+          {standalone && <h1 className="visually-hidden">{simulation.enabled ? "What if the storm shifts?" : "Site risk, in perspective."}</h1>}
           <div className="scene-top-actions">
             <button
               type="button"
@@ -411,7 +395,7 @@ export default function SiteMap({
       </div>
       {!onPin && !simulation.enabled && <RiskControls
         reports={reports}
-        data={inspection} currentData={atlas} showTimeline={focusedSite === selected} sites={sites} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
+        data={inspection} currentData={atlas} sites={sites} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
         onLayer={setLayer} onHour={setHour}
         onRegion={selectRegion}
         onSelect={inspectSite}
@@ -421,70 +405,7 @@ export default function SiteMap({
         setSimulationMode(false); inspectSite(selected);
         requestAnimationFrame(() => root.current?.querySelector<HTMLButtonElement>(".atlas-inspector-close")?.focus());
       }}/ >}
-      {!onPin && !simulation.enabled && active && (
-        <div
-          className="scene-site-card"
-          role="button" tabIndex={0} aria-label="Inspect selected site"
-          onClick={() => inspectSite(selected)}
-          onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inspectSite(selected); } }}
-          style={
-            {
-              "--active-risk": riskColor(decision?.index),
-            } as React.CSSProperties
-          }
-        >
-          <div className="scene-site-icon">
-            <MapBeacon />
-          </div>
-          <div>
-            <span>
-              {hovered ? "INSPECT SITE · CURRENT" : "CURRENT SITE RISK"} · EIA {active.id}
-            </span>
-            <strong>{active.name}</strong>
-            <p>
-              {heldTasks.length
-                ? heldTasks.map((t) => TASK_LABELS[t.task]).join(", ") +
-                  " on hold"
-                : `${active.county}, ${active.state} · ${decision?.unknownCount ?? 7} channels need verification`}
-            </p>
-          </div>
-          <div className="scene-site-score">
-            {decision?.index?.toFixed(1) ?? "?"}
-            <small>/ 10</small>
-          </div>
-        </div>
-      )}
-      {!onPin && !simulation.enabled && layer === "risk" && (
-        <div className="scene-bottom">
-          <div className="scene-legend">
-            <span>
-              <i style={{ background: "#c9ee8d" }} />
-              Lower
-            </span>
-            <span>
-              <i style={{ background: "#f0c477" }} />
-              Elevated
-            </span>
-            <span>
-              <i style={{ background: "#ff9676" }} />
-              High
-            </span>
-            <span>
-              <i style={{ background: "#9cabb4" }} />
-              Unknown
-            </span>
-          </div>
-          <span className="scene-help">
-            <Compass aria-hidden="true" size={12} />
-            Drag to orbit · scroll to zoom
-          </span>
-        </div>
-      )}
-      <div className="scene-disclosure">
-        {onPin
-          ? "Top-down · drag to pan · click to pin"
-          : "Drag to orbit · scroll to zoom · right-drag to pan · select a plant for evidence"}
-      </div>
+      {onPin && <div className="scene-disclosure">Top-down · drag to pan · click to pin</div>}
       {(fallback || geographyError) && (
         <div className="scene-warning" role="status">
           {fallback
@@ -496,20 +417,5 @@ export default function SiteMap({
       )}
     </div>
     </IconContext.Provider>
-  );
-}
-function MapBeacon() {
-  return (
-    <svg
-      width="18"
-      height="22"
-      viewBox="0 0 18 22"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path d="M9 2v15M5 19h8" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="9" cy="5" r="3" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 21h14" stroke="currentColor" opacity=".4" />
-    </svg>
   );
 }

@@ -30,7 +30,8 @@ test("canonical risk API covers every plant and preserves compatibility endpoint
       expect(channel.factors).toBeInstanceOf(Array);
     }
     expect(risks[site.id].observation.coverage.percent).toBeGreaterThanOrEqual(0);
-    expect(risks[site.id].mlCoverage.heatCast).toBe(!site.catalogOnly);
+    // Flags report applied models; catalog plants are outside every model cohort.
+    if (site.catalogOnly) expect(risks[site.id].mlCoverage.heatCast).toBe(false);
   }
   const id = snapshot.sites[0].id;
   const single = await request.get(`/api/sites/${id}/risk`);

@@ -6,7 +6,7 @@ Research date: October 17, 2026. The atlas scenario lab computes hypothetical wi
 
 The [Sperry Tech SwampHacks brief](https://sperrytech.ai/events/swamphacks) requests at least 50 real plant locations, seven environmental hazard channels, a ranked supervisor map, and a historically trained 0 to 10 hazard index. It also calls for a restarting 30-minute hold after lightning within 10 miles, next-day briefings at 6 PM local time, and persistent crew photos and map pins. Its own animated storm is labeled illustrative, with geographically scaled lightning boundaries.
 
-Hurricane scenarios extend the planning view. They do not replace the brief's reporting, alerts, historical modeling, or independent task controls. The brief's ambition to anticipate hazards does not establish that every hazard is observable or predictable; PlanIT retains unknown evidence.
+Hurricane scenarios extend the planning view. They do not replace the brief's reporting, alerts, historical modeling, or independent task controls. The brief's ambition to anticipate hazards does not establish that every hazard is observable or predictable; Threshold retains unknown evidence.
 
 ## Primary-source findings
 
@@ -51,6 +51,22 @@ Peak wind is calculated separately over the continuously traveled route. For eac
 
 **Comparison filters.** The site list uses peak wind of at least 39 mph, total rain of at least 25 mm, or rainfall excess of at least 25 mm, according to the selected layer. The 25 mm values are comparison filters chosen for the interface, not official flood or work thresholds. Summed installed capacity describes assets at those sites and does not estimate generation loss. Exported JSON includes scenario inputs, per-site values, and limitations.
 
+## Simulated risk per timeline step
+
+`shared/simulate-risk.ts` translates each frame into the numbers a supervisor acts on. For every plant it clones the current `SiteObservationV1` and lays the scenario over it:
+
+- Wind becomes the larger of today's and the scenario's, with gusts set to wind × 1.3.
+- The scenario's rain rate is added to the 1 h total.
+- The new trailing-window rain (`rainLast24hMm`) is added to the 24 h total.
+- Accumulated rain is added to the 7 d total.
+- Heavy rain sets WMO code 65 or 82.
+
+It then re-runs the same `scoreChannels` → `channelDecisions` → `applyPolicyLimits` → `decide` path that the server uses. From that it reports a rule-based composite, the channel scores, the task states, and the change against today's rule composite.
+
+Weather, flood and fire-weather channels take the higher of the simulated and current score. Every other channel keeps current evidence. Current task holds carry through. A scenario can therefore only add hazard, and it never clears a hold.
+
+The result is labelled `SIMULATED`. It is held in component state, included in the JSON export, and never merged into `siteRisks`, decisions or briefings. The learned OverallCast index is not applied to hypothetical weather.
+
 ## Evidence and presentation boundaries
 
 - Scenario controls, elapsed time, assumptions, and derived exposures carry hypothetical/simulated labels. None of the presets represents a loaded historical hurricane or an official forecast.
@@ -87,4 +103,4 @@ Final checks on October 17, 2026:
 
 Development checks caught a missing explicit slider-label association, an offline banner covering the mode switch, and lost focus when returning to current evidence. Those were corrected before the final full run. An earlier full-run attempt encountered a connection reset in an unchanged report test; that workflow passed in the final run.
 
-The existing browser-ML bundle-size warning remains. Browser and unit tests verify implementation behavior, not meteorological accuracy, hydraulic validation, live-provider coverage or physical-device GPU performance.
+Browser and unit tests verify implementation behavior, not meteorological accuracy, hydraulic validation, live-provider coverage or physical-device GPU performance.

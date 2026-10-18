@@ -20,7 +20,7 @@ def highs(station):
     frames = []
     for year in range(int(START[:4]), int(END[:4]) + 1):
         data = fetch(API, dict(product='high_low', station=station, begin_date=f'{year}0101', end_date=min(f'{year}1231', END.replace('-', '')),
-                               datum='STND', units='english', time_zone='gmt', format='json', application='planit-control'))
+                               datum='STND', units='english', time_zone='gmt', format='json', application='threshold-control'))
         if 'data' in data:
             frames.append(pd.DataFrame(data['data']))
     if not frames:

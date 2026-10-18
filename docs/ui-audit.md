@@ -49,7 +49,7 @@ The screenshot review caught and corrected a collapsed canvas caused by styleshe
 
 The [historical frontend audit](frontend-case-study.md) records unresolved report-dialog keyboard behavior and arbitrary-location keyboard pinning. Those workflows were preserved in this pass. Shareable URLs still retain the view rather than every selected site/layer/hour. Small operational labels need validation on actual field devices and at enlarged text settings.
 
-The existing TensorFlow bundle still produces a production chunk-size warning. A fully populated national workspace can also exceed browser localStorage capacity; live reads continue when saving fails, but that browser may lack a fresh offline copy. Screenshot checks do not establish hardware GPU performance or usability in field conditions.
+A fully populated national workspace can also exceed browser localStorage capacity; live reads continue when saving fails, but that browser may lack a fresh offline copy. Screenshot checks do not establish hardware GPU performance or usability in field conditions.
 
 See [the verification record](../tests/README.md) for exact unit, browser and build results, and [provider documentation](environment-providers.md) for source and credential limits.
 

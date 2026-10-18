@@ -126,6 +126,8 @@ export interface ScoringContext {
   forecast?: Forecast;
   soilThresholds?: number[];
   hazard?: HazardEvidence | null; // resolved by the caller for the site-local date
+  // Real time when scoring a future frame: model freshness and held readings age from here.
+  sourceNow?: number;
 }
 function hazardModelFactors(context: ScoringContext): Partial<Record<Category, RiskFactor>> {
   const e = context.hazard;
@@ -138,9 +140,9 @@ function hazardModelFactors(context: ScoringContext): Partial<Record<Category, R
   }));
 }
 function modelFactors(o: SiteObservationV1, context: ScoringContext): Partial<Record<Category, RiskFactor>> {
-  const f = context.forecast, now = context.now;
-  if (!f || f.siteId !== o.siteId || f.mode !== "live" || now < Date.parse(f.fetchedAt) || now - Date.parse(f.fetchedAt) >= C.modelWindow.fetchTtlHours * 3600000) return {};
-  const hours = f.hours.filter(h => Date.parse(h.time) >= now - C.modelWindow.lookbackHours * 3600000 && Date.parse(h.time) <= now + C.modelWindow.horizonHours * 3600000 && Date.parse(h.issuedAt) <= now &&
+  const f = context.forecast, now = context.now, source = context.sourceNow ?? now;
+  if (!f || f.siteId !== o.siteId || f.mode !== "live" || source < Date.parse(f.fetchedAt) || source - Date.parse(f.fetchedAt) >= C.modelWindow.fetchTtlHours * 3600000) return {};
+  const hours = f.hours.filter(h => Date.parse(h.time) >= now - C.modelWindow.lookbackHours * 3600000 && Date.parse(h.time) <= now + C.modelWindow.horizonHours * 3600000 && Date.parse(h.issuedAt) <= source &&
     h.heat.length === 3 && h.soil.length === 3 && [...h.heat, ...h.soil].every(Number.isFinite));
   if (!hours.length) return {};
   const make = (hazard: "heat" | "soil", value: number): RiskFactor => ({ key: hazard === "heat" ? "heatCast" : "groundCast", value,
@@ -175,7 +177,7 @@ export function scoreChannels(o: SiteObservationV1, context: ScoringContext): Ha
     wildlife: [factor("wildlife.dangerousSightings24h", o.wildlife.dangerousSightings24h, curve(o.wildlife.dangerousSightings24h, C.wildlifeCount), C.weights.wildlife[0], C.confidence.publicWildlife), factor("wildlife.nearestSightingMiles", o.wildlife.nearestSightingMiles, curve(o.wildlife.nearestSightingMiles, C.wildlifeDistance), C.weights.wildlife[1], C.confidence.publicWildlife)],
   };
   const values: Record<Category, number | null> = { heat: scoreHeat(w.heatIndexF, w.apparentTemperatureF), weather: scoreWeather(w), soil: soilScore,
-    lightning: scoreLightning(o.lightning), flood: scoreFlood(o, alerts), wildfire: scoreWildfire(o), wildlife: scoreWildlife(o.wildlife, context.now) };
+    lightning: scoreLightning(o.lightning), flood: scoreFlood(o, alerts), wildfire: scoreWildfire(o), wildlife: scoreWildlife(o.wildlife, context.sourceNow ?? context.now) };
   return (Object.keys(factors) as Category[]).map(hazard => {
     let value = values[hazard];
     const list = factors[hazard];
@@ -190,7 +192,7 @@ export function scoreChannels(o: SiteObservationV1, context: ScoringContext): Ha
     const reports = (context.reports ?? []).filter(r => r.siteId === o.siteId && r.category === hazard && r.status === "open" && Date.parse(r.createdAt) <= context.now);
     let crew: number | null = null;
     for (const report of reports) {
-      const evidence = crewEvidence(report, context.now);
+      const evidence = crewEvidence(report, context.sourceNow ?? context.now);
       crew = crew === null ? evidence.score : Math.max(crew, evidence.score);
       list.push({ key: `crew:${report.id}`, value: evidence.severity, score: evidence.score, weight: 1, confidence: evidence.confidence, kind: "crew", mode: "crew",
         source: evidence.classification ? "Confirmed JEV crew classification" : "Unclassified crew evidence: provisional MODERATE", validFrom: report.createdAt });

@@ -6,9 +6,7 @@ Keep shared colors and typography consistent with the existing CSS variables and
 
 Run `npm run build` after import or asset-path changes. Run the browser layout check for desktop and 390-pixel mobile widths; screenshots are generated under ignored `test-results/`.
 
-`weather-atlas.css` defines the national explorer’s mineral map, Geist typography, layer toolbar, light evidence drawer, timeline, scales, and responsive layout. The canvas fills the viewport behind floating controls. The evidence drawer overlays the scene and has its own scroll area; on phones it starts closed. Scope these rules to the atlas so report pinning keeps its compact controls. The atlas includes a three-site priority preview; the full ranking remains in Site intelligence.
-
-The atlas stylesheet also owns the “Open 3D simulation” launcher and lazy loading notice, so the button is styled before the studio module loads. The [Environment Studio](../features/site-simulation/README.md) owns its modal, large scene, environmental lenses, controls and responsive sidebar in `simulation.css`.
+`weather-atlas.css` defines the national explorer’s mineral map, Geist typography, layer toolbar, light evidence drawer, timeline, scales, and responsive layout. The canvas fills the viewport behind floating controls. The evidence drawer overlays the scene and has its own scroll area; on phones it starts closed. Scope these rules to the atlas so report pinning keeps its compact controls. The atlas floats a site search above up to five stop-work or high-risk priority sites; the full ranking remains in Site intelligence.
 
 ## Website theme
 
@@ -22,7 +20,7 @@ Unknown beacons use the existing gray with a question mark; low-confidence known
 
 `evidence.css` also styles the demo gap-fill switch, synthetic reading badges and explanatory notice. Preserve the text labels so generated fields remain identifiable without relying on color.
 
-The immersive atlas theme is scoped to `.view-atlas` and `.weather-atlas`. Shared observation/source components retain their paper appearance in Site intelligence. Navigation uses a single baseline; region and layer selections use underlines. The evidence drawer is opaque, rounded and independently scrollable. Camera controls share one rectangular rail, and task states remain plain colored text. Scrolling contents avoid backdrop filters. Motion changes opacity/transform and supports reduced motion.
+The immersive atlas theme is scoped to `.view-atlas` and `.weather-atlas`. Navigation uses a single baseline; region and layer selections use underlines. The evidence drawer is opaque, rounded and independently scrollable. Camera controls share one rectangular rail, and task states remain plain colored text. Scrolling contents avoid backdrop filters. Motion changes opacity/transform and supports reduced motion.
 
 `field-signals.css` styles the homepage’s concentric hazard dial, NWS heat/wind curve and plant task-readiness board. GSAP animates ring entrances, curve opacity, wind bars and tile reveals. The forecast cursor moves between actual hourly records; global pause, reduced motion, cached mode and offscreen visibility stop scanning. Unknown rings are dashed and unknown tiles hatched. No chart uses synthetic completion values.
 

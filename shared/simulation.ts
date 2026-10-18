@@ -33,6 +33,8 @@ export interface ScenarioSiteImpact extends ScenarioSample {
   accumulatedRainMm: number;
   /** Accumulated rain exceeding assumed drainage. Never flood-water depth. */
   runoffMm: number;
+  /** Rain over the trailing 24 simulated hours, the window the flood channel scores. */
+  rainLast24hMm: number;
   windExposureMphHours: number;
 }
 export interface ScenarioFrame {
@@ -224,25 +226,26 @@ export function buildScenarioFrame(input: ScenarioConfig, hour: number, sites: r
   const scenario = prepare(input), time = bounded(hour, [0, 72], "Scenario hour");
   const { config } = scenario, location = trackPosition(scenario, time), active = time < config.durationHours;
   const until = Math.min(time, config.durationHours);
-  const steps: { center: ScenarioPoint; hours: number }[] = [];
+  const steps: { center: ScenarioPoint; hours: number; start: number }[] = [];
   for (let start = 0; start < until; start += STEP_HOURS) {
     const end = Math.min(start + STEP_HOURS, config.durationHours);
     // Fixed midpoint samples keep cumulative totals monotonic during scrubbing,
     // including a partially elapsed final integration cell.
-    steps.push({ center: trackPosition(scenario, (start + end) / 2).center, hours: Math.min(end, until) - start });
+    steps.push({ center: trackPosition(scenario, (start + end) / 2).center, hours: Math.min(end, until) - start, start });
   }
   const impacts: Record<string, ScenarioSiteImpact> = {};
   for (const site of sites) {
     validatePoint(site);
     const instantaneous = sample(scenario, location.center, active, site);
-    let accumulatedRainMm = 0, runoffMm = 0, windExposureMphHours = 0;
+    let accumulatedRainMm = 0, runoffMm = 0, rainLast24hMm = 0, windExposureMphHours = 0;
     for (const step of steps) {
       const reading = sample(scenario, step.center, true, site);
       accumulatedRainMm += reading.rainRateMmH * step.hours;
+      if (step.start >= time - 24) rainLast24hMm += reading.rainRateMmH * step.hours;
       runoffMm += Math.max(0, reading.rainRateMmH - config.drainageMmH) * step.hours;
       windExposureMphHours += reading.windMph * step.hours;
     }
-    impacts[site.id] = { siteId: site.id, ...instantaneous, peakWindMph: peakWind(scenario, location.traveledTrack, site), accumulatedRainMm, runoffMm, windExposureMphHours };
+    impacts[site.id] = { siteId: site.id, ...instantaneous, peakWindMph: peakWind(scenario, location.traveledTrack, site), accumulatedRainMm, runoffMm, rainLast24hMm, windExposureMphHours };
   }
   return {
     mode: "SIMULATED", kind: scenario.kind, hour: time, config,

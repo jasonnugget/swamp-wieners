@@ -281,18 +281,20 @@ export function ReportForm({
   );
 }
 
+/** Reports from every site in one list; each card names its plant. */
 export default function Reports({
-  site,
   snapshot,
   onReport,
   onChange,
 }: {
-  site: Site;
   snapshot: Snapshot;
   onReport: () => void;
   onChange: () => void;
 }) {
-  const reports = snapshot.reports.filter((r) => r.siteId === site.id),
+  const siteNames = new Map(snapshot.sites.map((s) => [s.id, s.name])),
+    reports = snapshot.reports
+      .filter((r) => siteNames.has(r.siteId))
+      .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)),
     [filter, setFilter] = useState<"open" | "all">("open"),
     [resolving, setResolving] = useState<string>(),
     [resolution, setResolution] = useState(""),
@@ -377,7 +379,7 @@ export default function Reports({
                   {report.status === "open" ? "UNRESOLVED" : "RESOLVED"}
                 </span>
                 <span className="muted">
-                  {CATEGORY_LABELS[report.category]} · {report.author}{report.teamName ? ` · ${report.teamName}` : ""}
+                  <strong className="report-site">{siteNames.get(report.siteId)}</strong> · {CATEGORY_LABELS[report.category]} · {report.author}{report.teamName ? ` · ${report.teamName}` : ""}
                 </span>
                 <time>{new Date(report.createdAt).toLocaleString()}</time>
               </div>
@@ -483,7 +485,7 @@ export default function Reports({
           <section className="panel empty-state">
             <MapPin size={32} />
             <h3>
-              No {filter === "open" ? "unresolved " : ""}reports at this site
+              No {filter === "open" ? "unresolved " : ""}reports yet
             </h3>
             <p>A photo and a pin can change the next crew’s plan.</p>
             <button className="secondary" onClick={onReport}>

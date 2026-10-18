@@ -66,7 +66,7 @@ function useCrewState() {
         if (!profile.siteId) setProfile(p => ({ ...p, siteId: next.siteId }));
         void writeStored(storageKeys.cache, { server: profile.server, workspace: next }).catch(() => {});
       },
-      onError: e => { setCurrentTime(Date.now()); setStale(true); setError(e instanceof Error ? e.message : "Cannot reach PlanIT. Check the server connection in Crew."); },
+      onError: e => { setCurrentTime(Date.now()); setStale(true); setError(e instanceof Error ? e.message : "Cannot reach Threshold. Check the server connection in Crew."); },
       onStatus: status => { setLoading(status.loading); setRefreshing(status.refreshing); },
     });
     sync.current = updater;
@@ -81,7 +81,7 @@ function useCrewState() {
   const reports = useMemo(() => workspace?.reports.filter(r => r.siteId === site?.id) ?? [], [workspace?.reports, site?.id]);
   function startDraft() {
     if (draft) return draft;
-    if (!site) throw new Error("Connect to PlanIT and choose your site first.");
+    if (!site) throw new Error("Connect to Threshold and choose your site first.");
     const next: CrewDraft = {
       requestId: randomUUID(), server: profile.server, siteId: site.id, teamId: team?.id ?? "", author: profile.name,
       category: "soil", description: "", tasks: ["mobilization"], latitude: site.latitude, longitude: site.longitude,
@@ -98,7 +98,7 @@ function useCrewState() {
   }
   async function publish({ confirmPin = false }: { confirmPin?: boolean } = {}): Promise<HazardReport> {
     if (!draft?.photoUri) throw new Error("Add a photo first.");
-    if (draft.server !== profile.server) throw new Error("This draft belongs to a different PlanIT server. Reconnect to its server in Crew before sharing.");
+    if (draft.server !== profile.server) throw new Error("This draft belongs to a different Threshold server. Reconnect to its server in Crew before sharing.");
     await draftWrites.current.catch(() => {});
     const accepted = await shareReport(profile.server, reportPayload({ ...draft, pinConfirmed: confirmPin || draft.pinConfirmed }, await photoData(draft.photoUri)));
     setWorkspace(current => current?.siteId === accepted.siteId ? { ...current, reports: [...current.reports.filter(r => r.id !== accepted.id), accepted] } : current);

@@ -1,15 +1,15 @@
-.observation-details, .source-details { color: #282a24; font-variant-numeric: tabular-nums; }
+.observation-details, .source-details { color: color-mix(in oklab, var(--tone-15) 38%, #272727); font-variant-numeric: tabular-nums; }
 .observation-intro { font-size: 12px; line-height: 1.8; color: #68675d; margin: 19px 0; max-width: 65ch; }
 .observation-group { border-top: 1px solid #eeeadf; }
-.observation-group > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; font-size: 14px; font-weight: 500; color: #282a24; cursor: pointer; }
+.observation-group > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 52px; font-size: 14px; font-weight: 500; color: color-mix(in oklab, var(--tone-15) 38%, #272727); cursor: pointer; }
 .observation-group > summary > small { font-size: 10px; color: #68675d; font-weight: 400; white-space: nowrap; }
 .observation-note { font-size: 11px; color: #68675d; line-height: 1.8; margin: 0 0 12px; max-width: 65ch; }
 .observation-field { border-top: 1px solid #eeeadf; }
 .observation-field > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; min-height: 44px; cursor: pointer; list-style: none; }
 .observation-field > summary::-webkit-details-marker { display: none; }
 .observation-field > summary > span { font-size: 12px; color: #68675d; }
-.observation-field > summary > strong { font-size: 12px; font-weight: 500; text-align: right; color: #282a24; max-width: 54%; }
-.observation-field[data-known="false"] > summary > strong { color: #5b6852; font-weight: 400; }
+.observation-field > summary > strong { font-size: 12px; font-weight: 500; text-align: right; color: color-mix(in oklab, var(--tone-15) 38%, #272727); max-width: 54%; }
+.observation-field[data-known="false"] > summary > strong { color: color-mix(in oklab, var(--tone-40) 51%, #5d5d5d); font-weight: 400; }
 .observation-field > summary:hover { background: #eeeadf; }
 .observation-provenance { background: #eeeadf; padding: 12px; margin-bottom: 12px; border-radius: 4px; }
 .observation-provenance p { color: #68675d; font-size: 11px; line-height: 1.8; overflow-wrap: anywhere; }
@@ -27,17 +27,17 @@
 .source-details dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 .source-error { padding: 10px; margin-bottom: 14px; background: #ede2cf; font-size: 11px; color: #805d36; line-height: 1.8; overflow-wrap: anywhere; }
 .source-models, .source-site { margin-top: 24px; padding-top: 18px; border-top: 1px solid #eeeadf; }
-.source-details h3 { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #282a24; }
+.source-details h3 { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: color-mix(in oklab, var(--tone-15) 38%, #272727); }
 .source-models > p, .source-boundary { font-size: 11px; line-height: 1.8; color: #68675d; }
 .source-boundary { border-top: 1px solid #eeeadf; padding-top: 18px; margin-top: 20px; }
 .site-observation-panel { margin: 44px 0; padding: 26px 30px; background: #eeeadf; border: 1px solid #d8d3c5; border-radius: 8px; }
 .site-observation-panel > header { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
-.site-observation-panel h2 { font-size: 27px; font-weight: 400; letter-spacing: -.8px; color: #282a24; }
+.site-observation-panel h2 { font-size: 27px; font-weight: 400; letter-spacing: -.8px; color: color-mix(in oklab, var(--tone-15) 38%, #272727); }
 .site-observation-panel > header p { font-size: 12px; line-height: 1.8; color: #68675d; margin-top: 8px; }
 .site-observation-panel > header > div:last-child { text-align: right; }
-.site-observation-panel > header > div:last-child strong { font-size: 34px; font-weight: 400; color: #282a24; }
+.site-observation-panel > header > div:last-child strong { font-size: 34px; font-weight: 400; color: color-mix(in oklab, var(--tone-15) 38%, #272727); }
 .site-observation-panel > details { margin-top: 20px; border-top: 1px solid #d8d3c5; }
-.site-observation-panel > details > summary { padding-block: 15px; cursor: pointer; color: #282a24; font-size: 13px; }
+.site-observation-panel > details > summary { padding-block: 15px; cursor: pointer; color: color-mix(in oklab, var(--tone-15) 38%, #272727); font-size: 13px; }
 .site-observation-panel .observation-details { display: grid; grid-template-columns: 1fr 1fr; gap: 0 38px; align-items: start; }
 .site-observation-panel .observation-preview-controls { grid-column: 1 / -1; }
 .site-observation-panel .source-provider-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0 38px; align-items: start; }
@@ -49,7 +49,7 @@
 }
 
 .observation-preview-controls { margin-bottom: 18px; }
-.observation-preview-controls label { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px; color: #282a24; cursor: pointer; }
+.observation-preview-controls label { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 12px; color: color-mix(in oklab, var(--tone-15) 38%, #272727); cursor: pointer; }
 .observation-preview-controls input { width: 16px; height: 16px; accent-color: #68675d; }
 .observation-demo-notice { padding: 12px; background: #ede2cf; color: #705333; font-size: 11px; line-height: 1.8; border-left: 2px solid #ac784c; }
 .observation-synthetic { display: block; font-size: 9px; color: #80582d; margin-top: 4px; }

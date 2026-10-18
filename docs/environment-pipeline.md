@@ -6,7 +6,7 @@ The pre-migration audit covered `shared/types.ts`, `shared/policy.ts`, portable 
 
 Previously, the original fifty sites used bundled replay forecasts or Open-Meteo Previous Runs fixed 48-hour GFS features. HeatCast corrected NOAA heat index; GroundCast predicted surface moisture using frozen preprocessing/weights. The other 235 plants used NWS point/hourly or marine grid heat/wind screening. Policy selected peak forecast upper quantiles, coarse wind/rain screens, official alerts and crew evidence, then took maximum severity. Crew reports and replay lightning could force index 10. Policy already preserved task-specific holds and lightning timers.
 
-The map received decisions for risk beacons but independently requested fifty state sample locations and arbitrary point weather from Open-Meteo. Atlas weather never entered engine scoring. Jev classified report text and suggested tasks after persistence; manual confirmation controlled those suggestions. It supplied no environmental measurements. The historical training splits, held-out sites, threshold fitting and browser calibration paths are independent of live environmental collection.
+The map received decisions for risk beacons but independently requested fifty state sample locations and arbitrary point weather from Open-Meteo. Atlas weather never entered engine scoring. Jev classified report text and suggested tasks after persistence; manual confirmation controlled those suggestions. It supplied no environmental measurements. The historical training splits, held-out sites and threshold fitting are independent of live environmental collection.
 
 ## Current flow
 

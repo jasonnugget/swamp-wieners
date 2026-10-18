@@ -16,7 +16,7 @@ export default defineConfig({
     {
       name: "api-readiness",
       async configureServer() {
-        console.info("Waiting for PlanIT API before starting Vite…");
+        console.info("Waiting for Threshold API before starting Vite…");
         await waitForApi(`${apiTarget}/api/health`);
       },
     },
@@ -35,8 +35,9 @@ export default defineConfig({
     port: 5180,
     strictPort: true,
     proxy: {
-      "/api": apiTarget,
-      "/uploads": apiTarget,
+      // Keep the browser's Host header: the API rejects writes whose Origin differs from Host.
+      "/api": { target: apiTarget, changeOrigin: false },
+      "/uploads": { target: apiTarget, changeOrigin: false },
     },
   },
   build: { chunkSizeWarningLimit: 1700 },

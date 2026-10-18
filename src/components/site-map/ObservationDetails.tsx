@@ -1,14 +1,9 @@
 import { useState } from "react";
 import type { SiteObservationV1 } from "../../../shared/risk";
 import type { SiteDataPreview } from "../../../shared/site-data";
-import { useSiteDataPreview } from "../../lib/useSiteDataPreview";
 import { OBSERVATION_GROUPS, formatObservation } from "./observations";
 import "../../styles/evidence.css";
 
-export function SiteObservationPreview({ siteId, observation, timezone }: { siteId: string; observation: SiteObservationV1; timezone?: string }) {
-  const { completion, error } = useSiteDataPreview(siteId, observation);
-  return <>{error && <p role="status" className="observation-intro">{error}</p>}<ObservationDetails observation={observation} timezone={timezone} completion={completion}/></>;
-}
 export default function ObservationDetails({ observation, timezone, completion }: { observation: SiteObservationV1; timezone?: string; completion?: SiteDataPreview }) {
   const [fillGaps, setFillGaps] = useState(true);
   const preview = fillGaps ? completion : undefined;

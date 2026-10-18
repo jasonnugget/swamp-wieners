@@ -31,7 +31,7 @@ test("development readiness fails clearly if the API never starts", async () => 
   const server = createServer();
   const url = await listen(server);
   await close(server);
-  await assert.rejects(waitForApi(url, 50, 1), /PlanIT API did not become ready.*Check the API process output/);
+  await assert.rejects(waitForApi(url, 50, 1), /Threshold API did not become ready.*Check the API process output/);
 });
 test("development readiness bounds a hung health request", async t => {
   const server = createServer(() => {});

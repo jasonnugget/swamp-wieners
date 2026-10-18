@@ -21,7 +21,7 @@ function weather(): WeatherPoint {
     hours: Array.from({ length: 241 }, (_, i) => ({ ...base, temperature: i >= 192 ? 112 : 80, apparent: i >= 192 ? 112 : 80, time: new Date(start + (i - 168) * 3600000).toISOString() })) };
 }
 function fixture(run: (store: Store, snapshot: Snapshot) => void) {
-  const directory = mkdtempSync(join(tmpdir(), "planit-atlas-")), store = new Store(directory);
+  const directory = mkdtempSync(join(tmpdir(), "threshold-atlas-")), store = new Store(directory);
   try {
     store.put("environment-weather", sites[0].id, weather());
     const engine = new Engine(store, sites, {}, models, { now: new Date(now).toISOString(), heroSiteId: sites[0].id });
@@ -59,16 +59,21 @@ test("timeline scores the same future weather frame, retains actual fetch times 
 test("stale forecast input and absent future hours stay unknown without retimestamping", () => fixture((store, snapshot) => {
   const p = weather(); p.fetchedAt = new Date(now - 3600000).toISOString();
   store.put("environment-weather", sites[0].id, p);
+  const cached = riskAtlas(snapshot, store, 24, now).sites[0].snapshot;
+  assert.notEqual(cached.risk, null); assert.equal(cached.observation.provenance.stale, true);
+  p.fetchedAt = new Date(now - 6 * 3600000).toISOString();
+  store.put("environment-weather", sites[0].id, p);
   assert.equal(riskAtlas(snapshot, store, 24, now).sites[0].snapshot.risk, null);
   store.put("environment-weather", sites[0].id, { ...weather(), hours: [] });
   assert.equal(riskAtlas(snapshot, store, 72, now).sites[0].snapshot.risk, null);
 }));
-test("future frames expire detected-strike holds and never invent future strikes", () => fixture((store, snapshot) => {
+test("future frames hold the latest detected-strike stop-work", () => fixture((store, snapshot) => {
   const strike: Strike = { id: "live", time: new Date(now).toISOString(), latitude: sites[0].latitude, longitude: sites[0].longitude, mode: "live" };
   store.put("strike", strike.id, strike);
   snapshot.siteRisks[sites[0].id] = siteRisk(sites[0], weather(), now, [], [strike], [], false).snapshot;
   assert.ok(riskAtlas(snapshot, store, 0, now).sites[0].snapshot.activeOverrides.some(o => o.source === "lightning"));
-  assert.ok(!riskAtlas(snapshot, store, 1, now).sites[0].snapshot.activeOverrides.some(o => o.source === "lightning"));
+  assert.ok(riskAtlas(snapshot, store, 1, now).sites[0].snapshot.activeOverrides.some(o => o.source === "lightning"));
+
 }));
 test("atlas layers only select backend values, preserve unknowns, and interpolate risk colors", () => {
   const r = siteRisk(sites[0], weather(), now, [], [], [], false).snapshot;
@@ -132,3 +137,13 @@ test("optional demo companions fill every field for every hour without changing 
   }
   assert.deepEqual(snapshot, before);
 }));
+test("model forecasts stay applied at future hours while fresh against real time", async () => {
+  const { scoreChannels } = await import("../../shared/risk-scoring");
+  const target = Math.floor(now / 3600000) * 3600000 + 24 * 3600000;
+  const forecast = { siteId: sites[0].id, mode: "live" as const, fetchedAt: new Date(now - 60000).toISOString(), modelVersion: "test",
+    hours: Array.from({ length: 73 }, (_, i) => ({ time: new Date(Math.floor(now / 3600000) * 3600000 + i * 3600000).toISOString(), issuedAt: new Date(now - 60000).toISOString(), heat: [90, 95, 100], soil: [0.2, 0.25, 0.3], wind: 5, precipitation: 0 })) };
+  const o = siteRisk(sites[0], weather(), now, [], [], [], false).snapshot.observation;
+  const heatCast = (context: Parameters<typeof scoreChannels>[1]) => scoreChannels(o, context).find(c => c.hazard === "heat")!.factors.some(f => f.key === "heatCast");
+  assert.ok(heatCast({ now: target, sourceNow: now, forecast: forecast as never }));
+  assert.ok(!heatCast({ now: target, forecast: forecast as never }));
+});

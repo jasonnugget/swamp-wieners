@@ -4,7 +4,7 @@ October 17, 2026. This pass carries the mobile app’s cream, butter-yellow and 
 
 ## References and direction
 
-The requested design-taste-frontend-v1, gpt-taste and high-end-visual-design skills informed the layout, type and motion. Fresh Awwwards references were researched during the companion mobile pass; their archived images were downloaded and visually inspected. Reference images are not shipped with PlanIT.
+The requested design-taste-frontend-v1, gpt-taste and high-end-visual-design skills informed the layout, type and motion. Fresh Awwwards references were researched during the companion mobile pass; their archived images were downloaded and visually inspected. Reference images are not shipped with Threshold.
 
 | Reference | Design influence |
 | --- | --- |
@@ -16,7 +16,7 @@ The web prompt’s Python seed was 16: an editorial split, Geist, horizontal acc
 
 ## What changed
 
-Locally bundled variable Geist replaces the active website typefaces. The hero and loading screen use an original SVG camera/notebook illustration; it is decorative, never an observation or crew photo. A yellow action surface, nested arrow controls and larger charcoal lettering establish the new theme across the landing page, intelligence, reports, briefings and Model Lab.
+Locally bundled variable Geist replaces the active website typefaces. The hero and loading screen use an original SVG camera/notebook illustration; it is decorative, never an observation or crew photo. A yellow action surface, nested arrow controls and larger charcoal lettering establish the new theme across the landing page, intelligence, reports and briefings.
 
 The national atlas has cream controls, a pale-gold land surface and a matching inspector. This changes scene colors and lighting only. Projection, topology, depth precision, camera limits, pin raycasting and flat-map fallback remain intact. The report pinning view keeps its dark surface. Hazard gradients, task states and unknown/low-confidence markers retain their operational meaning.
 
@@ -59,4 +59,4 @@ Commands ran from the repository root.
 
 Browser checks cover navigation, reduced motion and global pause, chart gaps and missing forecasts, map depth/camera/pinning and fallback, report handoff, retained lightning holds, browser calibration and offline inference. These are targeted specifications, not a claim that the entire browser suite ran. The final edits after those specifications only remove decorative chart-number prefixes, deduplicate a font-family fallback and adjust the phone breakpoint; the build and responsive capture were repeated afterward.
 
-The existing lazy browser-ML chunk still triggers Vite’s size warning: 2,049.38 kB minified against a 1,700 kB warning threshold. Packaging succeeds; this pass does not restructure model loading. Real device touch/GPU behavior and the normal API’s health still need a separate check. No API endpoints or backend calculations changed, and the user’s SQLite history and uploads were left intact.
+At the time, the lazy browser-ML chunk triggered Vite’s size warning (2,049.38 kB minified against a 1,700 kB threshold); that chunk was later removed with the Model Lab. Real device touch/GPU behavior and the normal API’s health still need a separate check. No API endpoints or backend calculations changed, and the user’s SQLite history and uploads were left intact.

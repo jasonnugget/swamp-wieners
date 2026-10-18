@@ -9,7 +9,7 @@ export default function LoadingScreen({ snapshotReady, modelReady, error, onEnte
 }) {
   return (
     <div className="boot-screen" aria-busy={!error && !(snapshotReady && modelReady)}>
-      <div className="boot-top"><span className="boot-wordmark"><Zap aria-hidden="true" size={20} /> PlanIT<span>↗</span></span><span>Good eyes. Good crew.</span></div>
+      <div className="boot-top"><span className="boot-wordmark"><Zap aria-hidden="true" size={20} /> Threshold<span>↗</span></span><span>Good eyes. Good crew.</span></div>
       <div className="boot-illustration"><FieldSculpture paused/></div>
       <div className="boot-copy">
         <span className="eyebrow">A better heads-up starts here.</span>
@@ -22,7 +22,7 @@ export default function LoadingScreen({ snapshotReady, modelReady, error, onEnte
         {onEnter && !error && <button className="boot-enter text-button" onClick={onEnter}>Enter workspace <ArrowUpRight aria-hidden="true" size={15} /></button>}
         {error && <div className="boot-error"><p role="alert">{error}</p><button className="primary" onClick={() => location.reload()}>Retry connection <ArrowUpRight aria-hidden="true" size={16} /></button></div>}
       </div>
-      <div className="boot-bottom"><span>GEOGRAPHY. EVIDENCE. PERSPECTIVE.</span><span>PLANIT CONTROL <span className="boot-pulse">↗</span></span></div>
+      <div className="boot-bottom"><span>GEOGRAPHY. EVIDENCE. PERSPECTIVE.</span><span>THRESHOLD CONTROL <span className="boot-pulse">↗</span></span></div>
     </div>
   );
 }

@@ -6,12 +6,15 @@ import { createSimulationOverlay } from "./simulation-scene";
 import { scenarioBounds, type SimulationLayer } from "./scenario-geometry";
 import type { Decision, HazardReport, Site } from "../../../shared/types";
 import { REGION_BOUNDS, type MapRegion } from "../../../shared/weather";
+import { accentTone } from "../../lib/accent";
 import {
   LAND_TOP,
   projectUS as project,
   normalizeLongitude,
   REGION,
   riskColor,
+  atlasStates,
+  SOUTHEAST_CORNERS,
   statePolygons,
   unproject,
   type StateGeometry,
@@ -41,6 +44,26 @@ export interface MapScene {
   zoom(factor: number): void;
   resize(): void;
   dispose(): void;
+}
+
+/** Current accent from the header picker; CSS owns the palette. */
+function brandColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue("--brand").trim() || "#c3d99c";
+}
+
+type LandRole = "surface" | "ocean" | "top" | "top-focal" | "side" | "edge" | "pin-edge" | "pin-edge-focal";
+/** Land tints follow the accent; the dark pin-map surfaces stay neutral slate. */
+function landColor(role: LandRole) {
+  switch (role) {
+    case "surface": return accentTone(0.955, 0.6);
+    case "ocean": return accentTone(0.93, 0.5);
+    case "top": return accentTone(0.82, 0.4);
+    case "top-focal": return accentTone(0.77, 0.6);
+    case "side": return accentTone(0.57, 0.55);
+    case "edge": return accentTone(0.41, 0.6);
+    case "pin-edge": return accentTone(0.33, 1);
+    case "pin-edge-focal": return accentTone(0.65, 0.8);
+  }
 }
 
 function disposeGroup(group: THREE.Object3D) {
@@ -78,7 +101,7 @@ export function createMapScene(
     powerPreference: "low-power",
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
-  renderer.setClearColor(callbacks.pin ? "#11191d" : "#f5f6f2");
+  renderer.setClearColor(callbacks.pin ? "#11191d" : landColor("surface"));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.25;
@@ -93,7 +116,7 @@ export function createMapScene(
   canvas.tabIndex = 0;
   container.appendChild(canvas);
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(callbacks.pin ? "#11191d" : "#f5f6f2", 0.003);
+  scene.fog = new THREE.FogExp2(callbacks.pin ? "#11191d" : landColor("surface"), 0.003);
   const camera = new THREE.PerspectiveCamera(38, 1, 0.02, 1000);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = true;
@@ -122,7 +145,7 @@ export function createMapScene(
   const ocean = new THREE.Mesh(
     new THREE.PlaneGeometry(650, 650),
     new THREE.MeshStandardMaterial({
-      color: callbacks.pin ? "#172329" : "#edf0e7",
+      color: callbacks.pin ? "#172329" : landColor("ocean"),
       roughness: 0.85,
       metalness: 0.15,
     }),
@@ -139,6 +162,15 @@ export function createMapScene(
     beacons = new THREE.Group(),
     reports = new THREE.Group();
   scene.add(land, beacons, reports);
+  const landMaterials: [THREE.MeshStandardMaterial | THREE.LineBasicMaterial, LandRole][] = [];
+  const recolorLand = () => {
+    landMaterials.forEach(([material, role]) => material.color.set(landColor(role)));
+    if (callbacks.pin) return;
+    renderer.setClearColor(landColor("surface"));
+    (scene.fog as THREE.FogExp2).color.set(landColor("surface"));
+    (ocean.material as THREE.MeshStandardMaterial).color.set(landColor("ocean"));
+  };
+  document.addEventListener("planit:accent", recolorLand);
   const simulation = callbacks.pin ? undefined : createSimulationOverlay();
   if (simulation) scene.add(simulation.group);
   const simulationLabel = document.createElement("div");
@@ -152,10 +184,7 @@ export function createMapScene(
   let disposed = false,
     top = !!callbacks.pin,
     rotating = false,
-    inView = true,
-    simulationOpen = Boolean(document.querySelector("dialog.site-simulation[open]"));
-  const simulationVisibility = (event: Event) => { simulationOpen = Boolean((event as CustomEvent<boolean>).detail); };
-  document.addEventListener("planit:site-simulation", simulationVisibility);
+    inView = true;
   let overview: MapRegion | undefined = callbacks.pin ? undefined : "mainland";
   const interact = () => {
     overview = undefined;
@@ -200,10 +229,10 @@ export function createMapScene(
       start: performance.now(),
     };
   }
-  function fit(immediate = false) {
+  function fit(immediate = false, sites: { latitude: number; longitude: number }[] = data.sites) {
     overview = undefined;
     const box = new THREE.Box3();
-    data.sites.forEach((s) => {
+    sites.forEach((s) => {
       const p = project(s.latitude, s.longitude);
       box.expandByPoint(new THREE.Vector3(p.x, LAND_TOP, p.z));
     });
@@ -232,6 +261,15 @@ export function createMapScene(
     } else animateTo(center, center.clone().add(offset));
   }
   function region(value: MapRegion, immediate = false) {
+    // The atlas frames the sites inside a region rather than the region's full extent.
+    const inRegion = data.sites.filter((s) => value === "all" || (value === "alaska" ? s.state === "AK" : value === "hawaii" ? s.state === "HI" : !["AK", "HI"].includes(s.state)));
+    if (!callbacks.pin && inRegion.length) {
+      // The Lower 48 view also frames the always-drawn Southeast around the sites.
+      fit(immediate, value === "mainland" ? [...inRegion, ...SOUTHEAST_CORNERS] : inRegion);
+      overview = value;
+      canvas.dataset.region = value;
+      return;
+    }
     overview = value;
     const bounds = REGION_BOUNDS[value];
     const a = project(bounds.north, bounds.west), b = project(bounds.south, bounds.east);
@@ -294,6 +332,7 @@ export function createMapScene(
   });
   visibility.observe(container);
 
+  let geography: StateGeometry | undefined, drawnStates = "";
   void fetch("/data/us-states.geojson", { signal: abort.signal })
     .then((r) => {
       if (!r.ok) throw new Error("Geography unavailable");
@@ -301,65 +340,77 @@ export function createMapScene(
     })
     .then((states) => {
       if (disposed) return;
-      for (const state of states.features)
-        for (const polygon of statePolygons(state.geometry)) {
-          const shape = new THREE.Shape();
-          polygon.forEach((ring, index) => {
-            const path = index === 0 ? shape : new THREE.Path();
-            ring.forEach(([longitude, latitude], i) => {
-              const p = project(latitude, longitude > 0 ? longitude - 360 : longitude);
-              if (i === 0) path.moveTo(p.x, -p.z);
-              else path.lineTo(p.x, -p.z);
-            });
-            path.closePath();
-            if (index > 0) shape.holes.push(path);
-          });
-          const focal = ["Florida", "Louisiana", "Mississippi"].includes(
-            state.properties.name,
-          );
-          const geometry = new THREE.ExtrudeGeometry(shape, {
-            depth: callbacks.pin ? 0.25 : 0.55,
-            bevelEnabled: false,
-            steps: 1,
-            curveSegments: 1,
-          });
-          geometry.rotateX(-Math.PI / 2);
-          geometry.translate(0, LAND_TOP - (callbacks.pin ? 0.25 : 0.55), 0);
-          const mesh = new THREE.Mesh(geometry, [
-            new THREE.MeshStandardMaterial({
-              color: callbacks.pin ? (focal ? "#4b5c5b" : "#3e4b50") : (focal ? "#c7d6b3" : "#d4ddc6"),
-              roughness: 0.8,
-              metalness: 0.15,
-              polygonOffset: true,
-              polygonOffsetFactor: 1,
-              polygonOffsetUnits: 1,
-            }),
-            new THREE.MeshStandardMaterial({
-              color: callbacks.pin ? "#1c3b38" : "#95a184",
-              roughness: 0.6,
-              polygonOffset: true,
-              polygonOffsetFactor: 1,
-              polygonOffsetUnits: 1,
-            }),
-          ]);
-          land.add(mesh);
-          mesh.userData.state = state.properties.name;
-          const edges = new THREE.LineSegments(
-            new THREE.EdgesGeometry(geometry, 30),
-            new THREE.LineBasicMaterial({
-              color: callbacks.pin ? (focal ? "#8fbea0" : "#3f6960") : "#68765a",
-              transparent: true,
-              opacity: callbacks.pin ? (focal ? 0.7 : 0.4) : 0.48,
-            }),
-          );
-          land.add(edges);
-        }
+      geography = states;
+      drawLand();
       canvas.dataset.geography = "ready";
-      canvas.dataset.states = String(states.features.length);
     })
     .catch((error) => {
       if (error.name !== "AbortError" && !disposed) callbacks.geographyError();
     });
+  // The atlas draws the Southeast plus states holding a loaded site; the pin map keeps every state.
+  function drawLand() {
+    if (!geography) return;
+    const wanted = callbacks.pin ? null : atlasStates(data.sites);
+    const key = wanted ? [...wanted].sort().join() : "*";
+    if (key === drawnStates) return;
+    drawnStates = key;
+    disposeGroup(land);
+    landMaterials.length = 0;
+    const features = geography.features.filter((f) => !wanted || wanted.has(f.properties.name));
+    for (const state of features)
+      for (const polygon of statePolygons(state.geometry)) {
+        const shape = new THREE.Shape();
+        polygon.forEach((ring, index) => {
+          const path = index === 0 ? shape : new THREE.Path();
+          ring.forEach(([longitude, latitude], i) => {
+            const p = project(latitude, longitude > 0 ? longitude - 360 : longitude);
+            if (i === 0) path.moveTo(p.x, -p.z);
+            else path.lineTo(p.x, -p.z);
+          });
+          path.closePath();
+          if (index > 0) shape.holes.push(path);
+        });
+        const focal = ["Florida", "Louisiana", "Mississippi"].includes(
+          state.properties.name,
+        );
+        const geometry = new THREE.ExtrudeGeometry(shape, {
+          depth: callbacks.pin ? 0.25 : 0.55,
+          bevelEnabled: false,
+          steps: 1,
+          curveSegments: 1,
+        });
+        geometry.rotateX(-Math.PI / 2);
+        geometry.translate(0, LAND_TOP - (callbacks.pin ? 0.25 : 0.55), 0);
+        const top = new THREE.MeshStandardMaterial({
+          color: callbacks.pin ? (focal ? "#4b5c5b" : "#3e4b50") : landColor(focal ? "top-focal" : "top"),
+          roughness: 0.8,
+          metalness: 0.15,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
+        });
+        const side = new THREE.MeshStandardMaterial({
+          color: callbacks.pin ? "#1c3b38" : landColor("side"),
+          roughness: 0.6,
+          polygonOffset: true,
+          polygonOffsetFactor: 1,
+          polygonOffsetUnits: 1,
+        });
+        const edge = new THREE.LineBasicMaterial({
+          color: landColor(callbacks.pin ? (focal ? "pin-edge-focal" : "pin-edge") : "edge"),
+          transparent: true,
+          opacity: callbacks.pin ? (focal ? 0.7 : 0.4) : 0.48,
+        });
+        if (!callbacks.pin) landMaterials.push([top, focal ? "top-focal" : "top"], [side, "side"]);
+        landMaterials.push([edge, callbacks.pin ? (focal ? "pin-edge-focal" : "pin-edge") : "edge"]);
+        const mesh = new THREE.Mesh(geometry, [top, side]);
+        land.add(mesh);
+        mesh.userData.state = state.properties.name;
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 30), edge);
+        land.add(edges);
+      }
+    canvas.dataset.states = String(features.length);
+  }
 
   function label(
     text: string,
@@ -375,7 +426,9 @@ export function createMapScene(
     anchors.push({ element, position, priority });
     return element;
   }
-  const records = new Map<string, { pillar: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshStandardMaterial>; head: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>; halo: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>; element: HTMLButtonElement; anchor: { position: THREE.Vector3; priority: number }; key: string }>();
+  // Each site is a small house: walls and roof take the risk color; size stays constant so color carries the score.
+  const BUILDING_HEIGHT = 0.15, buildingScale = (selected: boolean) => (callbacks.pin ? 0.025 : 1) * (selected ? 1.3 : 1);
+  const records = new Map<string, { building: THREE.Group; walls: THREE.MeshStandardMaterial; roof: THREE.MeshStandardMaterial; halo: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>; element: HTMLButtonElement; anchor: { position: THREE.Vector3; priority: number }; key: string }>();
   let topology = "";
   function refreshBeacons() {
     pulses.length = 0;
@@ -387,14 +440,13 @@ export function createMapScene(
       if (selected || decision?.tasks.some(t => t.state === "HOLD")) pulses.push({ mesh: record.halo, base: selected ? 0.8 : 0.35 });
       if (record.key === key) continue;
       record.key = key;
-      const height = callbacks.pin ? 0.004 : 0.15 + (visual ? visual.fraction * 0.55 : (value ?? 0) * 0.055);
-      record.pillar.position.y = LAND_TOP + height / 2; record.pillar.scale.y = height;
-      record.pillar.material.color.set(color); record.pillar.material.emissive.set(color);
-      record.pillar.material.emissiveIntensity = selected ? 1 : 0.45;
-      record.pillar.material.opacity = value === null ? 0.4 : visual && visual.confidence < 0.5 ? 0.55 : 0.85;
-      record.head.position.y = LAND_TOP + height; record.head.scale.setScalar(selected ? 1.25 : 0.7); record.head.material.color.set(color);
+      const scale = buildingScale(selected), opacity = value === null ? 0.4 : visual && visual.confidence < 0.5 ? 0.55 : 1;
+      record.building.scale.setScalar(scale);
+      record.walls.color.set(color); record.walls.emissive.set(color); record.walls.emissiveIntensity = selected ? 0.55 : 0.18;
+      record.roof.color.set(color).multiplyScalar(0.72); record.roof.emissive.set(color); record.roof.emissiveIntensity = selected ? 0.4 : 0.1;
+      record.walls.opacity = record.roof.opacity = opacity;
       record.halo.material.color.set(color); record.halo.material.opacity = selected ? 0.8 : 0.35;
-      record.anchor.position.copy(record.head.position).add(new THREE.Vector3(0, callbacks.pin ? 0.003 : 0.12, 0)); record.anchor.priority = selected ? 100 : 10;
+      record.anchor.position.set(record.building.position.x, LAND_TOP + BUILDING_HEIGHT * scale + (callbacks.pin ? 0.003 : 0.06), record.building.position.z); record.anchor.priority = selected ? 100 : 10;
       record.element.textContent = value?.toFixed(1) ?? "?";
       record.element.className = `site-beacon ${selected ? "is-selected" : ""} ${value === null ? "is-unknown" : ""} ${visual && visual.confidence < 0.5 ? "has-low-confidence" : ""}`;
       record.element.style.setProperty("--beacon-color", color);
@@ -406,6 +458,7 @@ export function createMapScene(
   }
   function update(next: SceneData) {
     data = next;
+    drawLand();
     simulation?.update(data.simulation, data.simulationLayer ?? "wind", data.sites);
     simulationLabel.hidden = !data.simulation;
     simulationLabel.textContent = data.simulation ? `SIMULATED · ${data.simulation.active ? data.simulation.kind === "hurricane" ? "Hurricane" : "Rainfall" : "Track complete"}` : "";
@@ -425,13 +478,10 @@ export function createMapScene(
     anchors.length = 0;
     pulses.length = 0;
     pickTargets.length = 0;
-    const cylinder = new THREE.CylinderGeometry(
-        callbacks.pin ? 0.0006 : 0.035,
-        callbacks.pin ? 0.001 : 0.065,
-        1,
-        8,
-      ),
-      cap = new THREE.SphereGeometry(callbacks.pin ? 0.0017 : 0.075, 10, 8),
+    // Shared house geometry, modelled at full size with its base at y = 0.
+    const body = new THREE.BoxGeometry(0.11, 0.09, 0.09).translate(0, 0.045, 0),
+      annex = new THREE.BoxGeometry(0.05, 0.05, 0.06).translate(0.075, 0.025, 0.01),
+      gable = new THREE.ConeGeometry(0.085, BUILDING_HEIGHT - 0.09, 4).rotateY(Math.PI / 4).translate(0, 0.09 + (BUILDING_HEIGHT - 0.09) / 2, 0),
       ring = new THREE.RingGeometry(
         callbacks.pin ? 0.002 : 0.11,
         callbacks.pin ? 0.003 : 0.135,
@@ -443,36 +493,24 @@ export function createMapScene(
       const selected = site.id === data.selected,
         color = riskColor(risk),
         p = project(site.latitude, site.longitude);
-      const height = callbacks.pin ? 0.004 : 0.15 + (risk ?? 0) * 0.055;
-      const pillar = new THREE.Mesh(
-        cylinder,
-        new THREE.MeshStandardMaterial({
-          color,
-          emissive: color,
-          emissiveIntensity: selected ? 1 : 0.45,
-          transparent: true,
-          opacity: 0.85,
-          roughness: 0.35,
-        }),
-      );
-      pillar.position.set(p.x, LAND_TOP + height / 2, p.z);
-      pillar.scale.y = height;
-      pillar.userData.siteId = site.id;
-      beacons.add(pillar);
-      pickTargets.push(pillar);
-      const head = new THREE.Mesh(
-        cap,
-        new THREE.MeshBasicMaterial({ color: selected ? "#c3d99c" : color }),
-      );
-      head.position.set(p.x, LAND_TOP + height, p.z);
-      head.scale.setScalar(selected ? 1.25 : 0.7);
-      head.userData.siteId = site.id;
-      beacons.add(head);
-      pickTargets.push(head);
+      const scale = buildingScale(selected);
+      const walls = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: selected ? 0.55 : 0.18, transparent: true, roughness: 0.6 }),
+        roof = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).multiplyScalar(0.72), emissive: color, emissiveIntensity: selected ? 0.4 : 0.1, transparent: true, roughness: 0.5 });
+      const building = new THREE.Group();
+      for (const [geometry, material] of [[body, walls], [annex, walls], [gable, roof]] as const) {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.userData.siteId = site.id;
+        building.add(mesh);
+        pickTargets.push(mesh);
+      }
+      building.position.set(p.x, LAND_TOP, p.z);
+      building.scale.setScalar(scale);
+      building.userData.siteId = site.id;
+      beacons.add(building);
       const halo = new THREE.Mesh(
         ring,
         new THREE.MeshBasicMaterial({
-          color: selected ? "#c3d99c" : color,
+          color: selected ? brandColor() : color,
           side: THREE.DoubleSide,
           transparent: true,
           opacity: selected ? 0.8 : 0.35,
@@ -487,9 +525,7 @@ export function createMapScene(
       const element = label(
         risk?.toFixed(0) ?? "?",
         `site-beacon ${selected ? "is-selected" : ""}`,
-        head.position
-          .clone()
-          .add(new THREE.Vector3(0, callbacks.pin ? 0.003 : 0.12, 0)),
+        new THREE.Vector3(p.x, LAND_TOP + BUILDING_HEIGHT * scale + (callbacks.pin ? 0.003 : 0.06), p.z),
         selected ? 100 : 10,
       );
       element.style.setProperty("--beacon-color", color);
@@ -506,7 +542,7 @@ export function createMapScene(
         controls.autoRotate = false;
         callbacks.select(site.id);
       };
-      records.set(site.id, { pillar, head, halo, element, anchor: anchors[anchors.length - 1], key: "" });
+      records.set(site.id, { building, walls, roof, halo, element, anchor: anchors[anchors.length - 1], key: "" });
       element.onmouseenter = () => callbacks.hover(site.id);
       element.onmouseleave = () => callbacks.hover(null);
       element.onfocus = () => callbacks.hover(site.id);
@@ -665,7 +701,7 @@ export function createMapScene(
   const projected = new THREE.Vector3();
   function tick(now: number) {
     frame = requestAnimationFrame(tick);
-    if (!inView || simulationOpen || document.hidden || now - lastDraw < 32) return;
+    if (!inView || document.hidden || now - lastDraw < 32) return;
     const delta = Math.min((now - lastDraw) / 1000, 0.1);
     lastDraw = now;
     if (move) {
@@ -779,7 +815,7 @@ export function createMapScene(
       observer.disconnect();
       visibility.disconnect();
       controls.dispose();
-      document.removeEventListener("planit:site-simulation", simulationVisibility);
+      document.removeEventListener("planit:accent", recolorLand);
       canvas.removeEventListener("pointerdown", start);
       canvas.removeEventListener("pointerup", end);
       canvas.removeEventListener("pointercancel", cancel);

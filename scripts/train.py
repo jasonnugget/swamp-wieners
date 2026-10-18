@@ -1,7 +1,7 @@
 """Train two small quantile MLPs on real archived weather; export portable weights.
 
 NumPy backpropagation keeps the training environment small and reproducible.
-The browser loads these exact dense weights into TensorFlow.js.
+The server and homepage replay run these exact dense weights.
 """
 import json
 import time

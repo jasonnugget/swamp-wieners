@@ -51,7 +51,9 @@ export async function loadWeather(locations: WeatherLocation[]): Promise<Weather
           current: CURRENT_VARIABLES, hourly: VARIABLES, temperature_unit: "fahrenheit",
           wind_speed_unit: "mph", forecast_hours: "73", past_hours: "168", timeformat: "unixtime", timezone: "UTC",
         });
-        const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: AbortSignal.timeout(18000) });
+        const request = () => fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: AbortSignal.timeout(18000) });
+        // One retry on timeout: a slow batch otherwise leaves its sites on cached weather.
+        const response = await request().catch((error: unknown) => { if (error instanceof Error && error.name === "TimeoutError") return request(); throw error; });
         if (response.status === 429) {
           const value = response.headers.get("Retry-After");
           const seconds = value === null ? NaN : Number(value);

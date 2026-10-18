@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "PlanIT Crew",
+    "name": "Threshold Crew",
     "slug": "planit-crew",
     "scheme": "planit-crew",
     "version": "1.0.0",
@@ -14,7 +14,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.planit.crew",
       "infoPlist": {
-        "NSLocalNetworkUsageDescription": "Connect to your crew's PlanIT server on the same Wi-Fi network.",
+        "NSLocalNetworkUsageDescription": "Connect to your crew's Threshold server on the same Wi-Fi network.",
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
           "NSAllowsLocalNetworking": true

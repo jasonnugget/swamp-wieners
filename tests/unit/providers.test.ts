@@ -169,7 +169,7 @@ test("FEMA distinguishes mapped true/false, unmapped unknown and verified static
     const result = await new FemaFloodplainProvider(cache(), http(() => json({ features })), "", true, clock).getFloodplainEvidence(site);
     assert.equal(result.data!.floodplain, expected); assert.equal(result.mode, "STATIC");
   }
-  const directory = mkdtempSync(join(tmpdir(), "planit-fema-"));
+  const directory = mkdtempSync(join(tmpdir(), "threshold-fema-"));
   try {
     const file = join(directory, "exposure.json");
     writeFileSync(file, JSON.stringify({ version: 1, sites: { [site.id]: { latitude: site.latitude, longitude: site.longitude, floodplain: true, verifiedAt: iso(-DAY), sourceUrl: "https://hazards.fema.gov/" } } }));
@@ -272,7 +272,7 @@ test("provider evidence populates normalized fields and confidence metadata, and
   assert.equal(expired.risk, null); assert.equal(expired.confidence, 0);
 });
 test("cache persists across adapter restart, deduplicates work, expires, and does not cache failures as success", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "planit-cache-")), store = new Store(directory);
+  const directory = mkdtempSync(join(tmpdir(), "threshold-cache-")), store = new Store(directory);
   let time = now, calls = 0;
   try {
     const first = new ProviderCache(store, () => time);
@@ -305,7 +305,7 @@ test("one timeout fails only its own request; repeated timeouts pause the origin
   await assert.rejects(client.json("source", "https://example.test/d"), /after repeated timeouts \(backoff active\)/); assert.equal(calls, 5);
 });
 test("a failed NWS refresh preserves existing unexpired warnings and a failed source leaves other evidence usable", async () => {
-  const directory = mkdtempSync(join(tmpdir(), "planit-poller-")), store = new Store(directory);
+  const directory = mkdtempSync(join(tmpdir(), "threshold-poller-")), store = new Store(directory);
   try {
     const warning = { id: "flood", siteId: site.id, category: "flood" as const, title: "Flood Warning", event: "Flood Warning", severity: 7, expiresAt: iso(HOUR), mode: "live" as const };
     store.put("alert", warning.id, warning);
@@ -326,7 +326,7 @@ test("a failed NWS refresh preserves existing unexpired warnings and a failed so
 
 test("national provider polling bounds source jobs, deduplicates selected refreshes and does not skip catalog plants", async () => {
   const sites: Site[] = JSON.parse(readFileSync("public/data/sites.json", "utf8"));
-  const directory = mkdtempSync(join(tmpdir(), "planit-batch-")), store = new Store(directory);
+  const directory = mkdtempSync(join(tmpdir(), "threshold-batch-")), store = new Store(directory);
   const calls = new Map<string, number>(); let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   async function counted<T>(source: string, data: T) { calls.set(source, (calls.get(source) ?? 0) + 1); await gate; return evidence(source, data, now, MINUTE); }

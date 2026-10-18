@@ -10,6 +10,7 @@ import { useQuickReport } from "../../features/useQuickReport";
 import FieldHero from "../../components/FieldHero";
 import { Reveal } from "../../components/motion";
 import { ReportCard } from "../../components/ReportCard";
+import UrgentAlerts from "../../components/UrgentAlerts";
 
 export default function OnSite() {
   const crew = useCrew(), { width } = useWindowDimensions(), scrollY = useSharedValue(0);
@@ -17,8 +18,9 @@ export default function OnSite() {
   const open = useMemo(() => crew.reports.filter(report => report.status === "open"), [crew.reports]);
   const recent = useMemo(() => [...crew.reports].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 3), [crew.reports]);
   const matched = crew.site && crew.workspace?.siteId === crew.site.id;
-  return <Page title="PlanIT Crew" home refresh scrollY={scrollY}>
-    <Pressable accessibilityRole="button" accessibilityLabel="Choose your site" onPress={() => router.push("/sites")} style={[styles.between, { paddingVertical: 2 }]}><View style={[styles.row, { flex: 1 }]}><Icon name="map-pin" size={21}/><View style={{ flex: 1 }}><Text style={styles.eyebrow}>On site</Text><Text style={[styles.body, { fontSize: 17, fontWeight: "500" }]}>{crew.site?.name ?? "Choose your site"}</Text><Text style={styles.small}>{crew.site ? `${crew.site.county}, ${crew.site.state}` : "Connect to your PlanIT server in Crew"}</Text></View></View><Icon name="chevron-down" size={18}/></Pressable>
+  return <Page title="Threshold Crew" home refresh scrollY={scrollY}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Choose your site" onPress={() => router.push("/sites")} style={[styles.between, { paddingVertical: 2 }]}><View style={[styles.row, { flex: 1 }]}><Icon name="map-pin" size={21}/><View style={{ flex: 1 }}><Text style={styles.eyebrow}>On site</Text><Text style={[styles.body, { fontSize: 17, fontWeight: "500" }]}>{crew.site?.name ?? "Choose your site"}</Text><Text style={styles.small}>{crew.site ? `${crew.site.county}, ${crew.site.state}` : "Connect to your Threshold server in Crew"}</Text></View></View><Icon name="chevron-down" size={18}/></Pressable>
+    <UrgentAlerts/>
     {crew.workspace?.clockMode === "demo" && <Text style={styles.small}>Demo workspace · reports use the demonstration clock.</Text>}
     <FieldHero hasSite={!!crew.site} draft={!!crew.draft} scrollY={scrollY} onCapture={() => { void startReport(); }} capturing={capturing}/>
     <TodayHazards/>

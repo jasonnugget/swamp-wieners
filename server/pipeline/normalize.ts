@@ -34,15 +34,20 @@ export function normalize(site: Site, point: WeatherPoint | undefined, now: numb
     provenance: { mode: "live", source: "No connected source", stale: false, error: point?.error ?? null, fieldSources: {}, fieldEvidence: {}, providers: {} },
   };
   if (point && point.latitude === site.latitude && point.longitude === site.longitude) {
-    const usable = !point.stale && fresh(point.fetchedAt, sourceNow, 3600000) && fresh(point.current.time, now, 2 * 3600000);
-    o.provenance = { ...o.provenance, source: "Open-Meteo model estimates", stale: !usable };
+    const live = !point.stale && fresh(point.fetchedAt, sourceNow, 3600000) && fresh(point.current.time, now, 2 * 3600000);
+    // A failed refresh keeps the last fetched hourly forecast. Within the grace window its
+    // row for this hour stands in at reduced confidence instead of blanking soil and CAPE.
+    const cached = live || !fresh(point.fetchedAt, sourceNow, RISK_CONFIG.weatherCache.graceHours * 3600000) ? undefined
+      : point.hours.find(h => Date.parse(h.time) === Math.floor(now / 3600000) * 3600000);
+    const usable = live || !!cached, cap = live ? 1 : RISK_CONFIG.weatherCache.confidence;
+    o.provenance = { ...o.provenance, source: cached ? "Open-Meteo cached forecast" : "Open-Meteo model estimates", stale: !live };
     o.fetchedAt = Number.isFinite(Date.parse(point.fetchedAt)) ? new Date(point.fetchedAt).toISOString() : null;
-    o.validAt = Number.isFinite(Date.parse(point.current.time)) ? new Date(point.current.time).toISOString() : null;
+    o.validAt = Number.isFinite(Date.parse((cached ?? point.current).time)) ? new Date((cached ?? point.current).time).toISOString() : null;
     o.provenance.providers.weather = { source: "Open-Meteo", status: usable ? "ok" : "unavailable", mode: "FORECAST", fetchedAt: o.fetchedAt ?? new Date(now).toISOString(), observedAt: o.validAt,
-      validUntil: new Date((o.fetchedAt ? Date.parse(o.fetchedAt) : now) + 3600000).toISOString(), confidence: usable ? 0.8 : 0,
-      error: usable ? null : point.error ?? "Weather cache is stale or invalid", details: { interpretation: "Gridded model estimates, not field instruments" } };
+      validUntil: new Date((o.fetchedAt ? Date.parse(o.fetchedAt) : now) + (cached ? RISK_CONFIG.weatherCache.graceHours : 1) * 3600000).toISOString(), confidence: usable ? 0.8 * cap : 0,
+      error: live ? null : cached ? `Refresh failed (${point.error ?? "stale"}); using hourly forecast fetched ${o.fetchedAt}` : point.error ?? "Weather cache is stale or invalid", details: { interpretation: "Gridded model estimates, not field instruments" } };
     if (usable) {
-      const c = point.current, end = Math.floor(Date.parse(c.time) / 3600000) * 3600000;
+      const c = cached ?? point.current, end = Math.floor(Date.parse(c.time) / 3600000) * 3600000;
       const hourly = point.hours.find(h => Date.parse(h.time) === end);
       const rolling = (count: number) => {
         const hours = Array.from({ length: count }, (_, i) => point.hours.find(h => Date.parse(h.time) === end - i * 3600000));
@@ -64,8 +69,8 @@ export function normalize(site: Site, point: WeatherPoint | undefined, now: numb
       for (const [group, fields] of Object.entries({ weather: o.weather, soil: o.soil, lightning: o.lightning }))
         for (const [name, value] of Object.entries(fields)) if (value !== null) {
           const hourlyField = group === "soil" || name.startsWith("precipitation") || name === "cape" || name === "forecastPotential";
-          o.provenance.fieldSources[`${group}.${name}`] = `Open-Meteo model estimate at ${hourlyField ? new Date(end).toISOString() : c.time}`;
-          o.provenance.fieldEvidence[`${group}.${name}`] = { source: "Open-Meteo", mode: "FORECAST", fetchedAt: o.fetchedAt!, observedAt: hourlyField ? new Date(end).toISOString() : c.time, confidence: group === "lightning" ? 0.5 : 0.8 };
+          o.provenance.fieldSources[`${group}.${name}`] = `Open-Meteo ${cached ? `cached forecast (fetched ${o.fetchedAt})` : "model estimate"} at ${hourlyField ? new Date(end).toISOString() : c.time}`;
+          o.provenance.fieldEvidence[`${group}.${name}`] = { source: "Open-Meteo", mode: "FORECAST", fetchedAt: o.fetchedAt!, observedAt: hourlyField ? new Date(end).toISOString() : c.time, confidence: Math.min(cap, group === "lightning" ? 0.5 : 0.8) };
         }
     }
   }

@@ -7,6 +7,7 @@ import {
   normalizeLongitude,
   REGION,
   riskColor,
+  atlasStates,
   statePolygons,
   unproject,
   type StateGeometry,
@@ -55,11 +56,13 @@ export default function FlatMap({
       .catch(() => {});
     return () => abort.abort();
   }, []);
-  const statePaths = useMemo(() => states?.features.map(state => statePolygons(state.geometry)
+  const stateKey = onPin ? "*" : [...atlasStates(sites)].sort().join();
+  // The atlas draws the Southeast plus states holding a site; the pin map keeps every state.
+  const statePaths = useMemo(() => states?.features.filter(state => stateKey === "*" || stateKey.split(",").includes(state.properties.name)).map(state => statePolygons(state.geometry)
     .map(polygon => polygon.map(ring => ring.map(([longitude, latitude], index) => {
       const point = project(latitude, longitude > 0 ? longitude - 360 : longitude);
       return `${index ? "L" : "M"}${point.x},${point.z}`;
-    }).join(" ") + "Z").join(" ")).join(" ")), [states]);
+    }).join(" ") + "Z").join(" ")).join(" ")), [states, stateKey]);
   const site = sites.find((s) => s.id === selected) ?? sites[0];
   const simulationBounds = simulation && !onPin ? scenarioBounds(simulation) : undefined;
   const northwest =
@@ -118,8 +121,7 @@ export default function FlatMap({
           <path
             key={index}
             d={statePath}
-            fill="#2d4b40"
-            stroke="#799b7e"
+            style={{ fill: "var(--tone-22)", stroke: "var(--tone-50)" }}
             strokeWidth={onPin ? ".0003" : ".008"}
             fillRule="evenodd"
           />
@@ -130,7 +132,7 @@ export default function FlatMap({
           {simulation.active ? <>
             <path d={`${path(scenarioFootprint(simulation.center, simulation.config.radiusKm))}Z`} fill={scenarioColor} fillOpacity=".12" stroke="#e9aa6c" strokeWidth="1.5" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
             {simulation.kind === "hurricane" ? [0, 1, 2].map(arm => <path key={arm} d={path(Array.from({ length: 70 }, (_, index) => scenarioDestination(simulation.center, simulation.config.radiusKm * (.16 + index / 69 * .8), arm / 3 * Math.PI * 2 + index / 69 * Math.PI * 1.76 - simulation.progress * Math.PI * 2)))} fill="none" stroke="#e9aa6c" strokeOpacity=".7" strokeWidth="5" vectorEffect="non-scaling-stroke" />) : [.35, .65].map(radius => <path key={radius} d={`${path(scenarioFootprint(simulation.center, simulation.config.radiusKm * radius))}Z`} fill="none" stroke="#79c6cc" strokeWidth="2" vectorEffect="non-scaling-stroke" />)}
-            <circle cx={stormCenter.x} cy={stormCenter.z} r={Math.max(width, height) * .009} fill="#26362c" stroke="#fff1d8" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+            <circle cx={stormCenter.x} cy={stormCenter.z} r={Math.max(width, height) * .009} style={{ fill: "var(--tone-15)" }} stroke="#fff1d8" strokeWidth="2" vectorEffect="non-scaling-stroke" />
           </> : null}
           {simulationLayer === "runoff" ? sites.map(site => {
             const runoff = simulation.impacts[site.id]?.runoffMm ?? 0;

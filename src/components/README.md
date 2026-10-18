@@ -9,8 +9,6 @@
 | `CrewNotes.tsx` | Homepage carousel of accepted reports from the selected site; preserves report-history context |
 | `SiteMap.tsx` | Three.js authoritative risk atlas, environmental layers, showcase controls, and report pinning |
 | `ForecastChart.tsx` | Model median, uncertainty band, baseline, and optional reanalysis outcomes |
-| `HazardForecast.tsx` | Per-site learned next-day hazard probabilities, × normal, GO/CAUTION/NO-GO guideline and guardrail reasons |
-| `WorkWindows.tsx` | Task-specific model screening windows from shared calculations |
 
 These components accept data and callbacks through props. They do not persist reports, call Jev, or change operational policy. SiteMap uses the shared transport hook for batched canonical frames.
 
@@ -18,6 +16,6 @@ The map uses bundled state outlines with schematic Three.js extrusion and beacon
 
 Run `npm run build` and the [browser tests](../../tests/e2e/README.md) after map or rendering changes. Window calculations are covered under `tests/unit/`.
 
-The atlas’s `ObservationDetails` and `SourceDetails` are also reused by Site intelligence. They expose the complete normalized record and its provenance; formatting lives in `site-map/observations.ts`. The map canvas fills the viewport behind floating controls. A collapsible evidence drawer overlays the scene and scrolls independently; phones start with it closed.
+The atlas’s `ObservationDetails` and `SourceDetails` expose the complete normalized record and its provenance; formatting lives in `site-map/observations.ts`. The map canvas fills the viewport behind floating controls. A collapsible evidence drawer overlays the scene and scrolls independently; phones start with it closed.
 
 `SiteMap` also composes the isolated [scenario lab](../features/simulation/README.md). Its optional Three.js/flat overlay draws hypothetical wind, rain and cumulative rainfall-excess effects while keeping canonical plant markers unchanged. The scenario feature owns controls and playback; pure calculations live in `shared/simulation.ts` and never change task policy.

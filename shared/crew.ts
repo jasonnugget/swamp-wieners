@@ -12,4 +12,6 @@ export interface CrewWorkspace {
   reports: HazardReport[];
   /** Current, selected-site canonical risk; optional for older cached workspaces. */
   conditions?: SiteRiskSnapshot;
+  /** Escalations in effect at the selected site; optional for older servers. */
+  urgentAlerts?: import("./urgent").UrgentAlert[];
 }

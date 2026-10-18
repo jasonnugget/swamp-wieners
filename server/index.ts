@@ -10,6 +10,7 @@ import { Store } from "./store";
 import { Engine } from "./engine";
 import { crewClassificationSchema } from "../shared/crew-risk";
 import { triage } from "./integrations/jev";
+import { buildFleetBriefing, dueFleetDate, fleetPdfPath } from "./briefings/fleet";
 import { fetchWeather } from "./integrations/feeds";
 import { loadWeather } from "./integrations/open-meteo";
 import { createProviders } from "./pipeline/providers";
@@ -98,8 +99,10 @@ app.get("/api/crew/workspace", (req, res) => {
     version: 1, siteId, now: new Date(engine.now()).toISOString(), clockMode: engine.clockMode(),
     sites: engine.sites, teams: store.all<CrewTeam>("team"),
     reports: store.all<HazardReport>("report").filter(report => report.siteId === siteId),
-    conditions: engine.snapshot(siteId).siteRisks[siteId],
   };
+  const snapshot = engine.snapshot(siteId);
+  workspace.conditions = snapshot.siteRisks[siteId];
+  workspace.urgentAlerts = snapshot.urgentAlerts;
   res.json(workspace);
 });
 const screeningPending = new Map<string, Promise<void>>();
@@ -151,7 +154,8 @@ app.get("/api/risk/atlas", (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const { hour, siteId, completion } = parsed.data;
   if (siteId && !engine.sites.some(site => site.id === siteId)) return res.status(404).json({ error: "Site not found." });
-  res.json(riskAtlas(engine.snapshot(siteId), store, hour, Date.now(), completion === "1"));
+  const now = Date.now(), forecasts = engine.forecasts(), hazards = engine.hazardForecasts();
+  res.json(riskAtlas(engine.snapshot(siteId), store, hour, now, completion === "1", (site, target) => engine.modelContext(site, target, now, forecasts, hazards)));
 });
 app.get("/api/sites/:id/data-completion", (req, res) => {
   const snapshot = engine.snapshot(req.params.id), site = snapshot.sites.find(s => s.id === req.params.id);
@@ -319,6 +323,33 @@ app.post("/api/reports/:id/confirm-triage", (req, res) => {
   broadcast();
   res.json(updated);
 });
+app.get("/api/briefings/fleet", (_req, res) => res.json(store.all<import("../shared/fleet-briefing").FleetBriefing>("fleet-briefing").sort((a, b) => b.localDate.localeCompare(a.localDate))));
+const briefingDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+app.get("/api/briefings/fleet/:date/pdf", (req, res) => {
+  const date = briefingDate.safeParse(req.params.date);
+  if (!date.success || !store.get("fleet-briefing", date.data)) return res.status(404).json({ error: "Briefing not found" });
+  const file = fleetPdfPath(directory, date.data);
+  if (!existsSync(file)) return res.status(404).json({ error: "Briefing PDF is not available" });
+  res.setHeader("Cache-Control", "no-store");
+  res.download(file, `planit-fleet-briefing-${date.data}.pdf`);
+});
+// Builds (or rebuilds) a work day's fleet briefing from the site briefings stored so far.
+app.post("/api/briefings/fleet/generate", async (req, res) => {
+  const input = z.object({ localDate: briefingDate.optional() }).safeParse(req.body ?? {});
+  if (!input.success) return res.status(400).json({ error: "Invalid briefing date" });
+  // Generating on demand briefs every site for tomorrow first, so it never waits for 6 PM.
+  const date = input.data.localDate ?? engine.briefNow();
+  if (!store.all<import("../shared/types").Briefing>("briefing").some(b => b.localDate === date))
+    return res.status(409).json({ error: "No site briefings exist for that day." });
+  const briefing = await buildFleetBriefing(store, directory, engine.sites, date, engine.now());
+  broadcast();
+  res.json(briefing);
+});
+function fillFleetBriefing() {
+  const date = dueFleetDate(store, engine.sites);
+  if (date) void buildFleetBriefing(store, directory, engine.sites, date, engine.now()).then(broadcast, error =>
+    console.error("Fleet briefing failed", error instanceof Error ? error.message : "Unknown error"));
+}
 app.post("/api/demo/strike", (req, res) => {
   if (engine.clockMode() !== "demo")
     return res
@@ -478,8 +509,10 @@ const environmentTimer = setInterval(fillEnvironment, 2000);
 fillEnvironment();
 const timer = setInterval(() => {
   if (engine.tick()) broadcast();
+  fillFleetBriefing();
 }, 5000);
 engine.tick();
+fillFleetBriefing();
 // Fill the national map in demo and real modes without changing the safety clock.
 // Selected-site requests share these jobs and can jump ahead of background work.
 function fillNationalScreenings() {
@@ -524,7 +557,7 @@ const server = app.listen(
   process.env.HOST ?? "127.0.0.1",
   () =>
     console.log(
-      `PlanIT API http://${process.env.HOST ?? "127.0.0.1"}:${process.env.PORT ?? 3001}`,
+      `Threshold API http://${process.env.HOST ?? "127.0.0.1"}:${process.env.PORT ?? 3001}`,
     ),
 );
 function shutdown() {

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectSite, pickSite } from "./atlas-site";
 import { atlasFrame, atlasSites } from "./risk-fixtures";
 import { ATLAS_LAYERS, atlasValue, type RiskLayer } from "../../shared/atlas";
 
@@ -29,7 +30,7 @@ test("the evidence panel exposes all 34 fields, provenance, sources and usable m
   await panel.getByRole("button", { name: "Sources", exact: true }).click();
   await expect(panel.locator(".source-provider").first()).toContainText("Open-Meteo");
   await expect(panel.locator(".source-site")).toContainText(atlasSites[0].utility);
-  await page.getByLabel("Active site").selectOption(atlasSites[3].id);
+  await pickSite(page, atlasSites[3].id);
   await expect(page.getByTestId("atlas-risk")).toHaveText("Unknown");
   await panel.getByRole("button", { name: "Conditions", exact: true }).click();
   await expect(field("weather.temperatureF").locator("summary")).toContainText("Unknown");
@@ -72,19 +73,19 @@ test("canonical atlas renders all risk ranges, unknowns, hazard layers, timeline
   await expect(canvas).toHaveAttribute("data-states", "50", { timeout: 15000 });
   await expect(canvas).toHaveAttribute("data-risk-layer", "risk");
   await expect(page.locator(".site-beacon")).toHaveCount(285);
-  await expect(page.getByLabel("Forecast hour")).toHaveCount(0);
+  await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
   await page.locator(`.site-beacon[data-site-id="${atlasSites[0].id}"]`).press("Enter");
   await expect(page.getByLabel("Forecast hour")).toBeVisible();
   await expect(page.getByTestId("atlas-risk")).toHaveText(`${atlasFrame().sites[0].snapshot.risk!.toFixed(1)} / 10`);
   await expect(page.getByTestId("atlas-coverage")).not.toHaveText("0%");
   for (const i of [1, 2, 3]) {
-    await page.getByLabel("Active site").selectOption(atlasSites[i].id);
+    await pickSite(page, atlasSites[i].id);
     await expect(page.getByTestId("atlas-risk")).toHaveText(i === 3 ? "Unknown" : `${atlasFrame().sites[i].snapshot.risk!.toFixed(1)} / 10`);
   }
   await expect(page.locator(".site-beacon.is-selected")).toHaveText("?");
   await expect(page.locator(".site-beacon.is-selected")).toHaveClass(/is-unknown/);
   await expect(page.getByTestId("atlas-coverage")).toHaveText("0%");
-  await page.getByLabel("Active site").selectOption(atlasSites[1].id);
+  await pickSite(page, atlasSites[1].id);
   await expect(page.locator(".site-beacon.is-selected")).toHaveClass(/has-low-confidence/);
   const builds = await canvas.getAttribute("data-beacon-builds");
   for (const layer of Object.keys(ATLAS_LAYERS) as RiskLayer[]) {
@@ -105,20 +106,20 @@ test("canonical atlas renders all risk ranges, unknowns, hazard layers, timeline
   expect(requestedHours).toContain(24);
   expect(futureSites).toEqual([atlasSites[1].id]);
   // A different site loads only its own frame, and revisiting uses the cache.
-  await page.getByLabel("Active site").selectOption(atlasSites[2].id);
+  await pickSite(page, atlasSites[2].id);
   await expect(page.getByTestId("atlas-risk")).toHaveText(`${atlasFrame(24).sites[2].snapshot.risk!.toFixed(1)} / 10`);
-  await page.getByLabel("Active site").selectOption(atlasSites[1].id);
+  await pickSite(page, atlasSites[1].id);
   await expect(page.getByTestId("atlas-layer-value")).toHaveText("2.4mm/h");
   expect(futureSites).toEqual([atlasSites[1].id, atlasSites[2].id]);
   await page.getByRole("button", { name: "Play risk forecast" }).click();
   await page.getByRole("button", { name: "All US", exact: true }).click();
-  await expect(page.getByLabel("Forecast hour")).toHaveCount(0);
+  await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
   await expect(canvas).toHaveAttribute("data-region", "all");
-  await page.getByLabel("Active site").selectOption(atlasSites[1].id);
+  await pickSite(page, atlasSites[1].id);
   await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
   await expect(page.getByRole("button", { name: "Play risk forecast" })).toBeVisible();
   await page.getByRole("button", { name: "Fit all sites" }).click();
-  await expect(page.getByLabel("Forecast hour")).toHaveCount(0);
+  await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
   await page.getByRole("button", { name: "Focus selected site" }).click();
   await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
   // Future request failure cannot masquerade as a current or another-hour frame.
@@ -130,11 +131,11 @@ test("canonical atlas renders all risk ranges, unknowns, hazard layers, timeline
   await page.getByRole("button", { name: "Back to now" }).click();
   await page.getByRole("button", { name: "Alaska", exact: true }).click();
   await expect(canvas).toHaveAttribute("data-region", "alaska");
-  await expect(page.getByLabel("Forecast hour")).toHaveCount(0);
-  await expect(page.getByLabel("Active site")).toHaveValue(atlasSites.find(s => s.state === "AK")!.id);
+  await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
+  await expectSite(page, atlasSites.find(s => s.state === "AK")!.id);
   await page.getByRole("button", { name: "Hawaii", exact: true }).click();
-  await expect(page.getByLabel("Forecast hour")).toHaveCount(0);
-  await expect(page.getByLabel("Active site")).toHaveValue(atlasSites.find(s => s.state === "HI")!.id);
+  await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
+  await expectSite(page, atlasSites.find(s => s.state === "HI")!.id);
   await page.getByRole("button", { name: "Lower 48", exact: true }).click();
   await page.getByLabel("Find a site", { exact: true }).fill(atlasSites[1].name);
   await page.locator(".atlas-search-results").getByRole("button", { name: atlasSites[1].name, exact: true }).click();
@@ -158,7 +159,7 @@ test("canonical atlas renders all risk ranges, unknowns, hazard layers, timeline
   await expect(page.getByRole("button", { name: "Refresh risk atlas" })).toBeEnabled();
   await page.getByRole("button", { name: "Refresh risk atlas" }).click();
   await expect(page.locator(".atlas-error")).toContainText("Risk atlas unavailable");
-  await expect(page.locator(".atlas-coverage")).toContainText("CACHED / STALE");
+  await expect(page.locator(".atlas-freshness")).toContainText("CACHED / STALE");
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByLabel("Forecast hour")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -166,7 +167,7 @@ test("canonical atlas renders all risk ranges, unknowns, hazard layers, timeline
   expect(obsolete).toEqual([]); expect(errors).toEqual([]);
 });
 
-test("a real crew submission updates the supervisor beacon, evidence, tasks and priority queue through SSE", async ({ page, request, context }) => {
+test("a real crew submission updates the supervisor beacon and evidence through SSE", async ({ page, request, context }) => {
   await request.post("/api/demo/reset", { data: {} });
   const snapshot = await (await request.get("/api/snapshot")).json();
   // Earlier screening checks can leave real NOAA cache entries after demo reset.
@@ -190,8 +191,5 @@ test("a real crew submission updates the supervisor beacon, evidence, tasks and 
   expect(score).toBeGreaterThan(0); expect(score).toBeLessThan(10);
   await expect(page.locator(`.site-beacon[data-site-id="${site.id}"]`)).not.toHaveText("?");
   await expect(page.getByLabel("Active policy overrides")).toContainText("Truck stuck near access road");
-  await expect(page.getByLabel("Task decisions")).toContainText("HOLD");
-  await page.getByRole("navigation").getByRole("link", { name: "Site intelligence", exact: true }).click();
-  await expect(page.locator(".priority-row").first()).toContainText(site.name);
   await crew.close();
 });

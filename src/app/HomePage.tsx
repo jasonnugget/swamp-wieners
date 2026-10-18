@@ -1,13 +1,14 @@
 import { useRef, useState, type MouseEvent } from "react";
-import { ArrowDown, ArrowRight, ArrowUpRight, Pause, Play, MapTrifold, Camera, ChartLine, Fingerprint, GitBranch, ShieldCheck } from "@phosphor-icons/react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Pause, Play, MapTrifold, Camera, Fingerprint, GitBranch, ShieldCheck } from "@phosphor-icons/react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import type { Snapshot, Site } from "../../shared/types";
+import type { Forecast, ModelBundle, Snapshot, Site } from "../../shared/types";
 import { HazardProfile, WorkReadiness } from "../components/FieldSignals";
 import WeatherOutlook from "../components/WeatherOutlook";
 import CrewNotes from "../components/CrewNotes";
 import NetworkPreview from "../components/NetworkPreview";
+import ForecastReplay from "../components/ForecastReplay";
 import { pageHref, type Page } from "./navigation";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -15,12 +16,13 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 const features = [
   { title: "Read the landscape.", label: "Explore the 3D atlas", page: "atlas" as Page, icon: MapTrifold, image: "/images/wind-landscape.jpg", text: "Start with the map. Inspect environmental evidence, compare the next 72 hours, and find the sites that need a closer look." },
   { title: "Keep the context.", label: "Open crew reports", page: "reports" as Page, icon: Camera, image: "/images/forest-canopy.jpg", text: "A flooded access road. A wildlife sighting. Put a photo and a pin where the next crew can find them, with holds on the affected work." },
-  { title: "Question the forecast.", label: "Enter the Model Lab", page: "lab" as Page, icon: ChartLine, image: null, text: "Look inside HeatCast and GroundCast. Compare uncertainty and test local calibration while operational models stay separate." },
 ];
 const statement = "The forecast shows the heat. The crew knows the access road. A better work decision needs both.";
 
-export default function HomePage({ onNavigate, snapshot, cached, selectedSite, onSelectSite }: {
+export default function HomePage({ onNavigate, snapshot, cached, selectedSite, onSelectSite, bundle, forecast }: {
   snapshot: Snapshot;
+  bundle: ModelBundle;
+  forecast?: Forecast;
   cached: boolean;
   selectedSite: Site;
   onSelectSite: (id: string) => void;
@@ -43,10 +45,6 @@ export default function HomePage({ onNavigate, snapshot, cached, selectedSite, o
         scrollTrigger: { trigger: ".home-statement", start: "top 80%", end: "bottom 45%", scrub: .7 },
       });
     });
-    media.add("(min-width: 960px) and (prefers-reduced-motion: no-preference)", () => {
-      if (paused) return;
-      ScrollTrigger.create({ trigger: ".story-layout", start: "top 120px", end: "bottom 70%", pin: ".story-heading", pinSpacing: false });
-    });
     return () => media.revert();
   }, { scope: root, dependencies: [paused], revertOnUpdate: true });
 
@@ -67,15 +65,8 @@ export default function HomePage({ onNavigate, snapshot, cached, selectedSite, o
         <div className="hero-network">
           <NetworkPreview sites={snapshot.sites} risks={snapshot.siteRisks} selectedSite={selectedSite} cached={cached} onSelectSite={onSelectSite} />
         </div>
-        <div className="hero-baseline"><span>A wider view. A more informed shift.</span><a href="#perspective">Follow the fieldwork <ArrowDown size={13} aria-hidden="true" /></a><button onClick={() => setPaused(!paused)} aria-pressed={paused} aria-label={paused ? "Resume ambient motion" : "Pause ambient motion"}>{paused ? <Play size={13} aria-hidden="true" /> : <Pause size={13} aria-hidden="true" />}<span>{paused ? "Resume motion" : "Pause motion"}</span></button></div>
+        <div className="hero-baseline"><span>A wider view. A more informed shift.</span><button onClick={() => setPaused(!paused)} aria-pressed={paused} aria-label={paused ? "Resume ambient motion" : "Pause ambient motion"}>{paused ? <Play size={13} aria-hidden="true" /> : <Pause size={13} aria-hidden="true" />}<span>{paused ? "Resume motion" : "Pause motion"}</span></button></div>
       </section>
-
-      <div className="network-facts" aria-label="Workspace scope">
-        <p><strong>{snapshot.sites.length}</strong><span>real power plants</span></p>
-        <p><strong>{new Set(snapshot.sites.map(site => site.state)).size}</strong><span>states in view</span></p>
-        <p><strong>7</strong><span>environmental channels</span></p>
-        <div><Fingerprint size={24} aria-hidden="true" /><span>Public sources. Crew observations.<br />Every kind of evidence keeps its context.</span></div>
-      </div>
 
       <section className="home-perspective" id="perspective" aria-labelledby="perspective-title">
         <p className="section-caption">From the map to the morning briefing.</p>
@@ -83,14 +74,14 @@ export default function HomePage({ onNavigate, snapshot, cached, selectedSite, o
         <div className="feature-accordion grid-flow-dense">
           {features.map((feature, i) => (
             <article key={feature.page} className="feature-panel" data-open={active === i} onPointerEnter={e => { if (e.pointerType === "mouse") setActive(i); }}>
-              {feature.image ? <img src={feature.image} width="1400" height="933" loading="lazy" alt="" /> : <div className="feature-model-art" aria-hidden="true"><svg viewBox="0 0 600 400" fill="none"><path d="M0 100H600M0 200H600M0 300H600M100 0V400M200 0V400M300 0V400M400 0V400M500 0V400" stroke="currentColor" strokeOpacity=".12"/><path d="M0 295C80 310 115 150 200 210S320 70 400 130 510 40 600 65L600 205C510 150 475 250 400 225S260 340 200 300 60 385 0 360Z" fill="currentColor" fillOpacity=".12"/><path d="M0 330C80 350 115 220 200 260S320 150 400 180 510 95 600 135" stroke="currentColor" strokeWidth="3"/></svg></div>}
+              <img src={feature.image} width="1400" height="933" loading="lazy" alt="" />
               <div className="feature-symbol" aria-hidden="true"><feature.icon size={25} /></div>
               <button className="feature-trigger" aria-expanded={active === i} aria-controls={`feature-${feature.page}`} onClick={() => setActive(i)} onFocus={() => setActive(i)}><span>{feature.title}</span><ArrowUpRight size={24} aria-hidden="true" /></button>
               <div className="feature-detail" id={`feature-${feature.page}`} hidden={active !== i}><p>{feature.text}</p><a href={pageHref(feature.page)} onClick={e => link(e, feature.page)}>{feature.label}<ArrowRight size={17} aria-hidden="true" /></a></div>
             </article>
           ))}
         </div>
-        <p className="photography-note">Landscape photography and model curves are illustrative. Open a tool for source-labeled evidence.</p>
+        <p className="photography-note">Landscape photography is illustrative. Open a tool for source-labeled evidence.</p>
       </section>
 
       <section className="home-statement" aria-label={statement}>
@@ -101,11 +92,12 @@ export default function HomePage({ onNavigate, snapshot, cached, selectedSite, o
 
       <section className="home-story" aria-labelledby="story-title">
         <div className="story-layout">
-          <div className="story-heading"><p className="section-caption">A working view of the network.</p><h2 id="story-title">Conditions change.<br /><span>Stay a step closer.</span></h2><p className="story-intro">Look across the network, follow the forecast, then review the work. These views use the same evidence as your workspace.</p><a className="editorial-link" href={pageHref("intelligence")} onClick={e => link(e, "intelligence")}>See site intelligence <i><ArrowUpRight size={19} aria-hidden="true" /></i></a><p className="story-data-context">{cached ? "Cached workspace. Reconnect for current evidence." : "Connected workspace · current site risk."}<br/>Automatic environmental screening.</p></div>
+          <div className="story-heading"><p className="section-caption">A working view of the network.</p><h2 id="story-title">Conditions change.<br /><span>Stay a step closer.</span></h2><p className="story-intro">Look across the network, follow the forecast, then review the work. These views use the same evidence as your workspace.</p><a className="editorial-link" href={pageHref("atlas")} onClick={e => link(e, "atlas")}>Follow the forecast <i><ArrowUpRight size={19} aria-hidden="true" /></i></a><p className="story-data-context">{cached ? "Cached workspace. Reconnect for current evidence." : "Connected workspace · current site risk."}<br/>Automatic environmental screening.</p></div>
           <div className="story-chapters">
             <article><span className="chapter-word">Observe</span><h3>Seven signals.<br/>One wider view.</h3><p>Compare the environmental channels across our plants. A low score only tells part of the story: check how many sites have usable evidence.</p><HazardProfile sites={snapshot.sites} risks={snapshot.siteRisks} paused={paused}/></article>
             <article><span className="chapter-word">Look ahead</span><h3>Find the hottest hour.<br/>See the wind change.</h3><p>A moving view of the next 24 hours. The warmest available plant is spotlighted automatically. Scrub the curve to inspect the heat and wind before planning the shift.</p><WeatherOutlook sites={snapshot.sites} screenings={snapshot.weatherScreenings ?? {}} paused={paused} cached={cached}/></article>
-            <article><span className="chapter-word">Get ready</span><h3>One tile.<br/>One crew’s next move.</h3><p>Compare installation, mobilization and preparation across the network. Each plant carries its current work decision, including restrictions and unknowns.</p><WorkReadiness sites={snapshot.sites} risks={snapshot.siteRisks} paused={paused}/><a className="editorial-link" href={pageHref("intelligence")} onClick={e => link(e, "intelligence")}>Inspect work decisions <ArrowUpRight size={20} aria-hidden="true" /></a></article>
+            <article><span className="chapter-word">Look back</span><h3>What did the forecast<br/>get right?</h3><p>Replay a past forecast for {selectedSite.name}. Reveal what actually happened, then nudge the inputs to see how sensitive the model is.</p>{forecast && !selectedSite.catalogOnly ? <ForecastReplay site={selectedSite} bundle={bundle} forecast={forecast} className="home-replay" heading={false}/> : <p className="replay-empty">No forecast replay for this site yet. Pick another plant above.</p>}</article>
+            <article><span className="chapter-word">Get ready</span><h3>One tile.<br/>One crew’s move.</h3><p>Compare installation, mobilization and preparation across the network. Each plant shows its work decision, restrictions and unknowns.</p><WorkReadiness sites={snapshot.sites} risks={snapshot.siteRisks} paused={paused}/><a className="editorial-link" href={pageHref("atlas")} onClick={e => link(e, "atlas")}>Inspect site risk <i><ArrowUpRight size={19} aria-hidden="true" /></i></a></article>
           </div>
         </div>
       </section>
@@ -113,7 +105,7 @@ export default function HomePage({ onNavigate, snapshot, cached, selectedSite, o
       <CrewNotes site={selectedSite} reports={snapshot.reports.filter(report => report.siteId === selectedSite.id)} onNavigate={onNavigate}/>
 
       <section className="home-action" aria-labelledby="action-title"><p className="section-caption">For the next shift. And the one after.</p><a href={pageHref("atlas")} onClick={e => link(e, "atlas")}><h2 id="action-title">Good work starts<br />with a clearer view.</h2><span className="action-arrow"><ArrowUpRight aria-hidden="true" /></span></a><div className="action-bottom"><p>Find your site. Review the evidence.<br />Bring the whole crew into the picture.</p><a className="editorial-link" href={pageHref("atlas")} onClick={e => link(e, "atlas")}>Open your workspace <i><ArrowUpRight size={20} aria-hidden="true" /></i></a></div></section>
-      <footer className="home-footer"><a href={pageHref("home")} onClick={e => link(e, "home")} className="footer-wordmark">PlanIT<span>A little foresight goes a long way.</span></a><div><a href={pageHref("atlas")} onClick={e => link(e, "atlas")}>3D Atlas</a><a href={pageHref("reports")} onClick={e => link(e, "reports")}>Crew reports</a><a href="/data/provenance.json" target="_blank" rel="noreferrer">Sources & provenance <ArrowUpRight aria-hidden="true" size={13} /></a></div><p>PlanIT Control<br />Utility field-safety prototype.</p></footer>
+      <footer className="home-footer"><a href={pageHref("home")} onClick={e => link(e, "home")} className="footer-wordmark">Threshold<span>A little foresight goes a long way.</span></a><div><a href={pageHref("atlas")} onClick={e => link(e, "atlas")}>3D Atlas</a><a href={pageHref("reports")} onClick={e => link(e, "reports")}>Crew reports</a><a href="/data/provenance.json" target="_blank" rel="noreferrer">Sources & provenance <ArrowUpRight aria-hidden="true" size={13} /></a></div><p>Threshold Control<br />Utility field-safety prototype.</p></footer>
     </div>
   );
 }

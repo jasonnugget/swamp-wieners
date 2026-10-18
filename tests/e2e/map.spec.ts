@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectSite, pickSite } from "./atlas-site";
 
 test.beforeEach(async ({ request }) => {
   await request.post("/api/demo/reset", { data: {} });
@@ -59,8 +60,8 @@ test("3D map selects real sites, orbits, zooms, and expands for a showcase", asy
   await expect(map.locator(".site-beacon")).toHaveCount(285);
   await map.locator('[data-site-id="55433"]').focus();
   await map.locator('[data-site-id="55433"]').press("Enter");
-  await expect(page.getByLabel("Active site")).toHaveValue("55433");
-  await expect(map.locator(".scene-site-card")).toContainText(
+  await expectSite(page, "55433");
+  await expect(map.locator(".atlas-location-title")).toContainText(
     "Bayou Cove Peaking Power",
   );
   await page.waitForTimeout(800);
@@ -73,7 +74,7 @@ test("3D map selects real sites, orbits, zooms, and expands for a showcase", asy
   });
   await page.mouse.up();
   await expect.poll(() => canvas.getAttribute("data-camera")).not.toBe(before);
-  await expect(page.getByLabel("Active site")).toHaveValue("55433");
+  await expectSite(page, "55433");
   await page.waitForTimeout(400);
   const distance = Number(
     (await canvas.getAttribute("data-camera"))!.split(",")[2],
@@ -202,7 +203,7 @@ test("without WebGL, the flat fallback still selects sites and places hazard pin
   await page
     .getByRole("button", { name: /Bayou Cove Peaking Power, Site risk/ })
     .press("Enter");
-  await expect(page.getByLabel("Active site")).toHaveValue("55433");
+  await expectSite(page, "55433");
   await page
     .getByRole("button", { name: "Report hazard", exact: true })
     .first()

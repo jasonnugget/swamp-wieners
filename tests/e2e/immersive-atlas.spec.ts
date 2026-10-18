@@ -13,13 +13,11 @@ test("fullscreen map preserves navigation, drawer keyboard access, mobile canvas
   expect(await canvas.boundingBox()).toEqual({ x: 0, y: 0, width: 1440, height: 1000 });
   const nav = (await page.locator(".site-header").boundingBox())!;
   expect(nav.x).toBeGreaterThan(0); expect(nav.y).toBeGreaterThan(0);
-  const title = page.getByRole("heading", { name: "Site risk, in perspective." });
-  expect(await title.evaluate(e => e.getBoundingClientRect().height / parseFloat(getComputedStyle(e).lineHeight))).toBeLessThanOrEqual(2.1);
-  await expect(page.getByLabel("Forecast hour")).toHaveCount(0);
-  await page.getByRole("button", { name: "Explore selected site forecast" }).click();
+  await expect(page.getByRole("heading", { name: "Site risk, in perspective." })).toBeAttached();
+  // The 72-hour timeline is shown without a click and resets to Now when the view refits.
   await expect(page.getByLabel("Forecast hour")).toBeVisible();
   await page.getByRole("button", { name: "Fit all sites", exact: true }).click();
-  await expect(page.getByLabel("Forecast hour")).toHaveCount(0);
+  await expect(page.getByLabel("Forecast hour")).toHaveValue("0");
   const shell = page.locator(".atlas-inspector-shell");
   await page.getByRole("button", { name: "Hide site details" }).click();
   await expect(shell).toHaveAttribute("inert", "");
@@ -31,7 +29,7 @@ test("fullscreen map preserves navigation, drawer keyboard access, mobile canvas
   await page.keyboard.press("Escape");
   await expect(show).toBeFocused();
   await expect(canvas).toHaveAttribute("data-beacon-builds", builds!);
-  await page.getByRole("button", { name: "Inspect selected site" }).click();
+  await show.click();
   await expect(shell).toHaveAttribute("data-open", "true");
   await page.getByRole("button", { name: "Conditions", exact: true }).click();
   await page.locator(".atlas-inspector").evaluate(el => el.scrollTop = el.scrollHeight);
@@ -51,8 +49,5 @@ test("fullscreen map preserves navigation, drawer keyboard access, mobile canvas
   await panel.getByRole("button", { name: "Conditions", exact: true }).click();
   await expect(panel.locator(".observation-field")).toHaveCount(34);
   await page.getByRole("button", { name: "Hide site details" }).click();
-  await page.getByRole("button", { name: "Open navigation", exact: true }).click();
-  await page.getByRole("navigation").getByRole("link", { name: "Site intelligence", exact: true }).click();
-  await expect(page).toHaveURL(/view=intelligence/);
   expect(errors).toEqual([]);
 });

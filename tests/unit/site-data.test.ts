@@ -115,7 +115,7 @@ test("real same-depth hourly soil history takes precedence over a synthetic perc
 });
 
 test("offline completion command exports every plant and preserves unrelated runtime records", () => {
-  const directory = mkdtempSync(join(tmpdir(), "planit-completion-"));
+  const directory = mkdtempSync(join(tmpdir(), "threshold-completion-"));
   try {
     const store = new Store(directory);
     store.put("team", "team-to-preserve", { id: "team-to-preserve", name: "Existing crew", members: ["Crew member"], siteIds: [site.id] });

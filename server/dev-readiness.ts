@@ -14,5 +14,5 @@ export async function waitForApi(url: string, timeoutMs = 30000, pollMs = 250): 
     const remaining = deadline - Date.now();
     if (remaining > 0) await delay(Math.min(pollMs, remaining));
   }
-  throw new Error(`PlanIT API did not become ready at ${url} within ${timeoutMs}ms. Check the API process output.`);
+  throw new Error(`Threshold API did not become ready at ${url} within ${timeoutMs}ms. Check the API process output.`);
 }

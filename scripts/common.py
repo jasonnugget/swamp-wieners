@@ -35,7 +35,7 @@ def fetch(url, params=None, kind='json', timeout=150, attempts=8, headers=None):
         return json.loads(path.read_text()) if kind == 'json' else path.read_text(encoding='utf-8') if kind == 'text' else path.read_bytes()
     for attempt in range(attempts):
         try:
-            r = requests.get(url, params=params, timeout=timeout, headers=headers or {'User-Agent': 'PlanIT-Control-hackathon-pipeline'})
+            r = requests.get(url, params=params, timeout=timeout, headers=headers or {'User-Agent': 'Threshold-Control-hackathon-pipeline'})
             if r.status_code in (429, 502, 503, 504):
                 print(f'Retrying {r.status_code} ({attempt+1})', flush=True)
                 time.sleep(min(65, 10 * (attempt + 1)))

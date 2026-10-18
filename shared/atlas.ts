@@ -46,13 +46,14 @@ export function atlasColor(value: number | null | undefined, layer: RiskLayer = 
   const a = rgb(palette[i]), b = rgb(palette[i + 1]);
   return `#${a.map((v, n) => Math.round(v + (b[n] - v) * t).toString(16).padStart(2, "0")).join("")}`;
 }
+// 4 stop-work, 3 high risk, 2 insufficient evidence, 1 apparently safe.
+export function sitePriority(r: SiteRiskSnapshot | undefined): number {
+  if (r?.activeOverrides.some(o => o.state === "HOLD") || r?.tasks.some(t => t.state === "HOLD")) return 4;
+  if (r?.risk !== null && r?.risk !== undefined && r.risk >= 4) return 3;
+  // Insufficient evidence enters the review queue ahead of apparently safe sites.
+  return !r || r.risk === null || r.confidence < 0.5 || r.observation.coverage.percent < 50 ? 2 : 1;
+}
 export function rankSites(sites: Site[], risks: Record<string, SiteRiskSnapshot>): Site[] {
-  const priority = (s: Site) => {
-    const r = risks[s.id];
-    if (r?.activeOverrides.some(o => o.state === "HOLD") || r?.tasks.some(t => t.state === "HOLD")) return 4;
-    if (r?.risk !== null && r?.risk !== undefined && r.risk >= 4) return 3;
-    // Insufficient evidence enters the review queue ahead of apparently safe sites.
-    return !r || r.risk === null || r.confidence < 0.5 || r.observation.coverage.percent < 50 ? 2 : 1;
-  };
+  const priority = (s: Site) => sitePriority(risks[s.id]);
   return [...sites].sort((a, b) => priority(b) - priority(a) || (risks[b.id]?.risk ?? -1) - (risks[a.id]?.risk ?? -1) || (risks[a.id]?.confidence ?? 0) - (risks[b.id]?.confidence ?? 0) || a.name.localeCompare(b.name));
 }

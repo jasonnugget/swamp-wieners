@@ -2,7 +2,7 @@ import type { Site, WeatherScreening } from "../../shared/types";
 import { heatIndex } from "../../shared/model";
 
 const headers = {
-  "User-Agent": "PlanIT-Control (local field-safety prototype)",
+  "User-Agent": "Threshold-Control (local field-safety prototype)",
   Accept: "application/geo+json",
 };
 async function get(url: string) {

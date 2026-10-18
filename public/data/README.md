@@ -4,7 +4,7 @@
 | --- | --- |
 | `sites.json` | National EIA plant catalog, coordinates, utility, timezone, historical coverage, and screening flags |
 | `forecasts.json` | Site-keyed local-day forecasts with quantiles, weather features, and replay outcomes |
-| `samples.json` | Site-keyed capped historical partitions for browser calibration and evaluation |
+| `samples.json` | Site-keyed capped historical partitions exported by `scripts/train.py`; not loaded by the web app |
 | `scenario.json` | Demo clock start, forecast date, and hero plant ID |
 | `hazard-forecasts.json` | HazardCast calibrated next-day probabilities for the 2026 test period (`mode: historical`), used by demo decisions and briefings |
 | `hazard-replay.json` | Highest-forecast real 2026 Storm Events entries with evening-before probabilities, chosen using outcomes for demonstration |

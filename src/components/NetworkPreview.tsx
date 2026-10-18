@@ -94,12 +94,12 @@ export default function NetworkPreview({ sites, risks, selectedSite, cached, onS
           <g aria-hidden="true">{sites.filter(site => site.id !== selectedSite.id).map(site => {
             const point = position(site.latitude, site.longitude, siteRegion(site.state));
             const value = currentRisk(risks[site.id], cached);
-            return <circle key={site.id} cx={point.x} cy={point.y} r="2.8" className="network-map-dot" data-unknown={value === null} data-low-confidence={value !== null && risks[site.id]?.confidence < .5} fill={value === null ? "#f5f6f2" : atlasColor(value)} />;
+            return <circle key={site.id} cx={point.x} cy={point.y} r="2.8" className="network-map-dot" data-unknown={value === null} data-low-confidence={value !== null && risks[site.id]?.confidence < .5} fill={value === null ? "#f4f4f4" : atlasColor(value)} />;
           })}</g>
           <g className="network-map-selected" aria-hidden="true">
             <circle cx={selectedPosition.x} cy={selectedPosition.y} r="15" className="network-map-selection-halo" />
             <circle cx={selectedPosition.x} cy={selectedPosition.y} r="8" className="network-map-selection-ring" />
-            <circle cx={selectedPosition.x} cy={selectedPosition.y} r="4" fill={risk === null ? "#a1aaa3" : atlasColor(risk)} />
+            <circle cx={selectedPosition.x} cy={selectedPosition.y} r="4" fill={risk === null ? "#a5a5a5" : atlasColor(risk)} />
           </g>
           <g className="network-inset-labels" aria-hidden="true"><text x="34" y="404">ALASKA</text><text x="192" y="404">HAWAII</text><text x="567" y="404" textAnchor="end">Insets not to scale</text></g>
         </svg> : <div className="network-map-placeholder" role="status"><div aria-hidden="true" />{mapUnavailable ? "Map unavailable. Select a plant below to inspect its evidence." : "Loading plant geography…"}</div>}

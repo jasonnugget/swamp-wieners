@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { expectSite, pickSite } from "./atlas-site";
 import { atlasFrame, atlasSites } from "./risk-fixtures";
 import { completeSiteData, siteDataPreview } from "../../shared/site-data";
 
@@ -35,7 +36,7 @@ test("completion APIs fill every plant while canonical unknowns, zeroes, risk an
   expect(raw.sites[0].completion).toBeUndefined();
 });
 
-test("synthetic gaps are labeled, reversible and available across sites, forecast hours and intelligence", async ({ page }) => {
+test("synthetic gaps are labeled, reversible and available across sites, and forecast hours", async ({ page }) => {
   const errors: string[] = [], requests: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   page.on("request", request => requests.push(request.url()));
@@ -69,17 +70,13 @@ test("synthetic gaps are labeled, reversible and available across sites, forecas
   await expect(temperature.locator("summary")).toContainText("Unknown");
   await expect(temperature).toHaveAttribute("data-origin", "unknown");
   await fill.check();
-  await page.getByLabel("Active site").selectOption(atlasSites[0].id);
+  await pickSite(page, atlasSites[0].id);
   await expect(temperature).toHaveAttribute("data-origin", "source");
   await expect(temperature.locator("summary")).toContainText("70.0 °F");
   await expect(panel.locator('[data-observation-field="weather.precipitation1hMm"] summary')).toContainText("0.0 mm");
   await page.getByLabel("Forecast hour").fill("72");
   await expect(temperature.locator("summary")).toContainText("88.0 °F");
   await expect(panel.locator('.observation-field[data-known="false"]')).toHaveCount(0);
-  await page.getByRole("navigation").getByRole("link", { name: "Site intelligence", exact: true }).click();
-  const evidence = page.getByLabel("Current environmental evidence");
-  await expect(evidence.getByRole("checkbox", { name: "Fill gaps with demo estimates" })).toBeChecked();
-  await expect(evidence.locator('.observation-field[data-known="false"]')).toHaveCount(0);
   expect(requests.some(url => url.includes("completion=1"))).toBe(true);
   expect(errors).toEqual([]);
 });

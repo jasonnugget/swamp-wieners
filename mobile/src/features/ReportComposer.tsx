@@ -83,7 +83,7 @@ export default function ReportComposer() {
       <Text style={styles.small}>Saved record {accepted.id.slice(0, 8)} · {new Date(accepted.createdAt).toLocaleString()}</Text>
     </Page>;
   }
-  if (!draft || !site) return <Page title="Report a hazard" caption="NEW OBSERVATION"><Notice danger>Connect to your PlanIT server and choose a site before reporting.</Notice><Button title="Back to crew setup" onPress={() => router.replace("/crew")}/></Page>;
+  if (!draft || !site) return <Page title="Report a hazard" caption="NEW OBSERVATION"><Notice danger>Connect to your Threshold server and choose a site before reporting.</Notice><Button title="Back to crew setup" onPress={() => router.replace("/crew")}/></Page>;
   const issue = unappliedCoordinates ? "Apply your entered coordinates before sharing." : draftIssue({ ...draft, pinConfirmed: true });
   const needsName = editName || !draft.author.trim() || (!!team && !team.members.includes(draft.author));
   const affectedWork = taskOptions.filter(task => draft.tasks.includes(task.id)).map(task => task.label).join(", ");

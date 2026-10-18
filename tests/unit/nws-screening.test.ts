@@ -62,7 +62,7 @@ test("low official forecasts cannot clear independent crew or lightning holds", 
   assert.ok(decide(site, undefined, [{ ...report, status: "resolved" }], strikes, [], now, undefined, low).index! < 10);
 });
 test("engine uses current official screening in demo without borrowing model forecasts, and expires it", () => {
-  const directory = mkdtempSync(join(tmpdir(), "planit-nws-"));
+  const directory = mkdtempSync(join(tmpdir(), "threshold-nws-"));
   const store = new Store(directory);
   try {
     const models = JSON.parse(readFileSync("public/models/bundle.json", "utf8"));
@@ -98,7 +98,7 @@ test("offshore plants use official raw grid intervals instead of unavailable lan
 });
 
 test("real-clock briefing includes the entire next local day of NOAA screening", () => {
-  const directory = mkdtempSync(join(tmpdir(), "planit-nws-briefing-"));
+  const directory = mkdtempSync(join(tmpdir(), "threshold-nws-briefing-"));
   const store = new Store(directory);
   const originalNow = Date.now;
   const evening = Date.parse("2026-10-18T02:00:00Z"); // 7 PM on October 17 in California.

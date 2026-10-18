@@ -1,19 +1,15 @@
-const CACHE = "planit-field-v14";
+const CACHE = "planit-field-v15";
 const CORE = [
   "/",
   "/favicon.svg",
   "/data/sites.json",
   "/data/forecasts.json",
-  "/data/samples.json",
   "/data/scenario.json",
   "/data/states.geojson",
   "/data/us-states.geojson",
   "/data/weather-stations.json",
   "/data/provenance.json",
   "/models/bundle.json",
-  "/models/evaluation.json",
-  "/models/hazards.json",
-  "/data/hazard-replay.json",
   "/fonts/dm-sans.woff2",
   "/fonts/manrope.woff2",
   "/fonts/SpaceGrotesk-Variable.ttf",

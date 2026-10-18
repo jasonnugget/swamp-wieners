@@ -11,7 +11,7 @@ import { color } from "../components/ui";
 
 export default function Layout() {
   const [loaded, error] = useFonts({ Outfit: Outfit_400Regular, OutfitMedium: Outfit_500Medium, OutfitSemiBold: Outfit_600SemiBold });
-  if (!loaded && !error) return <View style={{ flex: 1, backgroundColor: color.paper, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={color.rust} accessibilityLabel="Opening PlanIT Crew"/></View>;
+  if (!loaded && !error) return <View style={{ flex: 1, backgroundColor: color.paper, justifyContent: "center", alignItems: "center" }}><ActivityIndicator color={color.rust} accessibilityLabel="Opening Threshold Crew"/></View>;
   return <SafeAreaProvider><CrewProvider><StatusBar style="dark"/><Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.paper } }}>
     <Stack.Screen name="(tabs)"/>
     <Stack.Screen name="capture" options={{ presentation: "fullScreenModal", gestureEnabled: false }}/>

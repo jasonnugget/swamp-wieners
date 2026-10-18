@@ -84,6 +84,15 @@ export interface SiteRiskSnapshot {
 }
 
 export { calculateCompositeRisk as compositeRisk } from "./risk-scoring";
+// Measured heat or wind beyond the policy limits restricts work even below the restrict score.
+export function applyPolicyLimits(policyChannels: HazardChannel[], channels: HazardScore[], weather: SiteObservationV1["weather"]) {
+  for (const c of policyChannels) {
+    const modelHeat = channels.find(h => h.hazard === "heat")?.factors?.find(f => f.key === "heatCast");
+    if (((c.category === "heat" && Math.max(weather.heatIndexF ?? weather.apparentTemperatureF ?? -Infinity, typeof modelHeat?.value === "number" ? modelHeat.value : -Infinity) >= RISK_CONFIG.policy.heatRestrictF) ||
+      (c.category === "weather" && Math.max(weather.windMph ?? -Infinity, weather.gustMph ?? -Infinity) >= RISK_CONFIG.policy.windRestrictMph)) && c.status !== "HOLD") c.status = "RESTRICTED";
+  }
+  return policyChannels;
+}
 // Crew severity is excluded from the hold guardrail: crew holds apply only to the tasks the crew selected.
 export function channelDecisions(scores: HazardScore[]): HazardChannel[] {
   return scores.map(c => {

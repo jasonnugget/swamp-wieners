@@ -1,4 +1,4 @@
-# PlanIT Crew — native iOS app
+# Threshold Crew — native iOS app
 
 A camera-first field app: **snap a photo → pin the hazard → share with the crew**. Accepted reports, photos, locations, selected task holds, team attribution and resolutions use the same Node/SQLite database as the supervisor website. A report remains attached to its plant for later crews and project owners; resolving it preserves the evidence and review history.
 
@@ -28,7 +28,7 @@ The app derives the API address from the Expo development host. If it cannot con
 
 You can alternatively set `EXPO_PUBLIC_API_URL` in `mobile/.env`, using [.env.example](.env.example), then restart Metro. This is a public server address, never a credential.
 
-If the server uses its demonstration clock, the app labels it. Switch the workspace to live time in PlanIT Control before real field reporting; the phone does not silently change a shared server clock.
+If the server uses its demonstration clock, the app labels it. Switch the workspace to live time in Threshold Control before real field reporting; the phone does not silently change a shared server clock.
 
 Choose a plant and your reporting name in **Crew**. Pick an existing team to use its assigned plants and roster. Team setup remains in the website's Crew reports view. Tap **Snap a hazard** to open the camera directly. Take a photo, check the hazard type and pin on one review screen, then tap **Confirm pin & share hazard**. Notes are optional; names are remembered after sharing. The affected-work summary stays visible and can be changed before submission. Camera cancellation or denial leaves a **Choose photo** option. The app confirms sharing only after the server accepts it. Other open apps and the supervisor receive live invalidations; pull to refresh is also available.
 
@@ -90,6 +90,6 @@ Run root `npm test`, `npm run build`, and the crew API browser tests after backe
 
 Draft text, pin and compressed photo are saved in the app sandbox. Drafts are **not automatically uploaded**. A failed request keeps them available for an explicit retry. A stable request ID prevents the same unchanged retry from creating duplicate records. Cached reports remain visibly marked cached; no stale record becomes a site all-clear. Closing the app does not run background GPS, uploads or push notifications.
 
-The current backend is a trusted-network prototype with shared reporting names and team context, not authenticated accounts or a public multi-tenant service. Cross-screen sharing means the same connected PlanIT backend; historical records are not published to an external owner registry. Production deployment requires authenticated access and HTTPS.
+The current backend is a trusted-network prototype with shared reporting names and team context, not authenticated accounts or a public multi-tenant service. Cross-screen sharing means the same connected Threshold backend; historical records are not published to an external owner registry. Production deployment requires authenticated access and HTTPS.
 
 `node_modules/`, `.expo/`, `dist/`, and generated `ios/`/`android/` directories are ignored. Native permissions and app metadata belong in `app.json`; do not hand-edit generated projects. Runtime evidence stays in root `runtime/`, never in the app assets.

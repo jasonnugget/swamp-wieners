@@ -1,6 +1,6 @@
 # Reference-driven website design
 
-Research date: October 17, 2026. This document records the references behind the PlanIT homepage and separates observed design choices from interpretations of their value.
+Research date: October 17, 2026. This document records the references behind the Threshold homepage and separates observed design choices from interpretations of their value.
 
 ## Award evidence
 
@@ -10,7 +10,7 @@ Research date: October 17, 2026. This document records the references behind the
 
 ## What the references contribute
 
-| Reference | Observed design or documented behavior | Application to PlanIT |
+| Reference | Observed design or documented behavior | Application to Threshold |
 | --- | --- | --- |
 | [ODDyssey](https://odd-scout-web.vercel.app/) | An asymmetric headline sits beside a large city image with evidence annotations. Spacious chapters move from geographic comparisons to product previews and a dark section explaining evidence boundaries. | Pair the opening message with a geographic view, give each workflow room, and make provenance a visible part of the story. |
 | [Mr.Gridy](https://mrgridy.miami/) and its [Crosswire view](https://mrgridy.miami/compare) | A real project map explains the product immediately. The working view combines a map, a ranked action list, and a timeline. Consistent utility colors connect those views; plain language describes the next task. | Use actual plant locations in the opening view, retain shared site selection, and provide direct routes into the atlas and working tools. |
@@ -21,13 +21,13 @@ Research date: October 17, 2026. This document records the references behind the
 
 The strongest shared pattern is a short path from the problem to a visible working example. Mr.Gridy's map and timeline make the challenge's two dimensions readable together. UtiliTies' documented evidence links make its output easier to question. ODDyssey explains both the purpose and limits of its analysis before asking users to explore further. These are reasons the interfaces can support a persuasive demonstration, not claims about the judges' reasoning.
 
-Awwwards' [evaluation system](https://www.awwwards.com/about-evaluation/) assigns 40% to design, 30% to usability, 20% to creativity, and 10% to content. PlanIT borrows visual hierarchy and purposeful motion while keeping field decisions accessible.
+Awwwards' [evaluation system](https://www.awwwards.com/about-evaluation/) assigns 40% to design, 30% to usability, 20% to creativity, and 10% to content. Threshold borrows visual hierarchy and purposeful motion while keeping field decisions accessible.
 
-## PlanIT implementation
+## Threshold implementation
 
 - The opening `NetworkPreview` SVG plots the repository's 285 actual EIA plant locations, with Alaska and Hawaii insets. A labeled native HTML selector shares the selected site with the workspace. The preview reads canonical risk and task evidence; missing, stale, or cached readings remain visibly unknown, while independent holds stay visible.
 - Charcoal, mineral neutrals, and a lime accent establish the homepage palette. Geist carries headings and interface text. Hazard colors retain their semantic role in evidence displays.
-- An expandable workflow strip links to the atlas, crew reports, and Model Lab. Landscape photography and decorative model curves are labeled illustrative.
+- An expandable workflow strip links to the atlas and crew reports. Landscape photography is labeled illustrative.
 - A dark evidence chapter explains provenance and independent holds. The existing hazard profile, weather outlook, and work-readiness figures remain connected to workspace data.
 - Scoped GSAP effects reveal content, scrub the evidence statement, and pin the story heading on larger screens. Reduced-motion preferences and a pause control govern presentation. Animation does not change environmental readings, model results, or task policy.
 
@@ -61,4 +61,4 @@ Final checks on October 17, 2026:
 
 The first browser run exposed outdated homepage-title assertions and a crew/SSE test that assumed the first catalog plant had no provider cache. The latter now selects a plant whose canonical risk is actually unknown, preserving its unknown-to-crew-evidence assertion without clearing persisted provider records. The final full run passed after these corrections.
 
-The existing large browser-ML chunk still produces Vite's size warning. Model Lab and the Three.js scene remain separate lazy chunks; the homepage preview does not load a Three.js renderer. Browser tests exercise an isolated runtime; they do not establish complete live-provider coverage or a physical-device accessibility certification.
+The Three.js scene remains a separate lazy chunk; the homepage preview does not load a Three.js renderer. Browser tests exercise an isolated runtime; they do not establish complete live-provider coverage or a physical-device accessibility certification.

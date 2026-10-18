@@ -49,14 +49,14 @@ export default function ForecastChart({
                 x2="712"
                 y1={y(v)}
                 y2={y(v)}
-                stroke="#e4e8df"
+                style={{ stroke: "var(--line)" }}
                 strokeDasharray="3 4"
               />
               <text
                 x="35"
                 y={y(v) + 4}
                 textAnchor="end"
-                fill="#869180"
+                style={{ fill: "var(--muted)" }}
                 fontSize="10"
               >
                 {ground ? v.toFixed(2) : Math.round(v) + "°"}
@@ -85,11 +85,11 @@ export default function ForecastChart({
             </text>
           </g>
         )}
-        <path d={band} fill={ground ? "#89b5a5" : "#b9db8f"} opacity=".24" />
+        <path d={band} style={{ fill: ground ? "var(--tone-62)" : "var(--brand)" }} opacity=".24" />
         {!ground && (
           <path
             d={line((h) => h.baselineHeat)}
-            stroke="#a6afa1"
+            stroke="#a8a8a8"
             strokeWidth="1.5"
             strokeDasharray="5 5"
             fill="none"
@@ -97,7 +97,7 @@ export default function ForecastChart({
         )}
         <path
           d={line((h) => quant(h)[1])}
-          stroke={ground ? "#397363" : "#4b7637"}
+          style={{ stroke: ground ? "var(--tone-22)" : "var(--brand-strong)" }}
           strokeWidth="2.5"
           fill="none"
         />
@@ -120,7 +120,7 @@ export default function ForecastChart({
               x={x(hours.indexOf(h))}
               y="202"
               textAnchor="middle"
-              fill="#869180"
+              style={{ fill: "var(--muted)" }}
               fontSize="10"
             >
               {new Intl.DateTimeFormat("en-US", {

@@ -238,6 +238,8 @@ export interface Briefing {
   decision: Decision;
   reportIds: string[];
   text: string;
+  /** Made on demand before the site's 6 PM run; the scheduler replaces it then. */
+  early?: boolean;
 }
 export interface Snapshot {
   siteRisks: Record<string, import("./risk").SiteRiskSnapshot>;
@@ -254,6 +256,13 @@ export interface Snapshot {
   briefings: Briefing[];
   decisions: Record<string, Decision>;
   jevConfigured: boolean;
+  /** Fleet-wide next-day briefings, newest first; each has a PDF at /api/briefings/fleet/:date/pdf. */
+  fleetBriefings: import("./fleet-briefing").FleetBriefing[];
+  geminiConfigured: boolean;
+  /** Escalations currently in effect (lightning within 10 mi, thunderstorm, severe alert, hold). */
+  urgentAlerts: import("./urgent").UrgentAlert[];
+  /** Recent urgent alerts, newest first, including ones that have since cleared. */
+  alertHistory: import("./urgent").UrgentAlert[];
   feedStatus: Record<
     string,
     { checkedAt: string; ok: boolean; message: string }

@@ -66,7 +66,12 @@ test("track travel starts at the first point, ends at the last, and stops forcin
   assert.equal(end.impacts[point.id].windMph, 0);
   assert.equal(end.impacts[point.id].rainRateMmH, 0);
   assert.ok(end.impacts[point.id].accumulatedRainMm > 0);
-  assert.deepEqual(later.impacts, end.impacts);
+  // Totals are retained after the track ends; only the trailing 24 h window ages out.
+  const { rainLast24hMm: laterWindow, ...laterTotals } = later.impacts[point.id];
+  const { rainLast24hMm: endWindow, ...endTotals } = end.impacts[point.id];
+  assert.deepEqual(laterTotals, endTotals);
+  assert.ok(endWindow > 0);
+  assert.ok(laterWindow < endWindow);
 });
 
 test("cumulative rain and rain excess cannot decrease while moving forward through fractional hours", () => {

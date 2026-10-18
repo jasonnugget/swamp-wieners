@@ -37,8 +37,8 @@ test("team assignments speed reporting, persist defaults, and retain report hist
   await expect(modal.locator(".coordinates")).toHaveText(`${plant.latitude.toFixed(5)}, ${plant.longitude.toFixed(5)}`);
   await modal.getByRole("button", { name: "Share report", exact: true }).click();
   await expect(modal).not.toBeVisible();
-  await expect(page.getByLabel("Active site")).toHaveValue("627");
-  await expect(page.locator(".report-card")).toContainText(`Sam Chen · ${name}`);
+  await expect(page.locator(".report-card").first()).toContainText("Bayboro");
+  await expect(page.locator(".report-card").first()).toContainText(`Sam Chen · ${name}`);
   const saved = await (await request.get("/api/snapshot")).json();
   expect(saved.reports[0]).toMatchObject({ teamId: team.id, teamName: name, author: "Sam Chen", siteId: "627" });
   expect(saved.decisions["627"].tasks.find((t: { task: string }) => t.task === "mobilization").state).toBe("HOLD");

@@ -48,13 +48,20 @@ test("incomplete rolling rain, invalid fields, mismatched sites, stale and futur
   assert.equal(partial.weather.precipitation24hMm, 0);
   assert.equal(partial.weather.heatIndexF, null);
   assert.equal(partial.weather.windMph, null);
-  for (const p of [undefined, { ...point(), stale: true }, { ...point(), fetchedAt: new Date(now + 1).toISOString() },
-    { ...point(), fetchedAt: new Date(now - 3600000).toISOString() }, { ...point(), latitude: site.latitude + 1 }]) {
+  for (const p of [undefined, { ...point(), stale: true, fetchedAt: new Date(now - 6 * 3600000).toISOString() }, { ...point(), fetchedAt: new Date(now + 1).toISOString() },
+    { ...point(), fetchedAt: new Date(now - 6 * 3600000).toISOString() }, { ...point(), latitude: site.latitude + 1 }]) {
     const o = normalize(site, p, now);
     assert.equal(o.weather.temperatureF, null);
     assert.equal(o.weather.precipitation1hMm, null);
     assert.equal(o.coverage.percent, 0);
   }
+});
+test("a failed refresh keeps the cached hourly forecast for soil and CAPE at reduced confidence", () => {
+  const o = normalize(site, { ...point(), stale: true, error: "timeout", fetchedAt: new Date(now - 2 * 3600000).toISOString() }, now);
+  assert.equal(o.provenance.stale, true);
+  assert.notEqual(o.soil.moistureSurface, null);
+  assert.notEqual(o.weather.cape, null);
+  assert.ok(Object.values(o.provenance.fieldEvidence).every(e => e.confidence <= 0.5));
 });
 test("every catalog and model site has the same complete shape even on provider failure", async () => {
   let requests = 0;
@@ -114,7 +121,7 @@ test("successful fresh NWS check establishes false alert flags; absent, failed o
 });
 test("real-mode legacy decisions are projections of canonical risk; demo evidence never contaminates live snapshots", t => {
   t.mock.method(Date, "now", () => now);
-  const directory = mkdtempSync(join(tmpdir(), "planit-environment-"));
+  const directory = mkdtempSync(join(tmpdir(), "threshold-environment-"));
   const store = new Store(directory);
   try {
     const models = JSON.parse(readFileSync("public/models/bundle.json", "utf8"));
@@ -127,7 +134,8 @@ test("real-mode legacy decisions are projections of canonical risk; demo evidenc
     assert.deepEqual(s.siteRisks[site.id].tasks, s.decisions[site.id].tasks);
     assert.equal(s.siteRisks[site.id].activeOverrides.length, 0);
     assert.equal(s.siteRisks[sites[1].id].risk, null);
-    assert.equal(s.siteRisks[site.id].mlCoverage.heatCast, true);
+    // An empty historical bundle exists but contributes no factor, so it is not reported as applied.
+    assert.equal(s.siteRisks[site.id].mlCoverage.heatCast, false);
     assert.equal(s.siteRisks[sites[1].id].mlCoverage.heatCast, false);
   } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
 });

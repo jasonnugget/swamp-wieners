@@ -1,4 +1,4 @@
-# PlanIT Control
+# Threshold Control
 
 Field safety intelligence for 285 actual power plants across all 50 US states. Every site shares one normalized environmental-data and risk pipeline. HeatCast and GroundCast add model evidence for the original fifty-site historical cohort. Reports become persistent site knowledge for the next shift.
 
@@ -28,7 +28,7 @@ For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter
 
 ## Native iOS crew app
 
-[PlanIT Crew](mobile/README.md) is a separate Expo iPhone app for **photo → map pin → team sharing**. It uses the same server, preserves reports as location knowledge for later project owners, and keeps unshared drafts on the device. See [iPhone and Simulator setup](mobile/README.md#run-on-your-iphone).
+[Threshold Crew](mobile/README.md) is a separate Expo iPhone app for **photo → map pin → team sharing**. It uses the same server, preserves reports as location knowledge for later project owners, and keeps unshared drafts on the device. See [iPhone and Simulator setup](mobile/README.md#run-on-your-iphone).
 
 ## What is implemented
 
@@ -38,13 +38,12 @@ For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter
 - Lightning replay with the 10-mile rule and a 30-minute countdown reset by the latest qualifying strike. Strike timestamps persist in SQLite.
 - A 6 PM site-local scheduler that stores next-day briefings, carries unresolved reports, and prevents duplicate site/date briefings across restarts. The Node process must remain running for scheduling and live updates.
 - Real HeatCast and GroundCast neural model weights, reproducible NumPy training, chronological evaluation, and a separate ten-site geographic holdout.
-- Browser inference, real local calibration training, loss curves, measured execution time, historical outcome reveal, and sensitivity controls.
-- IndexedDB storage for local model candidates, plus a production service worker and cached workspace for offline model work.
+- A homepage historical forecast replay with outcome reveal and sensitivity controls.
+- A production service worker and cached workspace for offline viewing.
 - Batched Open-Meteo weather/soil inputs, official NWS alerts, nearby USGS stages, FEMA exposure and public wildlife context for all sites. FIRMS supports keyless regional downloads and optional keyed area queries; lightning modes distinguish unavailable, recorded live events and replay. Source-specific caches, expiry and backoff preserve unknowns on failure.
 - Continuous weather, heat, lightning, flood, wildfire, soil and wildlife channels; dominant risk plus bounded secondary compounding; separate task policy. Ordinary crew reports do not force risk to 10.
 - An authoritative 3D risk atlas with eleven layers, site explanations, coverage/confidence, current overrides and a backend-scored 72-hour timeline loaded on demand for the selected plant.
 - A separate atlas scenario lab with invented hurricane and inland-rain tracks, adjustable wind/rain/drainage assumptions, animated geographic footprints, a 72-hour simulation clock, plant exposure comparisons and JSON export. Rainfall excess is hypothetical runoff generation, not flood depth or an operational forecast; see [the model and limits](docs/atlas-simulation.md).
-- A local Three.js **Environment Studio**: select a plant in the atlas and choose **Open 3D simulation**. Explore detailed industrial, solar and substation miniatures, five environmental lenses, six presets and 34 hypothetical inputs. Rain/snow/hail, wind, clouds/fog, heat shimmer, water, soil layers and explicit fire/lightning demonstrations stay separate from source event evidence and live restrictions. Works offline; layouts and effects are illustrative rather than surveyed geometry or physical forecasts.
 
 ## Repository context
 
@@ -82,9 +81,9 @@ External providers + crew evidence
   → supervisor map and canonical site ranking
 ```
 
-The atlas distinguishes raw temperature/rain/wind from scored hazard channels. Unknown values are gray question marks; low-confidence known values are dashed and translucent. The inspector’s Overview, Conditions and Sources views show risk, coverage, confidence, drivers, task decisions, all 34 normalized environmental fields, field provenance, provider health, model availability and plant metadata. The canvas fills the viewport behind floating navigation, layer controls and a prompt for the selected plant’s 72-hour filmstrip. The national map retains current conditions while the inspector displays the selected forecast. A collapsible dark evidence drawer overlays the map; it starts closed on phones. Reports update connected supervisors through SSE; confirmed JEV classifications supply semantic evidence, never final site-risk numbers.
+The atlas distinguishes raw temperature/rain/wind from scored hazard channels. Unknown values are gray question marks; low-confidence known values are dashed and translucent. The inspector’s Overview, Conditions and Sources views show risk, coverage, confidence, drivers, task decisions, all 34 normalized environmental fields, field provenance, provider health, model availability and plant metadata. The canvas draws the Southeast plus any other state holding a loaded plant and fills the viewport behind floating navigation, a site search with the stop-work and high-risk plants to review first, layer controls and a prompt for the selected plant’s 72-hour filmstrip. The inspector lists only drivers with a known score. The national map retains current conditions while the inspector displays the selected forecast. A collapsible dark evidence drawer overlays the map; it starts closed on phones. Reports update connected supervisors through SSE; confirmed JEV classifications supply semantic evidence, never final site-risk numbers.
 
-Current snapshots use actual system time even during the historical demo. Future frames reuse backend normalization/scoring over available hourly weather, with explicit assumptions for existing controls. Future gauge readings, fires, strikes and wildlife sightings remain unknown; forecast tasks are not work authorization. Historical model replay and stored briefings retain their labeled periods.
+Current snapshots use actual system time even during the historical demo. Future frames reuse backend normalization/scoring and the same model context over available hourly weather. Gauge readings, fires, strikes, sightings and alert checks are held at their latest reading rather than dropped; forecast tasks are not work authorization. Historical model replay and stored briefings retain their labeled periods.
 
 The catalog contains 285 operating EIA plants across all fifty states, with at least five per state. The original fifty-site model cohort is preserved; `catalogOnly` means no historical model coverage, not exclusion from environmental collection. Regenerate the catalog with `npm run data:catalog`.
 

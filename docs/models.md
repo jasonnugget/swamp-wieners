@@ -15,10 +15,6 @@ The fixed partitions are 2024 training; January–June 2025 validation; July–D
 
 Heat baseline: uncorrected GFS heat index. Ground baseline: training-period site median, with the global training median for unseen sites. The soil baseline is intentionally simple; this evaluation does not establish superiority to public soil forecasts. GroundCast's interval undercovers on the test period. Per-site metrics, threshold precision/recall, and unseen-site results are bundled in `public/models/evaluation.json`.
 
-Local browser calibration uses 240 training, 96 validation, and 192 test samples per site, capped for a quick demonstration. It learns a linear correction from the frozen median prediction and seasonal features. Validation selects weights; the final test set is used only to report results. Repeated runs on these bundled samples are demonstrations, not new independent evaluations. Candidates are saved locally and never promoted into operational safety decisions.
-
-WebGPU inference and a complete optimizer update are attempted on the actual device. The interface reports the backend used. WebGL and CPU are explicit fallbacks. Browser capability detection alone is not evidence of successful GPU training.
-
 The atlas [scenario lab](atlas-simulation.md) is a separate deterministic experiment. It uses user-assumed storm tracks, idealized wind/rain profiles and a rainfall-excess integral; it is not a trained hurricane, inundation or outage model. Scenario outputs never train, calibrate or replace HeatCast, GroundCast or canonical task decisions. The equations and their limitations are documented separately from the evaluated models above.
 
 ### Rebuild from sources
@@ -132,7 +128,7 @@ What the evidence supports:
 | HeatEventCast | 538 (49) | 0.601 (0.580) | −0.026 to +0.068 (**not significant**) | +0.208 to +0.373 | 123 (30) | 0.639 (0.678) | −0.131 to +0.043 (**not significant**) |
 | OverallCast | 362 (90) | 0.225 (0.158) | +0.011 to +0.143 | +0.070 to +0.246 | 78 (46) | 0.196 (0.135) | +0.009 to +0.131 |
 
-Florida looks like the full test, with less certainty. StormCast, FloodCast and OverallCast still beat the rule screen at fitted Florida plants; WindCast's edge over rules is no longer significant. Florida has far fewer flood events (base rate 0.6% vs 2.8% across all plants), because most river-flood warnings are in Louisiana and Mississippi. `evaluation.<model>.floridaTest` and `.floridaUnseen` in `hazards.json` hold the full metrics, and the Model Lab has a "Florida only" toggle.
+Florida looks like the full test, with less certainty. StormCast, FloodCast and OverallCast still beat the rule screen at fitted Florida plants; WindCast's edge over rules is no longer significant. Florida has far fewer flood events (base rate 0.6% vs 2.8% across all plants), because most river-flood warnings are in Louisiana and Mississippi. `evaluation.<model>.floridaTest` and `.floridaUnseen` in `hazards.json` hold the full metrics.
 
 **Calibration and detection.** Probabilities are calibrated but rarely extreme.
 - At score ≥ 7, detection is low (wind 2%, flood 4%, thunderstorm 3%), with false-alarm ratios of 22–47%.
@@ -207,11 +203,10 @@ On Windows, run the same steps with `.venv/Scripts/python.exe`. The 2026 fire la
 
 - Preparation and base training: [scripts](../scripts/README.md).
 - Portable model contracts and CPU reference inference: [shared](../shared/README.md).
-- Browser model loading, backend probing, and local calibration: [Model Lab](../src/features/model-lab/README.md).
 - Frozen artifacts and evaluation: [public/models](../public/models/README.md).
 - HazardCast inference and guardrails: `shared/hazard-model.ts`, `shared/policy.ts`, [risk scoring](risk-scoring.md#learned-hazards-and-guardrails).
 
-The site catalog expansion adds 235 plants to the shared operational environmental pipeline, national visualization and crew reporting. These additions are marked `catalogOnly` and have no historical ML validation or bundled safety forecasts. The original fifty-site cohort is preserved in `model-sites.json`; model weights, samples, evaluation metrics, exclusions, and historical forecasts are unchanged. Model Lab is unavailable for catalog-only plants. These plants use the same live environmental collection and scoring pipeline; current provider forecasts also remain available in the atlas.
+The site catalog expansion adds 235 plants to the shared operational environmental pipeline, national visualization and crew reporting. These additions are marked `catalogOnly` and have no historical ML validation or bundled safety forecasts. The original fifty-site cohort is preserved in `model-sites.json`; model weights, samples, evaluation metrics, exclusions, and historical forecasts are unchanged. These plants use the same live environmental collection and scoring pipeline; current provider forecasts also remain available in the atlas.
 
 The operational environment pipeline now covers every site, including catalog additions. `mlCoverage` distinguishes HeatCast/GroundCast availability from environmental coverage. In real-clock mode, live risk combines normalized current conditions with fresh live fixed-lead model forecasts as separate heat/soil factors, tagged with model version and valid period. Historical forecasts cannot enter live scoring. Site-specific training soil anchors are distinguished from global held-out fallbacks. No model artifacts or training semantics changed. See [environment pipeline](environment-pipeline.md).
 

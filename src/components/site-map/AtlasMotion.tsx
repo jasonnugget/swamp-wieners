@@ -11,7 +11,7 @@ export function AtlasEntrance({ root, enabled }: { root: RefObject<HTMLDivElemen
     if (!enabled) return;
     const media = gsap.matchMedia();
     media.add("(prefers-reduced-motion: no-preference)", () => {
-      gsap.from(".scene-heading, .atlas-regions, .atlas-layer-bar, .atlas-timeline, .atlas-timeline-prompt", { opacity: 0, y: 16, scale: 0.985, duration: 1, stagger: 0.09, ease: "power3.out", clearProps: "transform,opacity" });
+      gsap.from(".atlas-finder, .atlas-layer-bar, .atlas-timeline", { opacity: 0, y: 16, scale: 0.985, duration: 1, stagger: 0.09, ease: "power3.out", clearProps: "transform,opacity" });
     });
     return () => media.revert();
   }, { scope: root, dependencies: [enabled], revertOnUpdate: true });

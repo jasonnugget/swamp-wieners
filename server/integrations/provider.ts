@@ -48,7 +48,7 @@ export class ProviderHttp {
       if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
       this.next.set(host, this.clock() + this.spacingMs);
       let response: Response;
-      try { response = await this.transport(url, { headers: { "User-Agent": "PlanIT-Control/0.1 (field-safety prototype)", ...headers }, signal: AbortSignal.timeout(15000) }); }
+      try { response = await this.transport(url, { headers: { "User-Agent": "Threshold-Control/0.1 (field-safety prototype)", ...headers }, signal: AbortSignal.timeout(15000) }); }
       catch {
         const failures = (this.failures.get(host) ?? 0) + 1; this.failures.set(host, failures);
         if (failures >= FAILURES_BEFORE_PAUSE) this.cooldown.set(host, { until: this.clock() + MINUTE, reason: "repeated timeouts" });

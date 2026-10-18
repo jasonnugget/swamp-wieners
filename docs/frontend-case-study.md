@@ -1,8 +1,8 @@
-# PlanIT Control: frontend case study
+# Threshold Control: frontend case study
 
 **Iteration:** editorial website with a dedicated fullscreen atlas  
 **Audit date:** October 17, 2026  
-**Challenge:** user-supplied text from `PlanIT_Control_SwampHacks_Brief.docx`, PlanIT Control / Sperry Tech  
+**Challenge:** user-supplied text from `PlanIT_Control_SwampHacks_Brief.docx`, Threshold Control / Sperry Tech  
 **Scope:** current implementation summary plus the original visual-design audit. The original browser captures and manual UX findings below predate the canonical risk-atlas migration. Current supervisor screenshots and interaction checks are recorded in the [immersive atlas audit](immersive-atlas.md); the [panel-layout audit](ui-audit.md) preserves the intermediate design.
 
 ## The problem behind the interface
@@ -11,7 +11,7 @@ The brief starts at 6:45 AM on an August construction shift in the Everglades. A
 
 The design problem is how to get those different kinds of evidence into the same work decision. A forecast cannot replace a crew’s observation. A wildlife report cannot establish tomorrow’s weather. An unknown channel cannot be treated as safe.
 
-PlanIT Control organizes that work around real power plant locations used as demonstration job sites. Its interface supports a supervisor reviewing restrictions and a crew member contributing location-specific knowledge. It does not establish that these plants are active construction projects or that its policies are ready for operational deployment.
+Threshold Control organizes that work around real power plant locations used as demonstration job sites. Its interface supports a supervisor reviewing restrictions and a crew member contributing location-specific knowledge. It does not establish that these plants are active construction projects or that its policies are ready for operational deployment.
 
 ## Visual identity and current supervisor layout
 
@@ -46,11 +46,11 @@ The approved headline remains. The surrounding copy now explains who the product
 | Opening narrative | A 6:45 AM shift, a waterlogged road, and a wildlife sighting in a text message. | Use the brief’s scenario without presenting it as a recorded event at a plant. |
 | Atlas feature | Inspect real plant locations and the next 72 hours of weather; switch to site risk for supervisor attention. | This homepage sentence predates the risk-first atlas; updating it is a remaining copy task, not a second data path. |
 | Crew feature | Pin a photo report, hold affected tasks, and preserve a record for the next crew. | Describe the report’s operational consequence. |
-| Model feature | Inspect HeatCast and GroundCast estimates and try local calibration separately from operational models. | Explain the models without inventing a universal safety predictor. |
+| Model feature | Replay a historical HeatCast forecast on the homepage, separately from operational models. | Explain the models without inventing a universal safety predictor. |
 | Hazard explanation | Review seven evidence channels; missing or stale coverage stays unknown. | Prevent a low visible score from implying complete coverage. |
 | Lightning explanation | In replay, each qualifying strike within 10 miles restarts a 30-minute outdoor-work hold. | State the rule while keeping simulation explicit. |
-| Handoff explanation | PlanIT creates a next-day briefing at 6 PM local time with unresolved reports, restrictions, source, and coverage details. | Describe stored briefings without promising email or SMS delivery. |
-| Footer | PlanIT Control / Sperry Tech; SwampHacks field-safety prototype. | Preserve the supplied challenge identity and prototype scope. |
+| Handoff explanation | Threshold creates a next-day briefing at 6 PM local time with unresolved reports, restrictions, source, and coverage details. | Describe stored briefings without promising email or SMS delivery. |
+| Footer | Threshold Control / Sperry Tech; SwampHacks field-safety prototype. | Preserve the supplied challenge identity and prototype scope. |
 
 The copy does not claim that soil moisture determines road bearing capacity, that wildlife can be forecast automatically, or that all seven hazards have live national coverage. It avoids asserting accuracy or injury reduction that has not been established by the implementation.
 
@@ -61,7 +61,6 @@ The copy does not claim that soil moisture determines road bearing capacity, tha
 | Home | `/` | Explain the problem and direct visitors into the working tools. |
 | 3D Atlas | `/?view=atlas` | Inspect all plants through canonical current/forecast frames, raw and scored layers, confidence, evidence, tasks and overrides. |
 | Site intelligence | `/?view=intelligence` | Rank sites, read the selected plant’s hazard evidence, and inspect task restrictions and forecast windows. |
-| Model Lab | `/?view=lab` | Inspect eligible historical-model forecasts, run browser inference, and test local calibration. |
 | Crew reports | `/?view=reports` | Manage reporting teams, submit photo/pin evidence, review open reports, and preserve resolution history. |
 | Safety briefings | `/?view=briefings` | Read and download the selected plant’s stored next-day handoffs. |
 
@@ -84,7 +83,7 @@ Native links support new tabs and query-string view navigation. Reloads and brow
 | A next-day report at 6 PM local time | The running server generates one stored briefing per site/date, carries unresolved reports, and supports download. | The Node process must remain running. The prototype creates briefings inside the application; it does not email or text them. |
 | Photo, map pin, shared site memory | Photo upload, geographic pinning, persistent reports, team assignments, affected-task holds, and resolution history work. | The database and uploads belong to this local deployment, not a public cross-owner service. Complete offline report synchronization is not implemented. |
 | Supervisor map and risk ranking | The atlas and priority list use canonical current risk. Holds lead ranking, significant risk follows, and insufficient evidence precedes observed low risk. Selection is shared. | Map and ordered list remain on different views. The atlas opens on Site risk; period-labeled model/replay detail views retain their own periods. |
-| ML-trained hazard index from historical data | HeatCast and GroundCast are trained environmental models with exported evaluation and browser inference. Their outputs inform policy screening. | The 0 to 10 index uses deterministic continuous channel scoring and dominant-plus-compounding aggregation, separate from task policy. It is not a learned seven-hazard injury-risk model. GroundCast targets reanalysis soil moisture, not observed vehicle immobilization. |
+| ML-trained hazard index from historical data | HeatCast and GroundCast are trained environmental models with exported evaluation. Their outputs inform policy screening. | The 0 to 10 index uses deterministic continuous channel scoring and dominant-plus-compounding aggregation, separate from task policy. It is not a learned seven-hazard injury-risk model. GroundCast targets reanalysis soil moisture, not observed vehicle immobilization. |
 
 The optional resources in the brief are suggestions. This case study does not imply that NOAA Storm Events, OSHA injury records, FEMA training labels, NLD boreholes, or tide stations have been integrated into model training. The implemented sources and limitations are recorded in [Data and policies](data-and-policies.md), [Models](models.md), and [Verified data sources](verified-data-sources.md).
 
@@ -95,7 +94,7 @@ The optional resources in the brief are suggestions. This case study does not im
 - **Evidence visibility:** historical replay, live forecasts, simulated strikes, crew observations, stale data, and missing coverage remain distinguishable. The decorative sculpture and landscape photographs are labeled separately from operational evidence.
 - **Accessible foundations:** native navigation links, labeled controls, visible focus styling, a skip link, keyboard feature selection, and headings are present. Ambient motion has a pause control. Reduced motion removes pinning, scrubbing, and automatic movement while keeping the content visible.
 - **Offline honesty:** cached model inference and local training work with prepared assets. The interface does not promise offline report delivery or server scheduling in a disconnected browser.
-- **Scoped rendering:** the national Three.js scene is lazy loaded for atlas use; TensorFlow browser code remains a lazy Model Lab boundary. The hero canvas pauses offscreen and in hidden tabs and disposes its observers and animation frame.
+- **Scoped rendering:** the national Three.js scene is lazy loaded for atlas use. The hero canvas pauses offscreen and in hidden tabs and disposes its observers and animation frame.
 
 These are implementation and browser observations. There has been no formal study with utility crews, no outdoor/gloved-use trial, and no measured reduction in accidents or decision time.
 

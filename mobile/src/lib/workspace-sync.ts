@@ -7,9 +7,10 @@ export function reconcileWorkspace(previous: CrewWorkspace | undefined, next: Cr
   const teams = JSON.stringify(previous.teams) === JSON.stringify(next.teams) ? previous.teams : next.teams;
   const reports = JSON.stringify(previous.reports) === JSON.stringify(next.reports) ? previous.reports : next.reports;
   const conditions = JSON.stringify(previous.conditions) === JSON.stringify(next.conditions) ? previous.conditions : next.conditions;
+  const urgentAlerts = JSON.stringify(previous.urgentAlerts) === JSON.stringify(next.urgentAlerts) ? previous.urgentAlerts : next.urgentAlerts;
   if (previous.version === next.version && previous.siteId === next.siteId && previous.clockMode === next.clockMode &&
-    sites === previous.sites && teams === previous.teams && reports === previous.reports && conditions === previous.conditions) return previous;
-  return { ...next, sites, teams, reports, conditions };
+    sites === previous.sites && teams === previous.teams && reports === previous.reports && conditions === previous.conditions && urgentAlerts === previous.urgentAlerts) return previous;
+  return { ...next, sites, teams, reports, conditions, urgentAlerts };
 }
 
 export type RefreshReason = "initial" | "manual" | "background";

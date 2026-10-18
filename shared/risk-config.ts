@@ -9,6 +9,8 @@ export const RISK_CONFIG = {
   dryness: [[0, 10], [15, 8], [30, 5], [60, 1], [100, 0]],
   wildlifeRecency: { halfLifeHours: 24, minimumRetention: 0.1 },
   modelWindow: { fetchTtlHours: 3, lookbackHours: 1, horizonHours: 48 },
+  // After a failed refresh, the last hourly forecast stands in at reduced confidence.
+  weatherCache: { graceHours: 6, confidence: 0.5 },
   confidence: { model: 0.65, soilTraining: 0.7, soilFallback: 0.35, apparent: 0.7, forecastLightning: 0.5, publicWildlife: 0.6 },
   semanticConfidenceCutoffs: { HIGH: 0.8, MEDIUM: 0.5 },
   heat: [[80, 0], [90, 2], [100, 4], [103, 6], [115, 8], [125, 10]],

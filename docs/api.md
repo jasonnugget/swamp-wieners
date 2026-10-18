@@ -155,7 +155,7 @@ Map layers select values without recalculating risk:
 
 Unknown values use gray question marks. Known values below 50% confidence use dashed/translucent markers. Display color is continuous; coverage, confidence and task state remain separate. Supervisor ranking uses current snapshots: active HOLD first, then known risk at least 4, then insufficient evidence (null risk, confidence below 0.5 or coverage below 50%), then observed low risk. Within each tier, higher risk leads, followed by lower confidence and name.
 
-The compatibility `/api/weather/atlas` and `/api/weather/point` routes remain available for external consumers. The supervisor map no longer calls either route, and arbitrary land clicks no longer create a separate weather truth. Historical replay, Model Lab and immutable briefing views retain their labeled periods.
+The compatibility `/api/weather/atlas` and `/api/weather/point` routes remain available for external consumers. The supervisor map no longer calls either route, and arbitrary land clicks no longer create a separate weather truth. Historical replay and immutable briefing views retain their labeled periods.
 
 ## Demo data completion
 

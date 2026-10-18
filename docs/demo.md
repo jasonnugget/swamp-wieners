@@ -16,7 +16,7 @@ Weather and public feeds may be unavailable or rate-limited. Show their actual s
 ## Historical model, lightning replay and briefing demonstration
 
 1. Open **Demo controls → Reset demo** only when intentionally clearing demonstration records. Turkey Point is the hero site. The bundled day was selected for its highest upper HeatCast prediction during July/August; it is not a representative random example.
-2. Open **Model Lab**, run fresh inference, then **Learn this site**. Show measured loss and before/after MAE, including degradation if it occurs. Reveal reanalysis outcomes as modeled historical targets, not field observations.
+2. On the homepage, scroll to **Look back** and reveal reanalysis outcomes in the historical replay. They are modeled historical targets, not field observations.
 3. In **Site intelligence**, inject a simulated strike within six miles. Advance ten minutes, then inject another. Replay outdoor task holds reset to thirty minutes. The current atlas does not promote these simulated events to live lightning evidence.
 4. Run to 6 PM and open **Safety briefings**. The scheduler stores the next local day's briefing and carries unresolved reports. Resolution does not rewrite an earlier briefing or clear another hazard's hold.
 
@@ -24,6 +24,6 @@ Reset clears reports, strikes, alerts, briefings, model forecasts and feed statu
 
 ## Offline demonstration
 
-Use the production build; development mode does not register the service worker. Load the app and Model Lab once and wait for offline assets before disconnecting. Inference and saved calibration work with cached assets. The current atlas can fall back to the cached canonical workspace and labels failed refreshes stale; new forecast frames require the server. Reports are not queued offline, and JEV, live feeds and scheduling do not run in a disconnected browser.
+Use the production build; development mode does not register the service worker. Load the app once and wait for offline assets before disconnecting. The current atlas can fall back to the cached canonical workspace and labels failed refreshes stale; new forecast frames require the server. Reports are not queued offline, and JEV, live feeds and scheduling do not run in a disconnected browser.
 
 See [browser verification](../tests/e2e/README.md), [API contracts](api.md) and [provider setup](environment-providers.md). Automated canonical-frame fixtures are test evidence, not live provider coverage.
