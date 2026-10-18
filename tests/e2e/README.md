@@ -5,6 +5,8 @@ Run `npm run test:e2e` from the root. Installed Google Chrome is required. `play
 | File | Coverage |
 | --- | --- |
 | `simulation.spec.ts` | Canonical beacon/hold/unknown separation, no operational writes, scenario export and drainage comparison, playback, mobile/keyboard/reduced motion, flat fallback, newer workspace holds during atlas failure and offline reload |
+| `refresh-coalescing.spec.ts` | A 100-event provider burst produces one active snapshot read and a retained follow-up update |
+| `site-simulation.spec.ts` | Environment Studio: 34 inputs, five lenses, six presets, three templates, shader errors, independent heat/soil, demonstration-only event art, animation pause, warmed geometry reuse, fallback, mobile, modal focus and full offline reload |
 | `network-preview.spec.ts` | Shared homepage/atlas plant selection and reload persistence; stale/cached unknown states with retained holds; local-geography failure at 320px |
 | `home-signals.spec.ts` | Hazard dial zero/null/stale handling; automatic NWS forecast selection, gaps, freshness, wind units and scrubbing; policy board without reports; scan/pause, reduced motion, empty forecasts and phone bounds |
 | `immersive-atlas.spec.ts` | Full-viewport renderer, floating navigation, two-line title, drawer close/reopen/Escape focus, inert hidden content, persistent close control, selected-site summary, mobile bounds and reduced motion |

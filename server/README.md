@@ -19,6 +19,8 @@ SQLite uses WAL and a five-second busy timeout so the application and bulk colle
 
 Persist reports before triage. Preserve independent hazard holds and audit history. Keep demo and real clock behavior distinct. Briefings are immutable snapshots keyed by site and next local date; duplicate-safe insertion prevents repeat delivery after restart. The process must remain active for timers and streaming updates.
 
+The briefing tick checks site-local eligibility and existing briefing IDs before constructing a snapshot. Idle or already-completed ticks do not recompute the national risk catalog; an eligible batch still shares one snapshot and keeps the existing per-site/date duplicate guard.
+
 Team rosters and plant assignments are SQLite `team` records included in snapshots and shared through SSE invalidation. Team reports must name a current member and assigned plant; the server copies the current team name onto the report for history. Teams survive demo reset. Team membership is reporting context, not an authorization system.
 
 The server binds to localhost by default and has no account authentication. Public datasets and weights are intentionally readable. Credentials, the SQLite database, and upload storage must remain outside `public/`.

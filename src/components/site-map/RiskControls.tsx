@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, CaretRight as ChevronRight, Pause, Play, ArrowClockwise as RefreshCw, MagnifyingGlass as Search, X, SidebarSimple, Thermometer, Wind, CloudRain, SunHorizon, Lightning, Waves, Flame, Mountains, PawPrint, ShieldCheck, CloudLightning, ClockCountdown } from "@phosphor-icons/react";
 import { EvidenceMotion } from "./AtlasMotion";
 import { ATLAS_LAYERS, atlasValue, atlasColor, rankSites, type RiskLayer } from "../../../shared/atlas";
-import type { Site } from "../../../shared/types";
+import type { HazardReport, Site } from "../../../shared/types";
 import type { SafetyOverride } from "../../../shared/risk";
 import { TASK_LABELS } from "../../../shared/policy";
 import type { MapRegion } from "../../../shared/weather";
 import type { useRiskAtlas } from "../../lib/useRiskAtlas";
 import ObservationDetails from "./ObservationDetails";
 import SourceDetails from "./SourceDetails";
+const SiteSimulation = lazy(() => import("../../features/site-simulation/SiteSimulation"));
 
 const layerIcons = { risk: ShieldCheck, temperature: Thermometer, heat: SunHorizon, wind: Wind, rain: CloudRain, weather: CloudLightning, soil: Mountains, flood: Waves, wildfire: Flame, lightning: Lightning, wildlife: PawPrint };
 const names: Record<string, string> = { heat: "Heat", weather: "Weather", soil: "Soil", flood: "Flood", wildfire: "Wildfire", lightning: "Lightning", wildlife: "Wildlife" };
@@ -18,7 +19,8 @@ function AllClear({ override }: { override: SafetyOverride }) {
   const seconds = Math.max(0, Math.ceil((Date.parse(override.expiresAt!) - now) / 1000));
   return <p>All-clear: <time data-testid="all-clear">{`${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`}</time>{seconds === 0 && " · awaiting backend confirmation"}</p>;
 }
-export default function RiskControls({ data, currentData, showTimeline, sites, layer, hour, region, selected, reducedMotion, onLayer, onHour, onRegion, onSelect, inspectorOpen, onInspector }: {
+export default function RiskControls({ data, currentData, showTimeline, sites, layer, hour, region, selected, reducedMotion, onLayer, onHour, onRegion, onSelect, inspectorOpen, onInspector, reports = [] }: {
+  reports?: HazardReport[];
   inspectorOpen: boolean; onInspector(open: boolean): void;
   data: ReturnType<typeof useRiskAtlas>; currentData: ReturnType<typeof useRiskAtlas>; showTimeline: boolean; sites: Site[]; layer: RiskLayer; hour: number; region: MapRegion; selected: string; reducedMotion: boolean;
   onLayer(layer: RiskLayer): void; onHour(hour: number): void; onRegion(region: MapRegion): void; onSelect(id: string): void;
@@ -26,6 +28,12 @@ export default function RiskControls({ data, currentData, showTimeline, sites, l
   const panel = useRef<HTMLElement>(null), showInspector = useRef<HTMLButtonElement>(null);
   const [playing, setPlaying] = useState(false), [search, setSearch] = useState("");
   const [view, setView] = useState<"overview" | "conditions" | "sources">("overview");
+  const [simulationOpen, setSimulationOpen] = useState(false);
+  const simulationButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    document.dispatchEvent(new CustomEvent("planit:site-simulation", { detail: simulationOpen }));
+    return () => { document.dispatchEvent(new CustomEvent("planit:site-simulation", { detail: false })); };
+  }, [simulationOpen]);
   useEffect(() => { if (reducedMotion || !showTimeline) setPlaying(false); }, [reducedMotion, showTimeline]);
   useEffect(() => {
     if (!showTimeline || !playing || reducedMotion || data.loading) return;
@@ -55,6 +63,7 @@ export default function RiskControls({ data, currentData, showTimeline, sites, l
       <div className="atlas-inspector-top"><span>{hour === 0 ? "CURRENT SITE RISK" : `FORECAST · +${hour} HOURS`}</span><button type="button" onClick={data.refresh} disabled={data.loading} aria-label="Refresh risk atlas"><RefreshCw size={14} aria-hidden="true" className={data.loading ? "spin" : ""}/>{data.loading ? "Syncing…" : "Refresh"}</button></div>
       <div className="atlas-search"><Search size={15} aria-hidden="true"/><label className="atlas-search-label" htmlFor="atlas-place-search">Find a site</label><input id="atlas-place-search" type="search" value={search} placeholder="e.g., Turkey Point or FL…" name="atlas-site-search" autoComplete="off" onChange={e => setSearch(e.target.value)} />{matches.length > 0 && <div className="atlas-search-results">{matches.map(p => <button type="button" key={p.id} onClick={() => { onSelect(p.id); setSearch(""); }}>{p.name}</button>)}</div>}</div>
       <div className="atlas-site-heading"><p className="atlas-site-id">{site ? `${site.state} / EIA ${site.id}` : "SITE RECORD"}</p><h2 className="atlas-location-title">{site?.name ?? "Select a site"}</h2><p className="atlas-coordinate">{site ? `${site.county}, ${site.state} · ${site.capacityMw.toLocaleString()} MW` : "No frame available"}</p></div>
+      <button ref={simulationButton} type="button" className="site-simulation-launch" onClick={() => { setPlaying(false); setSimulationOpen(true); }}>Open 3D simulation</button>
       <div className="atlas-risk-hero"><div><span>Composite site risk</span><strong data-testid="atlas-risk">{r?.risk == null ? "Unknown" : <>{r.risk.toFixed(1)}<small> / 10</small></>}</strong></div><div className="atlas-risk-mark" style={{ borderColor: atlasColor(r?.risk) }} aria-hidden="true"><span style={{ background: atlasColor(r?.risk) }}/></div></div>
       <div className="atlas-layer-reading" data-layer={layer}><span>{hour > 0 ? "Forecast value" : "Map layer"} · {ATLAS_LAYERS[layer].name}{layer === "wind" && value !== null ? r?.observation.weather.gustMph === null ? " · sustained" : " · gust" : ""}</span><strong data-testid="atlas-layer-value">{value == null ? "?" : value.toFixed(1)}<small>{ATLAS_LAYERS[layer].unit}</small></strong>{value === null && <p>Unknown / no data</p>}</div>
       <dl className="atlas-metrics"><div><dt>Data coverage</dt><dd data-testid="atlas-coverage">{r ? `${r.observation.coverage.percent.toFixed(0)}%` : "Unknown"}</dd><small>{r ? `${r.observation.coverage.available} of ${r.observation.coverage.expected} primary inputs` : "Waiting for inputs"}</small></div><div><dt>Evidence confidence</dt><dd>{r ? `${(r.confidence * 100).toFixed(0)}%` : "Unknown"}</dd><small>{r && r.confidence < 0.5 ? "LOW CONFIDENCE" : "Screening evidence"}</small></div></dl>
@@ -73,6 +82,7 @@ export default function RiskControls({ data, currentData, showTimeline, sites, l
       {data.error && <p className="atlas-error" role="status">{data.error}</p>}
     </aside>
     </div>
+    {simulationOpen && site && <Suspense fallback={<p role="status" className="site-simulation-loading">Loading site simulator…</p>}><SiteSimulation key={site.id} site={site} reports={reports} snapshot={currentData.atlas?.sites.find(p => p.site.id === selected)?.snapshot} stale={currentData.stale} onClose={() => { setSimulationOpen(false); requestAnimationFrame(() => simulationButton.current?.focus()); }}/></Suspense>}
     {!showTimeline && <button type="button" className="atlas-timeline-prompt" aria-label="Explore selected site forecast" onClick={() => onSelect(selected)}><ClockCountdown size={24} aria-hidden="true"/><span><small>72-hour risk outlook</small><strong>Explore {site?.name ?? "the selected site"}</strong></span><i><ArrowUpRight size={19} aria-hidden="true"/></i></button>}
     {showTimeline && <div className="atlas-timeline"><div className="atlas-time-heading"><button type="button" disabled={reducedMotion} onClick={() => setPlaying(!playing)} aria-label={playing ? "Pause risk forecast" : "Play risk forecast"}>{playing ? <Pause size={15} aria-hidden="true"/> : <Play size={15} aria-hidden="true"/>}</button><div><span>{site?.name ?? "Select a site"} · 72-hour outlook <b>{hour === 0 ? "Now" : `+${hour}h`}</b></span><strong>{data.loading ? "Loading selected site…" : atlas?.validAt ? new Date(atlas.validAt).toLocaleString() : "Risk frame unavailable"}</strong></div><button type="button" className="atlas-now" onClick={() => { onHour(0); setPlaying(false); }}>Back to now</button></div><div className="atlas-forecast-track" aria-hidden="true">{Array.from({ length: 25 }, (_, i) => <i key={i} data-active={i * 3 <= hour}/>)}</div><input aria-label="Forecast hour" name="forecast-hour" type="range" min={0} max={72} step={1} value={hour} onChange={e => { setPlaying(false); onHour(Number(e.target.value)); }} /><div className="atlas-time-ticks"><span>Now</span><span>+24h</span><span>+48h</span><span>+72h</span></div></div>}
     <div className="atlas-scale"><span>{ATLAS_LAYERS[layer].name} · {ATLAS_LAYERS[layer].unit}</span><i data-layer={layer}/><div><span>{ATLAS_LAYERS[layer].low}</span><span>{ATLAS_LAYERS[layer].high}</span></div><small>Gray / ? = unknown</small></div>

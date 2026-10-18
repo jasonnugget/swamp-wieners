@@ -2,6 +2,8 @@
 
 | File | Behavior covered |
 | --- | --- |
+| `coalesced-refresh.test.ts` | Notification bursts share one follow-up read, never overlap requests, await newer data and recover after failures |
+| `site-simulation.test.ts` | Artistic state preserves unknowns, keeps heat/moisture independent, separates precipitation categories and clones presets without changing source inputs |
 | `policy.test.ts` | Lightning timing/distance, independent holds, unknown/stale forecasts, flood screening, and heat index |
 | `nws-screening.test.ts` | NOAA unit conversion and missing data, partial national scores, freshness expiry, independent holds, and engine demo-clock separation |
 | `dev-readiness.test.ts` | API startup retries, valid health responses, connection refusal and bounded hung requests |

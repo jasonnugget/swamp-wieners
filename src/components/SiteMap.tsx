@@ -410,6 +410,7 @@ export default function SiteMap({
         )}
       </div>
       {!onPin && !simulation.enabled && <RiskControls
+        reports={reports}
         data={inspection} currentData={atlas} showTimeline={focusedSite === selected} sites={sites} layer={layer} hour={hour} region={region} selected={selected} reducedMotion={reducedMotion}
         onLayer={setLayer} onHour={setHour}
         onRegion={selectRegion}

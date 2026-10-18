@@ -4,6 +4,8 @@
 
 `loadSnapshot()` returns both a snapshot and an offline flag. A cached fallback is historical workspace state, not a successful fresh read. Writes require the server; this helper does not queue or retry full reports.
 
+`coalesced-refresh.ts` groups workspace invalidations into one active read and one queued follow-up batch. Callers arriving during a read await a later read, so provider/SSE bursts cannot fan out national snapshot requests or lose an update that arrived in flight. Failure releases the queue. This helper only schedules reads; it does not cache decisions or queue writes.
+
 Keep credentials out of this directory and all browser bundles. Jev and external feed calls belong in `server/integrations/`. Use the server-side contracts in [docs/api.md](../../docs/api.md).
 
 Production offline behavior depends on `public/sw.js` and the asset manifest emitted by `vite.config.ts`. Verify changes with `npm run test:e2e`, including a reload with browser networking disabled.

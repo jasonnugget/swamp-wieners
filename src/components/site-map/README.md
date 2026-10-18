@@ -12,6 +12,8 @@ Use bundled geography and local packages so the production view works offline. D
 
 Vite explicitly prebundles Three.js and OrbitControls in `vite.config.ts` for the lazy scene import. If dependencies change while a development server is running, restart it to avoid stale optimized-module URLs. Module loading errors and renderer initialization errors have separate fallback messages; the browser console preserves the underlying error.
 
+The same prebundle list includes the studio's rounded geometry, geometry batching and compositor addons, avoiding a first-launch dependency optimization reload. After changing it, verify the studio on the development URL as well as the production browser build.
+
 ## Authoritative risk atlas
 
 `RiskControls.tsx` presents eleven layers, site inspection, evidence sources, search and region shortcuts. The wide 72-hour slider sits along the bottom of the map and controls only the selected site, named above the slider. It appears only after explicitly focusing a plant through a beacon, search, site selector, focus button, Site details control or forecast prompt. Region/All US navigation, Fit plants, zooming out, manual map navigation and automatic rotation exit site focus, hide the slider, stop playback, cancel forecast reads and return inspection to current conditions. The national map stays on current conditions; the inspector requests only `/api/risk/atlas?hour=1..72&siteId=...`. Switching plants loads that plant at the selected hour; recent visited frames are cached. Forecast failures show unknown values without replacing current map evidence. Layers select raw observation fields or scored channels from that same snapshot. Temperature is Fahrenheit; heat/soil/flood/fire/lightning/wildlife/weather layers are 0–10 risk. Gray markers and question marks indicate unknown data. Known low-confidence values retain their scale color with a dashed, translucent marker. Wind prefers gusts and labels a sustained-wind fallback explicitly.
@@ -39,6 +41,10 @@ The evidence-view buttons use native button semantics and `aria-pressed`; field 
 `ObservationDetails` accepts the backend’s optional demo completion companion. Its default-on gap-fill switch reveals a Synthetic badge and explanation for generated values; disabling it restores source-only missingness. `SiteObservationPreview` fetches the inspected Site intelligence companion through `useSiteDataPreview`. Beacons, raw map layers, scores, tasks and source coverage never use companion values.
 
 ## Immersive atlas presentation
+
+The selected-site inspector offers “Open 3D simulation”, which lazy-loads the [scenario sandbox](../../features/site-simulation/README.md). It receives the current source snapshot independently of the forecast slider. Scenario inputs never update atlas frames, risk, policy or persisted records.
+
+`RiskControls`/the studio publish `planit:site-simulation` visibility events. The atlas scene pauses rendering while the native modal is open and resumes on close; it removes the listener on disposal. This avoids rendering two large canvases simultaneously. Launcher styling is in `weather-atlas.css`, outside the lazy module.
 
 `AtlasMotion.tsx` isolates GSAP entrances, evidence-view transitions and scroll-linked prose reveals. It scopes selectors, reverts contexts/listeners on unmount and honors reduced motion. It never animates score widths or alters risk values. The Phosphor icon context uses light strokes. Navigation remains in `App.tsx`; map layers, region controls and the forecast filmstrip float over the scene.
 

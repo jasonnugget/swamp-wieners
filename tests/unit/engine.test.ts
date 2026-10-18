@@ -17,6 +17,21 @@ const forecasts = JSON.parse(
   readFileSync("public/data/forecasts.json", "utf8"),
 );
 const scenario = JSON.parse(readFileSync("public/data/scenario.json", "utf8"));
+test("idle and already-generated briefing ticks avoid national scoring without changing scheduling", () => {
+  const directory = mkdtempSync(join(tmpdir(), "planit-idle-")), store = new Store(directory);
+  try {
+    const eastern = sites.find(s => s.timezone === "America/New_York")!;
+    const engine = new Engine(store, [eastern], forecasts, models, scenario);
+    const snapshot = engine.snapshot.bind(engine); let reads = 0;
+    engine.snapshot = (...args) => { reads++; return snapshot(...args); };
+    store.put("config", "clock", { mode: "demo", now: "2026-08-02T16:00:00Z" });
+    assert.equal(engine.tick(), false); assert.equal(reads, 0);
+    store.put("config", "clock", { mode: "demo", now: "2026-08-02T22:00:00Z" });
+    assert.equal(engine.tick(), true); assert.equal(reads, 1);
+    assert.equal(store.all("briefing").length, 1);
+    assert.equal(engine.tick(), false); assert.equal(reads, 1);
+  } finally { store.close(); rmSync(directory, { recursive: true, force: true }); }
+});
 test("six PM briefing runs per timezone, includes unresolved reports, and survives restart without duplicates", () => {
   const directory = mkdtempSync(join(tmpdir(), "planit-"));
   let store = new Store(directory);

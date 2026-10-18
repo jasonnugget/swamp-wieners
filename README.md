@@ -44,6 +44,7 @@ For optional JEV classification, set `TYPESAFE_API_KEY` server-side. The adapter
 - Continuous weather, heat, lightning, flood, wildfire, soil and wildlife channels; dominant risk plus bounded secondary compounding; separate task policy. Ordinary crew reports do not force risk to 10.
 - An authoritative 3D risk atlas with eleven layers, site explanations, coverage/confidence, current overrides and a backend-scored 72-hour timeline loaded on demand for the selected plant.
 - A separate atlas scenario lab with invented hurricane and inland-rain tracks, adjustable wind/rain/drainage assumptions, animated geographic footprints, a 72-hour simulation clock, plant exposure comparisons and JSON export. Rainfall excess is hypothetical runoff generation, not flood depth or an operational forecast; see [the model and limits](docs/atlas-simulation.md).
+- A local Three.js **Environment Studio**: select a plant in the atlas and choose **Open 3D simulation**. Explore detailed industrial, solar and substation miniatures, five environmental lenses, six presets and 34 hypothetical inputs. Rain/snow/hail, wind, clouds/fog, heat shimmer, water, soil layers and explicit fire/lightning demonstrations stay separate from source event evidence and live restrictions. Works offline; layouts and effects are illustrative rather than surveyed geometry or physical forecasts.
 
 ## Repository context
 

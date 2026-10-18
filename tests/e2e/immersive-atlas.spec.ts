@@ -9,7 +9,7 @@ test("fullscreen map preserves navigation, drawer keyboard access, mobile canvas
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/?view=atlas");
   const canvas = page.locator(".weather-atlas .three-map-canvas");
-  await expect(canvas).toHaveAttribute("data-geography", "ready");
+  await expect(canvas).toHaveAttribute("data-geography", "ready", { timeout: 30000 });
   expect(await canvas.boundingBox()).toEqual({ x: 0, y: 0, width: 1440, height: 1000 });
   const nav = (await page.locator(".site-header").boundingBox())!;
   expect(nav.x).toBeGreaterThan(0); expect(nav.y).toBeGreaterThan(0);

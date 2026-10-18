@@ -8,6 +8,8 @@ Run `npm run build` after import or asset-path changes. Run the browser layout c
 
 `weather-atlas.css` defines the national explorer’s mineral map, Geist typography, layer toolbar, light evidence drawer, timeline, scales, and responsive layout. The canvas fills the viewport behind floating controls. The evidence drawer overlays the scene and has its own scroll area; on phones it starts closed. Scope these rules to the atlas so report pinning keeps its compact controls. The atlas includes a three-site priority preview; the full ranking remains in Site intelligence.
 
+The atlas stylesheet also owns the “Open 3D simulation” launcher and lazy loading notice, so the button is styled before the studio module loads. The [Environment Studio](../features/site-simulation/README.md) owns its modal, large scene, environmental lenses, controls and responsive sidebar in `simulation.css`.
+
 ## Website theme
 
 `site.css` is imported after the base stylesheet by `src/main.tsx`. It defines the mineral surfaces, lime actions, rounded enclosures, Geist typography, detached navigation, working-view styles, and loading sequence. `fieldwork.css` loads afterward and scopes the geographic homepage, dark evidence chapter and responsive editorial sections to `.fieldwork-home`. `network-preview.css` belongs to the lightweight SVG preview, including loading/error states, readable source status and the native site selector. The old command-center theme has been replaced. Homepage content has generous section spacing; working views keep compact evidence and form layouts. The dedicated atlas fills the viewport with a matching light map and mineral controls. Report pinning retains its compact dark map treatment.

@@ -2,6 +2,8 @@
 
 `App.tsx` owns navigation, selected-site persistence, snapshot refresh, SSE subscription, demo controls, and top-level notices. It composes the overview, report workflow, Model Lab, briefing view, and report modal.
 
+Snapshot reloads use `coalescedRefresh` from `../lib/`: SSE messages, reconnect errors, the fifteen-second poll and explicit actions share one active request plus one follow-up batch. Events arriving during a read still receive a later read; the UI does not issue a full national snapshot for every individual provider notification.
+
 Keep page composition and workspace-wide state here. Reusable views belong in `../components/`; feature-specific logic belongs under `../features/`. Keep transport and snapshot caching in `../lib/api.ts` and policy calculations in `shared/`.
 
 After a report is shared, select the plant returned by the report form so the workspace shows that report's site even when a crew assignment changed the form's default plant.

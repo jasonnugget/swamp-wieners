@@ -15,6 +15,8 @@ Keep credentials, uploaded crew photos, raw downloads, and SQLite records outsid
 
 The service worker consumes the build-generated `asset-manifest.json` to cache initial and lazy JavaScript, CSS, and worker assets. It excludes API requests and uploaded photos. Build and run the offline reload browser check after asset or caching changes.
 
+Cache v13 includes the Environment Studio shaders, procedural site kit, scene controls and lazy stylesheet through the generated asset manifest. The sandbox works offline without external models or tiles.
+
 Homepage photographs are downloaded from Unsplash: [wind landscape](https://images.unsplash.com/photo-1466611653911-95081537e5b7) and [forest canopy](https://images.unsplash.com/photo-1473448912268-2022ce9509d8). They are labeled as illustration, never site observations. Both are precached for offline use. The homepage preview uses bundled state geography and actual plant coordinates. The loading screen retains an original SVG field-kit illustration. Neither requires an image service. Geist font files are local and precached with the application.
 
 The field-intelligence redesign increments the service-worker asset cache so existing installations prepare the new homepage and shared theme for offline use. Snapshot storage, model candidates, server records and uploaded evidence keep their existing persistence.

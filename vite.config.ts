@@ -4,7 +4,12 @@ import { waitForApi } from "./server/dev-readiness";
 const apiTarget = "http://127.0.0.1:3001";
 export default defineConfig({
   optimizeDeps: {
-    include: ["three", "three/addons/controls/OrbitControls.js"],
+    include: [
+      "three", "three/addons/controls/OrbitControls.js",
+      "three/addons/geometries/RoundedBoxGeometry.js", "three/addons/utils/BufferGeometryUtils.js",
+      "three/addons/postprocessing/EffectComposer.js", "three/addons/postprocessing/RenderPass.js",
+      "three/addons/postprocessing/ShaderPass.js", "three/addons/postprocessing/OutputPass.js",
+    ],
   },
   plugins: [
     react(),

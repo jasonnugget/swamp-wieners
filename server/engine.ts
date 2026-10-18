@@ -115,14 +115,17 @@ export class Engine {
     };
   }
   tick() {
+    const due = this.sites.flatMap(site => {
+      const local = localParts(this.now(), site.timezone);
+      if (local.hour < 18) return [];
+      const localDate = nextDate(local.date), id = `${site.id}:${localDate}`;
+      return this.store.get("briefing", id) ? [] : [{ site, localDate, id }];
+    });
+    // An idle scheduler must not score the entire live catalog every five seconds.
+    if (!due.length) return false;
     const snap = this.snapshot();
     let changed = false;
-    for (const site of this.sites) {
-      const local = localParts(this.now(), site.timezone);
-      if (local.hour < 18) continue;
-      const localDate = nextDate(local.date),
-        id = `${site.id}:${localDate}`;
-      if (this.store.get("briefing", id)) continue;
+    for (const { site, localDate, id } of due) {
       const reports = snap.reports.filter(
         (r) => r.siteId === site.id && r.status === "open",
       );

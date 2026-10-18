@@ -152,7 +152,10 @@ export function createMapScene(
   let disposed = false,
     top = !!callbacks.pin,
     rotating = false,
-    inView = true;
+    inView = true,
+    simulationOpen = Boolean(document.querySelector("dialog.site-simulation[open]"));
+  const simulationVisibility = (event: Event) => { simulationOpen = Boolean((event as CustomEvent<boolean>).detail); };
+  document.addEventListener("planit:site-simulation", simulationVisibility);
   let overview: MapRegion | undefined = callbacks.pin ? undefined : "mainland";
   const interact = () => {
     overview = undefined;
@@ -662,7 +665,7 @@ export function createMapScene(
   const projected = new THREE.Vector3();
   function tick(now: number) {
     frame = requestAnimationFrame(tick);
-    if (!inView || document.hidden || now - lastDraw < 32) return;
+    if (!inView || simulationOpen || document.hidden || now - lastDraw < 32) return;
     const delta = Math.min((now - lastDraw) / 1000, 0.1);
     lastDraw = now;
     if (move) {
@@ -776,6 +779,7 @@ export function createMapScene(
       observer.disconnect();
       visibility.disconnect();
       controls.dispose();
+      document.removeEventListener("planit:site-simulation", simulationVisibility);
       canvas.removeEventListener("pointerdown", start);
       canvas.removeEventListener("pointerup", end);
       canvas.removeEventListener("pointercancel", cancel);

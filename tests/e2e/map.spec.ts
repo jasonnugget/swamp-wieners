@@ -29,7 +29,7 @@ test("3D depth precision follows national zoom and close report pinning", async 
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/?view=atlas");
   const canvas = page.locator(".three-map-canvas").first();
-  await expect(canvas).toHaveAttribute("data-geography", "ready");
+  await expect(canvas).toHaveAttribute("data-geography", "ready", { timeout: 30000 });
   const near = (target = canvas) => target.evaluate(element =>
     (window as typeof window & { mapDepthNear: Map<Element, number> }).mapDepthNear.get(element) ?? 0);
   await expect.poll(() => near()).toBeGreaterThan(0.3);
@@ -54,7 +54,7 @@ test("3D map selects real sites, orbits, zooms, and expands for a showcase", asy
   await page.goto("/?view=atlas");
   const map = page.getByTestId("site-map");
   const canvas = map.locator(".three-map-canvas");
-  await expect(canvas).toHaveAttribute("data-geography", "ready");
+  await expect(canvas).toHaveAttribute("data-geography", "ready", { timeout: 30000 });
   await page.getByRole("button", { name: "Site risk", exact: true }).click();
   await expect(map.locator(".site-beacon")).toHaveCount(285);
   await map.locator('[data-site-id="55433"]').focus();

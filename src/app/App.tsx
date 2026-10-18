@@ -1,5 +1,5 @@
 import { rankSites } from "../../shared/atlas";
-import { lazy, Suspense, useCallback, useEffect, useState, type MouseEvent } from "react";
+import { lazy, Suspense, useMemo, useEffect, useState, type MouseEvent } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -31,6 +31,7 @@ import {
 import type { Category, ModelBundle, Site, Snapshot } from "../../shared/types";
 import { CATEGORY_LABELS, TASK_LABELS } from "../../shared/policy";
 import { cacheAssets, loadSnapshot, readCachedSnapshot, request } from "../lib/api";
+import { coalescedRefresh } from "../lib/coalesced-refresh";
 import SiteMap from "../components/SiteMap";
 import ForecastChart from "../components/ForecastChart";
 import WorkWindows from "../components/WorkWindows";
@@ -111,7 +112,7 @@ export default function App() {
     const timer = setTimeout(() => setIntroComplete(true), 1600);
     return () => clearTimeout(timer);
   }, []);
-  const reload = useCallback(async () => {
+  const reload = useMemo(() => coalescedRefresh(async () => {
     try {
       const result = await loadSnapshot();
       setSnapshot(result.snapshot);
@@ -120,7 +121,7 @@ export default function App() {
     } catch (e) {
       setError(String(e));
     }
-  }, []);
+  }), []);
   useEffect(() => {
     if (!selected || !snapshot?.sites.find(s => s.id === selected)?.catalogOnly || offline) return;
     const controller = new AbortController();

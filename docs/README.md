@@ -17,6 +17,7 @@
 | [Playful web UI](web-playful-ui.md) | Reviewing the shared web/mobile visual direction, web screenshots, evidence boundaries and browser checks |
 | [UI audit](ui-audit.md) | Reviewing the current supervisor layout, screenshots, field completeness and browser checks |
 | [Site-data completion](site-data-completion.md) | Regenerating source-first, explicitly demo-only completion exports |
+| [Simulation visual research](simulation-visual-research.md) | Proposed site art direction, weather/VFX techniques, all 34 field mappings, evidence limits and implementation order |
 | [Demo](demo.md) | Rehearsing the report handoff and offline demonstration |
 
 Directory READMEs describe the nearby files. These documents explain behavior that crosses directory boundaries. The [root README](../README.md) covers installation and verification.
@@ -30,6 +31,8 @@ Directory READMEs describe the nearby files. These documents explain behavior th
 `assets/atlas-immersive-*.png` document the full-screen map iteration and are maintained with the immersive atlas audit. Earlier screenshots remain historical captures of their documented layouts.
 
 [Homepage field signals](home-signals.md) documents the concentric hazard dial, automatic NWS hourly outlook, task-readiness board and motion boundaries.
+
+`assets/environment-studio/` contains production browser captures of the [Environment Studio](../src/features/site-simulation/README.md): desktop storm, phone, heat, ground cutaway and fire demonstration. They use explicitly hypothetical presets and deterministic test source fixtures. The miniature geometry, weather art and demonstration locations are illustrative; these images do not establish surveyed layouts or field hazard accuracy.
 
 `assets/web-playful/` holds the current desktop/phone homepage, atlas and working-view captures. Its audit describes the isolated runtime and unavailable live-feed coverage; the images do not claim active provider connectivity. Earlier website captures remain historical.
 
