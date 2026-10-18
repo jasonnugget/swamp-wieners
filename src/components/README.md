@@ -9,6 +9,7 @@
 | `CrewNotes.tsx` | Homepage carousel of accepted reports from the selected site; preserves report-history context |
 | `SiteMap.tsx` | Three.js authoritative risk atlas, environmental layers, showcase controls, and report pinning |
 | `ForecastChart.tsx` | Model median, uncertainty band, baseline, and optional reanalysis outcomes |
+| `HazardForecast.tsx` | Per-site learned next-day hazard probabilities, × normal, GO/CAUTION/NO-GO guideline and guardrail reasons |
 | `WorkWindows.tsx` | Task-specific model screening windows from shared calculations |
 
 These components accept data and callbacks through props. They do not persist reports, call Jev, or change operational policy. SiteMap uses the shared transport hook for batched canonical frames.

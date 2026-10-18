@@ -7,9 +7,17 @@
 - **Map outlines:** [PublicaMundi US states GeoJSON](https://github.com/PublicaMundi/MappingAPI/blob/master/data/geojson/us-states.json), bundled for offline use.
 - **Lightning:** a swappable provider with explicit unavailable, recorded-live and demo modes. No licensed live network is configured by default; forecast potential never counts as a detected strike.
 - **Wildlife:** crew sightings plus sparse, filtered iNaturalist public context; no automated wildlife probability claim.
+- **HazardCast labels** (training and evaluation only, never features):
+  - [NOAA Storm Events](https://www.ncdc.noaa.gov/stormevents/) 2024 to June 2026.
+  - [IEM](https://mesonet.agron.iastate.edu/) archives of NWS warnings, plus ASOS station gusts and temperatures.
+  - [NOAA Tides & Currents](https://tidesandcurrents.noaa.gov/) high water against minor flood levels.
+  - [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/) fire detections through 2025.
+- **HazardCast plant traits:** [FEMA NFHL](https://hazards.fema.gov/femaportal/wps/portal/NFHLWMS) zones and the [USACE National Levee Database](https://levees.sec.usace.army.mil/).
+- **HazardCast validation only:** [OSHA severe injury reports](https://www.osha.gov/severe-injury-reports) and NOAA SWDI NEXRAD storm cells.
+- **What labels mean:** official or observed hazard evidence near a plant, not confirmed on-site conditions or injuries. See [HazardCast](models.md#hazardcast-learned-next-day-hazards-and-site-index).
 - **Flood screening:** legacy corridor replay screens plus USGS nearby-stage proxies, FEMA mapped exposure and official NWS alerts in the live pipeline. Legacy corridor flags do not establish flood exposure. FEMA supplies mapped static membership where available; nearest-gauge association does not verify hydrologic connectivity or predict inundation.
 
-Policy `continuous-policy-4` uses shared continuous channel scores and dominant-plus-compounding site aggregation under `continuous-risk-4`. Heat, wind, soil percentiles, flood factors/alert floors, lightning forecast/detection, wildfire and wildlife have separate deterministic screens. Crew evidence is classified semantically; ordinary reports no longer force severity 10. Numerical risk remains independent of crew-selected holds, official alert controls and the ten-mile/thirty-minute lightning rule. See [complete thresholds and formulas](risk-scoring.md).
+Policy `continuous-policy-5` uses shared continuous channel scores under `continuous-risk-5`. The site index is learned (OverallCast) where HazardCast covers the plant, and dominant-plus-compounding aggregation otherwise. Any environmental or learned channel score of 9 or more holds that channel's field tasks. Heat, wind, soil percentiles, flood factors/alert floors, lightning forecast/detection, wildfire and wildlife have separate deterministic screens. Crew evidence is classified semantically; ordinary reports no longer force severity 10. Numerical risk remains independent of crew-selected holds, official alert controls and the ten-mile/thirty-minute lightning rule. See [complete thresholds and formulas](risk-scoring.md).
 
 NOAA hourly forecasts retain their freshness checks and explicit source labels. Marine plants use raw forecast grid intervals when land hourly products are unavailable. Model forecasts, current estimates and historical replay remain distinguishable. Real-clock briefings select the next local day's available periods. No chronological split, held-out exclusion, training preprocessing or frozen-model evaluation changed.
 

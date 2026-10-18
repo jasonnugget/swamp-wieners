@@ -27,10 +27,13 @@ export class ProviderCache {
 
 // One queue per origin provides a shared pace/cooldown across all site requests.
 // Credentials are headers or URL path segments; errors never echo request URLs.
+// A single timeout fails only its own request; the origin pauses after FAILURES_BEFORE_PAUSE in a row.
+const FAILURES_BEFORE_PAUSE = 3;
 export class ProviderHttp {
   private queues = new Map<string, Promise<void>>();
   private next = new Map<string, number>();
-  private cooldown = new Map<string, number>();
+  private cooldown = new Map<string, { until: number; reason: string }>();
+  private failures = new Map<string, number>();
   constructor(private transport: typeof fetch = fetch, private clock = Date.now, private spacingMs = 1100) {}
   async text(source: string, url: string, headers: Record<string, string> = {}): Promise<string> {
     const host = new URL(url).origin, prior = this.queues.get(host) ?? Promise.resolve();
@@ -39,20 +42,26 @@ export class ProviderHttp {
     const tail = prior.catch(() => {}).then(() => gate); this.queues.set(host, tail);
     await prior.catch(() => {});
     try {
-      if (this.clock() < (this.cooldown.get(host) ?? 0)) throw new Error(`${source} rate-limit/backoff active`);
+      const pause = this.cooldown.get(host);
+      if (pause && this.clock() < pause.until) throw new Error(`${source} paused until ${new Date(pause.until).toISOString().slice(11, 16)}Z after ${pause.reason} (backoff active)`);
       const delay = (this.next.get(host) ?? 0) - this.clock();
       if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
       this.next.set(host, this.clock() + this.spacingMs);
       let response: Response;
       try { response = await this.transport(url, { headers: { "User-Agent": "PlanIT-Control/0.1 (field-safety prototype)", ...headers }, signal: AbortSignal.timeout(15000) }); }
-      catch { this.cooldown.set(host, this.clock() + MINUTE); throw new Error(`${source} request failed or timed out`); }
+      catch {
+        const failures = (this.failures.get(host) ?? 0) + 1; this.failures.set(host, failures);
+        if (failures >= FAILURES_BEFORE_PAUSE) this.cooldown.set(host, { until: this.clock() + MINUTE, reason: "repeated timeouts" });
+        throw new Error(`${source} request failed or timed out`);
+      }
+      this.failures.delete(host);
       if (!response.ok) {
         const retry = response.headers.get("Retry-After"), seconds = retry === null ? NaN : Number(retry);
         const retryMs = Number.isFinite(seconds) ? seconds * 1000 : retry ? Date.parse(retry) - this.clock() : NaN;
-        if (response.status === 429 || response.status >= 500) this.cooldown.set(host, this.clock() + Math.max(MINUTE, Number.isFinite(retryMs) ? Math.min(DAY, retryMs) : response.status === 429 ? HOUR : 5 * MINUTE));
+        if (response.status === 429 || response.status >= 500) this.cooldown.set(host, { until: this.clock() + Math.max(MINUTE, Number.isFinite(retryMs) ? Math.min(DAY, retryMs) : response.status === 429 ? HOUR : 5 * MINUTE), reason: `HTTP ${response.status}` });
         throw new Error(`${source} HTTP ${response.status}`);
       }
-      if (response.headers.get("X-RateLimit-Remaining") === "0") this.cooldown.set(host, this.clock() + HOUR);
+      if (response.headers.get("X-RateLimit-Remaining") === "0") this.cooldown.set(host, { until: this.clock() + HOUR, reason: "quota exhausted" });
       const body = await response.text();
       if (body.length > 8_000_000) throw new Error(`${source} response exceeds bounded payload limit`);
       return body;

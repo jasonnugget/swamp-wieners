@@ -1,6 +1,6 @@
 # Continuous hazard scoring
 
-`continuous-risk-4` defines numerical scoring; `continuous-policy-4` defines task controls. Configuration lives in `shared/risk-config.ts`, pure scoring in `shared/risk-scoring.ts`, crew semantics in `shared/crew-risk.ts`, and task policy in `shared/policy.ts`. Live snapshots, historical replay and newly generated forecast-period briefings use the same numerical functions. Existing stored briefings are immutable and retain their original policy version.
+`continuous-risk-5` defines numerical scoring; `continuous-policy-5` defines task controls. Configuration lives in `shared/risk-config.ts`, pure scoring in `shared/risk-scoring.ts`, crew semantics in `shared/crew-risk.ts`, and task policy in `shared/policy.ts`. Live snapshots, historical replay and newly generated forecast-period briefings use the same numerical functions. Existing stored briefings are immutable and retain their original policy version.
 
 ## Composite
 
@@ -22,7 +22,7 @@ All mappings use piecewise linear interpolation, clamp to 0 through 10 and prese
 | Channel | Numerical behavior |
 | --- | --- |
 | Heat | Heat index 80/90/100/103/115/125°F maps to 0/2/4/6/8/10. Apparent temperature is a lower-confidence fallback. |
-| Weather | Wind and gust speeds 10/20/30/40/50/65 mph map to 0/1/3/5/7/10. Hourly rain 0/2/10/25/50 mm maps to 0/1/4/7/10. Merge those screens with the evidence rule below. Categorical WMO thunderstorm/hail codes supply configured weather floors, without inventing lightning detection. |
+| Weather | Wind and gust speeds 10/20/30/40/50/65 mph map to 0/1/3/5/7/10. Hourly rain 0/2/10/25/50 mm maps to 0/1/4/7/10. Merge those screens with the evidence rule below. Categorical WMO thunderstorm/hail codes supply configured weather floors, without inventing lightning detection. Other valid codes (clear, cloudy, light rain) show as a 0 factor rather than unknown; they never set the channel score on their own. |
 | Soil | Percentiles 0/50/70/80/90/95/99 map to 0/1/3/5/7/9/10. The record stores percentiles as fractions from 0 to 1. Prefer a supplied percentile, then surface training anchors, then a low-confidence absolute-moisture fallback. |
 | Flood | Combine rainfall 35%, gauge 45%, mapped exposure 20%, renormalizing available components. Rain combines 1h/24h/7d screens at 40/40/20%. Gauge combines stage percentile and stage trend at 80/20%. Trend units are meters/hour. Floodplain membership supplies a static screen of 4; verified non-membership supplies 0. |
 | Wildfire | Combine active-fire distance 50%, radiative power 20%, detection recency 15%, wind 10%, and dryness 5%, renormalizing available components. Distance alone maps 80/30/10/3/0 miles to 1/3/6/9/10, but the other factors change the result when available. A fire-specific score requires a located fire; weather alone does not establish one. |
@@ -63,13 +63,47 @@ This retains the stronger evidence with small bounded reinforcement. Environment
 
 ## Policy and confidence
 
-A channel score of 7 is an explicit prototype restriction rule, not an automatic hold. Independent rules preserve heat controls at 103°F and wind controls at 50 km/h, even where the new continuous curve has a lower numerical score. Soil restrictions retain the training 90th-percentile screen. Named official alerts restrict affected outdoor tasks; legacy Extreme-alert evidence retains its existing hold rule. A ten-mile detected strike independently holds mobilization and installation until thirty minutes after the latest qualifying strike. Future or outside-radius strikes do not extend that timer. Preparation is available unless a report explicitly affects it.
+A channel score of 7 is an explicit prototype restriction rule. An environmental or learned channel score of 9 or more holds that channel's field tasks (see [guardrails](#learned-hazards-and-guardrails)). Independent rules preserve heat controls at 103°F and wind controls at 50 km/h, even where the new continuous curve has a lower numerical score. Soil restrictions retain the training 90th-percentile screen. Named official alerts restrict affected outdoor tasks; legacy Extreme-alert evidence retains its existing hold rule. A ten-mile detected strike independently holds mobilization and installation until thirty minutes after the latest qualifying strike. Future or outside-radius strikes do not extend that timer. Preparation is available unless a report explicitly affects it.
 
 Crew-selected tasks stay HOLD until resolution. Confirmed JEV MONITOR cannot release them; RESTRICT or HOLD can add controls to other affected tasks. The score alone never extends a lightning countdown or clears an override. Canonical decision channels retain mathematical severity, while their status can independently say HOLD.
 
 Channel confidence reflects available factor weights, nested rain/gauge completeness and source quality. Apparent-temperature fallback is .7; soil training anchors .7; uncalibrated soil .35; frozen model evidence .65; forecast lightning .5. These are heuristic evidence weights, not statistically calibrated probabilities. Snapshot confidence is the lesser of field coverage and the channel-confidence mean weighted by `1 + channelScore`; unknown channels remain in the confidence denominator with weight 1. It therefore cannot claim high completeness when primary feeds are disconnected.
 
 The existing 17-field coverage contract remains separate from confidence. Additional ML and crew scoring factors do not inflate environmental observation coverage; usable normalized provider forecast fields count as inputs. Consumers must present risk, coverage/confidence, drivers and operational overrides together. USGS, FEMA and public wildlife now supply provider evidence; FIRMS has keyless regional downloads and optional keyed area queries; live lightning network access remains unavailable by default. Provider expiry and per-field source confidence constrain scoring. See [source integration details](environment-providers.md). No fabricated readings fill unavailable sources.
+
+## Learned hazards and guardrails
+
+HazardCast (`shared/hazard-model.ts`, [model evaluation](models.md#hazardcast-learned-next-day-hazards-and-site-index)) supplies calibrated next-day probabilities for wind, flood, thunderstorm, fire activity and heat events at the original 50 model plants (39 fitted, 10 excluded from fitting, and Stock Island, which has no features and stays unknown).
+
+**Channel factors.** Each probability becomes a 0–10 score through `scoreAnchors` and is added as a `forecast` factor to its channel:
+
+| Factor | Channel |
+| --- | --- |
+| `windCast` | weather |
+| `floodCast` | flood |
+| `stormCast` | lightning |
+| `fireCast` | wildfire |
+| `heatEventCast` | heat |
+
+- The factor is merged with `mergeEvidence`, so a learned score can raise a channel but never lower rule, observation or alert evidence.
+- Live evidence must be fetched within `hazardModel.fetchTtlHours` (3 h), issued before now, and cover the site-local date. Factor confidence is 0.7.
+- Historical predictions enter only demo decisions and briefings, labelled `historical`. They never enter live scoring.
+- Soil remains GroundCast. Wildlife remains crew and public evidence.
+
+**Learned site index.** When fresh OverallCast evidence exists, the site `risk` is `max(OverallCast score, highest channel score)`.
+- `explanation.learned` carries the probability, the monthly base rate, per-hazard log-odds contributions and the rule composite.
+- The learned index never sits below the worst single channel.
+- Without HazardCast evidence (catalog plants, stale or missing forecasts), the dominant-plus-compounding formula above remains the fallback.
+
+**Guardrails** (`policy.holdScore` 9) can only tighten decisions:
+
+- An environmental or learned channel score ≥ 9 sets that channel to HOLD for its usual tasks: heat stops installation, soil stops mobilization, other channels stop both. Preparation stays available.
+- OverallCast index ≥ 9 holds mobilization and installation.
+- Crew severity is excluded from the score guardrail (`HazardScore.environmentScore`). Crew holds still apply only to the tasks the crew selected.
+- A low prediction never clears a detected-strike countdown, an official alert, a crew hold, or UNKNOWN coverage. A learned score can raise a channel's status, but cannot change UNKNOWN to AVAILABLE.
+- Score ≥ 7 restricts, as before. The UI labels AVAILABLE/RESTRICTED/HOLD as GO/CAUTION/NO-GO.
+
+On 2025 validation and calibration days, learned scores ≥ 9 occurred on 0.08% of wind days, 1.31% of heat days and 0.01% of site-index days, and never for flood, thunderstorm or fire (`evaluation.<hazard>.scoreShare`). A rule-only consequence of the new hold is that a flash-flood warning floor (9) and soil at the training 95th percentile anchor (9) now hold.
 
 ## Supervisor presentation
 

@@ -1,6 +1,6 @@
 // Prototype screening calibration. Values are not regulatory exposure limits.
 export const RISK_CONFIG = {
-  version: "continuous-risk-4",
+  version: "continuous-risk-5",
   // WMO codes are categorical: conditions supply floors, never ordinal code interpolation.
   weatherCodeFloors: { 45: 2, 48: 2, 56: 3, 57: 4, 65: 4, 66: 4, 67: 5, 82: 5, 86: 5, 95: 5, 96: 7, 99: 8 } as Record<number, number>,
   capeNormalizationJkg: 3000,
@@ -38,5 +38,8 @@ export const RISK_CONFIG = {
     rain: [0.4, 0.4, 0.2], gauge: [0.8, 0.2], wildfire: [0.5, 0.2, 0.15, 0.1, 0.05], wildlife: [0.6, 0.4],
   },
   alertFloors: { watch: 4, advisory: 3, warning: 7, floodWarning: 8, flashFloodWarning: 9, redFlag: 6 },
-  policy: { restrictScore: 7, heatRestrictF: 103, windRestrictMph: 50 / 1.609344, rainRestrictMm: 25 },
+  // HazardCast: learned next-day probabilities. Models only raise channel evidence.
+  hazardModel: { fetchTtlHours: 3, confidence: 0.7 },
+  // holdScore: an extreme channel or learned index forces HOLD on affected field tasks.
+  policy: { holdScore: 9, restrictScore: 7, heatRestrictF: 103, windRestrictMph: 50 / 1.609344, rainRestrictMm: 25 },
 } as const;

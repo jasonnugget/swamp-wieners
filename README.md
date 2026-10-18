@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. The API listens on port 3001. Vite waits for `/api/health` before accepting browser requests, preventing proxy connection errors during initial startup. If readiness fails within thirty seconds, check the API process output. For the production build:
+Open http://localhost:5180. The API listens on port 3001. Vite waits for `/api/health` before accepting browser requests, preventing proxy connection errors during initial startup. If readiness fails within thirty seconds, check the API process output. For the production build:
 
 ```bash
 npm run build
@@ -20,7 +20,7 @@ npm start
 
 Open http://127.0.0.1:3001. SQLite records and photos live in the ignored `runtime/` directory. The API binds to localhost by default. To try a phone on a trusted local network, set `HOST=0.0.0.0` and use the Vite development URL printed for that network. This hackathon prototype has no account authentication; keep it on a trusted network.
 
-Copy [.env.example](.env.example) to `.env` to configure optional providers and Jev access. NASA FIRMS uses keyless regional downloads by default; `FIRMS_MAP_KEY` enables smaller area queries; `USGS_API_KEY` is optional. FEMA and public wildlife queries need no key in the implemented adapters. Lightning defaults to unavailable until a trusted source is supplied. See [provider setup and limits](docs/environment-providers.md).
+Copy [.env.example](.env.example) to `.env` to configure optional providers and Jev access. NASA FIRMS uses keyless regional downloads by default; `FIRMS_MAP_KEY` enables smaller area queries; `USGS_API_KEY` is optional. FEMA and public wildlife queries need no key in the implemented adapters. Lightning defaults to unavailable until a trusted source is supplied. `SITE_SCOPE=trained` loads only the 50 HazardCast model plants instead of the full 285-plant catalog; stored records for other plants are kept but not sent. See [provider setup and limits](docs/environment-providers.md).
 
 Run `npm run data:complete` to refresh all plants and write a field-by-field [data-completion export](docs/site-data-completion.md) under `runtime/site-data/`. Real values take priority. All 34 preview fields receive source values or labeled synthetic demo values, including hypothetical event/gauge fields; synthetic completion never feeds live risk, task policy or model training. Conditions and Site intelligence show these estimates by default with a source-only switch. Use `npm run data:complete -- --offline` to rebuild the full export from existing source records.
 

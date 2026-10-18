@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { providerMetadataSchema, fieldEvidenceSchema } from "./providers";
 import { RISK_CONFIG } from "./risk-config";
-import type { Category, Decision, HazardChannel, Task } from "./types";
+import type { Category, Decision, HazardChannel, HazardKey, Task } from "./types";
 
 const number = z.number().finite().nullable();
 const positive = z.number().finite().nonnegative().nullable();
@@ -47,10 +47,13 @@ export interface RiskExplanation {
   compounding: { hazard: Category; score: number; strength: number }[];
   secondaryStrength: number;
   uplift: number;
+  // Present when OverallCast supplied the site index; the rule formula above is then the fallback.
+  learned?: { model: string; date: string; probability: number; climatology: number; score: number; ruleComposite: number | null; contributions: Record<HazardKey, number> };
 }
 export interface HazardScore {
   hazard: Category;
   score: number | null;
+  environmentScore?: number | null; // before crew evidence; drives the extreme-score hold guardrail
   confidence: number; // 0–1 completeness of channel inputs, not statistical probability
   evidence: string[];
   factors: RiskFactor[];
@@ -77,15 +80,20 @@ export interface SiteRiskSnapshot {
   observation: SiteObservationV1;
   tasks: Decision["tasks"];
   activeOverrides: SafetyOverride[];
-  mlCoverage: { heatCast: boolean; groundCast: boolean };
+  mlCoverage: { heatCast: boolean; groundCast: boolean; hazardCast: boolean };
 }
 
 export { calculateCompositeRisk as compositeRisk } from "./risk-scoring";
+// Crew severity is excluded from the hold guardrail: crew holds apply only to the tasks the crew selected.
 export function channelDecisions(scores: HazardScore[]): HazardChannel[] {
-  return scores.map(c => ({
-    category: c.hazard, severity: c.score,
-    status: c.score === null ? "UNKNOWN" : c.score >= RISK_CONFIG.policy.restrictScore ? "RESTRICTED" : "AVAILABLE",
-    title: c.score === null ? "Coverage unavailable" : `${c.score.toFixed(1)}/10 environmental screen`,
-    detail: c.evidence.join(" "), mode: "live", source: "Normalized site environment v1",
-  }));
+  return scores.map(c => {
+    const environment = c.environmentScore === undefined ? c.score : c.environmentScore;
+    const extreme = environment !== null && environment >= RISK_CONFIG.policy.holdScore;
+    return {
+      category: c.hazard, severity: c.score,
+      status: c.score === null ? "UNKNOWN" : extreme ? "HOLD" : c.score >= RISK_CONFIG.policy.restrictScore ? "RESTRICTED" : "AVAILABLE",
+      title: c.score === null ? "Coverage unavailable" : extreme ? `${c.score.toFixed(1)}/10 extreme screen · hold` : `${c.score.toFixed(1)}/10 environmental screen`,
+      detail: c.evidence.join(" "), mode: "live", source: "Normalized site environment v1",
+    };
+  });
 }

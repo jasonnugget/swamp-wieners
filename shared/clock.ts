@@ -1,13 +1,20 @@
+// Formatter construction dominates the cost of this call; reuse one per timezone.
+const formatters = new Map<string, Intl.DateTimeFormat>();
 export function localParts(now: number, timezone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    hourCycle: "h23",
-    minute: "2-digit",
-  }).formatToParts(now);
+  let format = formatters.get(timezone);
+  if (!format) {
+    format = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      hourCycle: "h23",
+      minute: "2-digit",
+    });
+    formatters.set(timezone, format);
+  }
+  const parts = format.formatToParts(now);
   const p = Object.fromEntries(parts.map((x) => [x.type, x.value]));
   return {
     date: `${p.year}-${p.month}-${p.day}`,

@@ -17,7 +17,7 @@ test("canonical risk API covers every plant and preserves compatibility endpoint
       expect(risks[site.id].observation.provenance.providers[provider]).toHaveProperty("fetchedAt");
       expect(risks[site.id].observation.provenance.providers[provider]).toHaveProperty("validUntil");
     }
-    expect(risks[site.id].scoringVersion).toBe("continuous-risk-4");
+    expect(risks[site.id].scoringVersion).toBe("continuous-risk-5");
     expect(risks[site.id].explanation).toHaveProperty("primary");
     expect(risks[site.id].explanation.compounding).toBeInstanceOf(Array);
     for (const channel of risks[site.id].channels) {

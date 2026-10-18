@@ -182,11 +182,16 @@ test("confidence distinguishes sparse low risk from observed low risk", () => {
   assert.equal(channels.find(c => c.hazard === "flood")!.confidence, 0);
   assert.equal(channels.find(c => c.hazard === "flood")!.score, null);
 });
-test("score 10 does not automatically HOLD; detected lightning holds reset and expire independently", () => {
+test("an extreme environmental score holds affected tasks; detected lightning holds reset and expire independently", () => {
   const f = forecast(); f.hours[0].heat = [120, 125, 130];
   const d = decide(site, f, [], [], [], now, [0.1, 0.3, 0.4]);
   assert.equal(d.channels.find(c => c.category === "heat")!.severity, 10);
-  assert.equal(d.tasks.find(t => t.task === "installation")!.state, "RESTRICTED");
+  assert.equal(d.channels.find(c => c.category === "heat")!.status, "HOLD");
+  assert.equal(d.tasks.find(t => t.task === "installation")!.state, "HOLD");
+  // Heat affects installation only; the guardrail follows the channel's task scope.
+  assert.notEqual(d.tasks.find(t => t.task === "mobilization")!.state, "HOLD");
+  f.hours[0].heat = [100, 105, 110];
+  assert.equal(decide(site, f, [], [], [], now, [0.1, 0.3, 0.4]).tasks.find(t => t.task === "installation")!.state, "RESTRICTED");
   const strike = { id: "s", mode: "live" as const, latitude: site.latitude, longitude: site.longitude, time: iso() };
   const held = siteRisk(site, undefined, now, [], [strike], [], false);
   assert.equal(held.decision.lightningUntil, iso(1800000));
@@ -252,4 +257,15 @@ test("modeled thunderstorm/hail conditions raise a weather floor without inventi
   assert.equal(scoreWeather(o.weather), 8);
   assert.equal(scoreLightning(o.lightning), null);
   assert.equal(scoreChannels(o, { now }).find(c => c.hazard === "weather")!.factors.find(f => f.key === "weather.weatherCode")!.value, 99);
+});
+
+test("an ordinary weather code is known evidence of no condition floor, not an unknown", () => {
+  const o = empty(); o.weather.windMph = 12; o.weather.weatherCode = 3;
+  const weather = () => scoreChannels(o, { now }).find(c => c.hazard === "weather")!;
+  assert.equal(weather().factors.find(f => f.key === "weather.weatherCode")!.score, 0);
+  assert.equal(weather().score, scoreWeather({ ...o.weather, weatherCode: null }));
+  o.weather.weatherCode = null;
+  assert.equal(weather().factors.find(f => f.key === "weather.weatherCode")!.score, null);
+  const blank = empty(); blank.weather.weatherCode = 0;
+  assert.equal(scoreWeather(blank.weather), null);
 });

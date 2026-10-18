@@ -1259,6 +1259,142 @@ main {
 .lab-metrics .metric strong {
   font-size: 28px;
 }
+.segmented {
+  display: flex;
+  gap: 4px;
+}
+.segmented button {
+  background: #fff;
+  border: 1px solid #e3e9da;
+  border-radius: 6px;
+  padding: 7px 11px;
+  font-size: 11px;
+}
+.segmented button.active {
+  border-color: #abc58b;
+  background: #edf5e2;
+  color: #58783e;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.hazard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.hazard-table th,
+.hazard-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+}
+.hazard-table thead th {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.hazard-table tbody tr {
+  cursor: pointer;
+}
+.hazard-table tbody tr.selected {
+  background: #f3f8ec;
+}
+.hazard-table small {
+  color: var(--orange);
+  font-size: 9px;
+}
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+.reliability {
+  width: 100%;
+  max-width: 420px;
+  display: block;
+  margin: 6px auto 10px;
+}
+.reliability .axis {
+  stroke: var(--line);
+}
+.reliability .diagonal {
+  stroke: #c6cfbd;
+  stroke-dasharray: 4 4;
+}
+.reliability .observed {
+  stroke: var(--green);
+  stroke-width: 2;
+  fill: none;
+}
+.reliability circle {
+  fill: var(--green);
+}
+.reliability text {
+  font-size: 9px;
+  fill: var(--muted);
+}
+.replay-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.replay-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.replay-card p,
+.replay-card small {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.replay-card button {
+  justify-self: start;
+  margin-top: 4px;
+}
+.hazard-forecast-panel {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.hazard-forecast {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.hazard-forecast > div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 3px;
+}
+.hazard-forecast span,
+.hazard-forecast small {
+  font-size: 11px;
+  color: var(--muted);
+}
+.hazard-forecast strong {
+  font-size: 20px;
+}
+.hazard-forecast [data-state="HOLD"] {
+  border-color: var(--danger);
+}
+.hazard-forecast [data-state="RESTRICTED"] {
+  border-color: var(--orange);
+}
 .lab-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);

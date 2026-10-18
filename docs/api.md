@@ -65,7 +65,8 @@ The reviewer name must contain 1 to 80 characters and the explanation 5 to 1,000
 | --- | --- | --- |
 | `POST /api/demo/strike` | `{ "siteId": "621", "distanceMiles": 6 }` | Persisted simulated `Strike`; requires demo mode. Distance defaults to 6 and accepts 0 to 50 miles |
 | `POST /api/clock` | `{ "mode": "demo", "advanceMinutes": 10 }` | Updated snapshot after clock change and scheduler check. Mode is `demo` or `real`; optional advancement is 0 to 1,440 minutes |
-| `POST /api/demo/reset` | `{}` | Clears demonstration reports, strikes, alerts, briefings, stored forecasts, and feed status, then restores the bundled demo clock |
+| `POST /api/demo/replay` | `{ "event": 0 }` | Sets the demo clock to 6 PM site-local the evening before entry `event` of `public/data/hazard-replay.json` and returns the snapshot with that briefing. Unknown index returns 400. Historical data only |
+| `POST /api/demo/reset` | `{}` | Clears demonstration reports, strikes, alerts, briefings, stored forecasts and hazard forecasts, and feed status, then restores the bundled demo clock |
 
 Clock advancement affects stored demo time; real mode follows the system clock. The clock and reset endpoints affect the shared local workspace. Reset is not a substitute for resolving a real report. Teams, environmental weather, NOAA screenings, provider records/caches and uploaded files survive reset. Reset still clears stored strike/alert events, including any recorded live events in those record kinds; it is an explicit demonstration action.
 
@@ -94,6 +95,27 @@ These compatibility responses use actual system/provider time and do not drive t
 `GET /api/sites/risks` returns a site-ID map of `SiteRiskSnapshot`; `GET /api/sites/:id/risk` returns one snapshot or HTTP 404 for an unknown site. `GET /api/snapshot` adds the same map as `siteRisks`. These reads use persisted provider evidence immediately; unavailable evidence produces null scores rather than HTTP errors or invented zeros. Site refresh now also collects canonical environmental inputs.
 
 Snapshots include version, site ID, system-clock `generatedAt`, policy version, composite risk, confidence (0 to 1), seven channel scores/evidence, normalized observation with field coverage (0 to 100), task decisions, independent active overrides and ML availability. Observation `validAt`/`fetchedAt` are nullable when no weather was obtained. Observation provenance mode is `live` for current snapshots and `forecast` for projected atlas frames; per-source modes retain LIVE/DEMO/FORECAST/STATIC distinctions. Real-clock legacy decisions use canonical risk/tasks; demo decisions and forecast-period briefings retain compatibility behavior. Canonical live timestamps remain independent of the demo clock. See [contract details](environment-pipeline.md).
+
+## Learned hazard forecasts
+
+`Snapshot.hazardForecasts` maps a site ID to a `HazardForecast` with these fields:
+- `siteId`, `mode`, `fetchedAt`, `issuedAt` and `modelVersion`.
+- `days`: at most today and tomorrow. Each day has:
+  - `hazards.{wind,flood,lightning,fire,heat}` as `{probability, score, climatology}`.
+  - `overall` as `{probability, score, climatology, contributions}`.
+
+Which forecasts appear:
+- **Demo mode:** bundled `historical` test-period predictions.
+- **Real mode:** `live` forecasts stored by site refresh. These expire after three hours.
+- **Catalog-only plants:** no entry.
+
+`SiteRiskSnapshot` changes:
+- `mlCoverage.hazardCast` is true when fresh learned evidence scored the snapshot.
+- `explanation.learned` is present when OverallCast supplied the index.
+- Channel factors use the keys `windCast`, `floodCast`, `stormCast`, `fireCast` and `heatEventCast`.
+- `channels[].environmentScore` is the score before crew evidence.
+
+Briefing text adds one line per learned hazard. See [guardrails](risk-scoring.md#learned-hazards-and-guardrails).
 
 ## Continuous scoring and report semantics
 

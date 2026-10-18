@@ -288,12 +288,21 @@ test("origin backoff honors 429 Retry-After, isolates origins, recovers, and bou
   let time = now, calls = 0;
   const client = new ProviderHttp(async () => { calls++; return calls === 1 ? new Response("limited", { status: 429, headers: { "Retry-After": "120" } }) : json({ ok: true }); }, () => time, 0);
   await assert.rejects(client.json("source", "https://example.test/a"), /429/);
-  await assert.rejects(client.json("source", "https://example.test/b"), /backoff/); assert.equal(calls, 1);
+  await assert.rejects(client.json("source", "https://example.test/b"), /after HTTP 429 \(backoff/); assert.equal(calls, 1);
   await client.json("other", "https://other.test/a"); assert.equal(calls, 2);
   time += 120 * MINUTE / 60; await client.json("source", "https://example.test/b"); assert.equal(calls, 3);
   let active = 0, peak = 0;
   await mapConcurrent(Array.from({ length: 285 }, (_, i) => i), 3, async () => { active++; peak = Math.max(peak, active); await Promise.resolve(); active--; });
   assert.equal(peak, 3);
+});
+test("one timeout fails only its own request; repeated timeouts pause the origin and say so", async () => {
+  let calls = 0, failing = true;
+  const client = new ProviderHttp(async () => { calls++; if (failing) throw new Error("timeout"); return json({ ok: true }); }, () => now, 0);
+  await assert.rejects(client.json("source", "https://example.test/a"), /timed out/);
+  failing = false; await client.json("source", "https://example.test/b"); assert.equal(calls, 2);
+  failing = true;
+  for (let i = 0; i < 3; i++) await assert.rejects(client.json("source", "https://example.test/c"), /timed out/);
+  await assert.rejects(client.json("source", "https://example.test/d"), /after repeated timeouts \(backoff active\)/); assert.equal(calls, 5);
 });
 test("a failed NWS refresh preserves existing unexpired warnings and a failed source leaves other evidence usable", async () => {
   const directory = mkdtempSync(join(tmpdir(), "planit-poller-")), store = new Store(directory);

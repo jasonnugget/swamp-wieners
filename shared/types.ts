@@ -108,6 +108,60 @@ export interface ModelBundle {
   };
   soilThresholds: Record<string, number[]>;
 }
+export type HazardKey = "wind" | "flood" | "lightning" | "fire" | "heat";
+export interface HazardNetwork {
+  layers: Layer[];
+  platt: [number, number];
+  positiveWeight: number;
+  labelSources: string[];
+  labelEnd: string;
+  climatology: number[]; // training-period monthly base rate, Jan..Dec
+}
+export interface HazardModelBundle {
+  version: string;
+  createdAt: string;
+  features: string[];
+  mean: number[];
+  std: number[];
+  scoreAnchors: [number, number][];
+  hazards: Record<HazardKey, HazardNetwork>;
+  overall: { inputs: HazardKey[]; coefficients: number[]; intercept: number; inputMean: number[]; labelSources: string[]; labelEnd: string; climatology: number[] };
+  siteTraits: Record<string, number[]>;
+  siteContext: Record<string, unknown>;
+  evaluation: Record<string, unknown>;
+  counts: Record<string, number>;
+  samples: { siteId: string; date: string; x: number[]; probabilities: Record<HazardKey | "overall", number> }[];
+  featureSamples: { siteId: string; date: string; soilP90: number; hours: HazardHour[]; priorRain: number[]; expected: number[] }[];
+  notes: string[];
+  source: string;
+  ruleBaselineVersion: string;
+}
+// One hour of archived/live 48h-lead forecast plus frozen HeatCast/GroundCast upper quantiles.
+export interface HazardHour {
+  time: string;
+  temperature: number;
+  humidity: number;
+  precipitation: number;
+  wind: number;
+  gust: number;
+  cape: number;
+  dewPoint: number;
+  heatcastP90: number;
+  groundcastP90: number;
+}
+export interface HazardDay {
+  date: string; // site-local calendar date
+  hazards: Record<HazardKey, { probability: number; score: number; climatology: number }>;
+  overall: { probability: number; score: number; climatology: number; contributions: Record<HazardKey, number> };
+}
+export interface HazardForecast {
+  siteId: string;
+  mode: DataMode;
+  fetchedAt: string;
+  issuedAt: string;
+  modelVersion: string;
+  days: HazardDay[];
+}
 export interface CrewTeam {
   id: string;
   name: string;
@@ -193,6 +247,7 @@ export interface Snapshot {
   clockMode: "real" | "demo";
   sites: Site[];
   forecasts: Record<string, Forecast>;
+  hazardForecasts?: Record<string, HazardForecast>; // at most today and tomorrow per site
   reports: HazardReport[];
   strikes: Strike[];
   alerts: Alert[];

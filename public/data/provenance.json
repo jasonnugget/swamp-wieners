@@ -14,5 +14,33 @@
     "Four manually selected Mississippi corridor sites have demonstration rainfall screening; floodplain membership is not verified.",
     "Demo day deliberately selected as the hero site\u2019s highest upper HeatCast prediction during July\u2013August; aggregate metrics cover the full test period."
   ],
-  "mapOutlines": "https://github.com/PublicaMundi/MappingAPI/blob/master/data/geojson/us-states.json"
+  "mapOutlines": "https://github.com/PublicaMundi/MappingAPI/blob/master/data/geojson/us-states.json",
+  "hazardCast": {
+    "version": "planit-hazard-2",
+    "features": "Archived 48h GFS daily aggregates, frozen HeatCast/GroundCast upper quantiles, FEMA NFHL and USACE NLD plant traits, NOAA CO-OPS gauge distance",
+    "labels": {
+      "stormEvents": "https://www.ncei.noaa.gov/stormevents/",
+      "nwsWarnings": "https://mesonet.agron.iastate.edu/vtec/",
+      "asos": "https://mesonet.agron.iastate.edu/request/download.phtml",
+      "tides": "https://tidesandcurrents.noaa.gov/",
+      "firms": "https://firms.modaps.eosdis.nasa.gov/"
+    },
+    "validationOnly": {
+      "osha": "https://www.osha.gov/severe-injury-reports",
+      "nexradStormCells": "https://www.ncei.noaa.gov/swdiws/"
+    },
+    "labelEnds": {
+      "wind": "2026-06-30",
+      "flood": "2026-06-30",
+      "lightning": "2026-06-30",
+      "fire": "2026-06-30",
+      "heat": "2026-09-30",
+      "overall": "2026-06-30"
+    },
+    "limitations": [
+      "Labels are official or observed hazard evidence near a plant, not confirmed on-site conditions or injuries.",
+      "FIRMS includes prescribed and agricultural burns; fire labels end 2025-12-31 without a FIRMS key.",
+      "Scores map probability through documented anchors; learned evidence only raises channel scores."
+    ]
+  }
 }

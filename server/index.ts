@@ -18,8 +18,10 @@ import { collect } from "./pipeline/collect";
 import { fetchNwsScreening } from "./integrations/nws-screening";
 import type { WeatherLocation, WeatherAtlas } from "../shared/weather";
 import { CATEGORIES, TASKS } from "../shared/policy";
+import { historicalHazardForecasts, type HistoricalHazardFile } from "../shared/hazard-model";
 import type {
   Forecast,
+  HazardModelBundle,
   CrewTeam,
   HazardReport,
   ModelBundle,
@@ -38,12 +40,18 @@ const root = resolve("."),
 const read = <T>(file: string): T =>
   JSON.parse(readFileSync(join(root, "public", file), "utf8"));
 const store = new Store(directory);
+// HazardCast is optional: without its bundle, learned hazard evidence is unavailable (unknown), not zero.
+const hazardModel = existsSync(join(root, "public", "models/hazards.json")) ? read<HazardModelBundle>("models/hazards.json") : undefined;
+// SITE_SCOPE=trained loads and polls only the 50 HazardCast model plants (no catalog additions).
+const catalog = read<Site[]>("data/sites.json");
 const engine = new Engine(
   store,
-  read<Site[]>("data/sites.json"),
+  process.env.SITE_SCOPE === "trained" ? catalog.filter(site => !site.catalogOnly) : catalog,
   read<Record<string, Forecast>>("data/forecasts.json"),
   read<ModelBundle>("models/bundle.json"),
   read("data/scenario.json"),
+  hazardModel && existsSync(join(root, "public", "data/hazard-forecasts.json"))
+    ? historicalHazardForecasts(hazardModel, read<HistoricalHazardFile>("data/hazard-forecasts.json")) : {},
 );
 const hazardProviders = createProviders(store, () => engine.now());
 const providerPoller = new ProviderPoller(store, engine.sites, hazardProviders, broadcast);
@@ -354,6 +362,15 @@ app.post("/api/clock", (req, res) => {
   broadcast();
   res.json(engine.snapshot());
 });
+// Replay a real 2026 test event from the evening-before briefing. Historical data only.
+app.post("/api/demo/replay", (req, res) => {
+  const input = z.object({ event: z.number().int().min(0) }).safeParse(req.body);
+  const replay = existsSync(join(root, "public", "data/hazard-replay.json")) ? read<{ events: { siteId: string; briefingAt: string }[] }>("data/hazard-replay.json").events : [];
+  if (!input.success || !replay[input.data.event]) return res.status(400).json({ error: "Unknown replay event" });
+  engine.setClock("demo", replay[input.data.event].briefingAt);
+  broadcast();
+  res.json(engine.snapshot());
+});
 app.post("/api/demo/reset", (_req, res) => {
   engine.reset();
   broadcast();
@@ -365,12 +382,14 @@ async function updateFeeds(site: Site, weather = true) {
   const now = Date.now();
   const results = await Promise.allSettled([
     weather && !site.catalogOnly
-      ? fetchWeather(site, engine.models, now)
+      ? fetchWeather(site, engine.models, now, hazardModel)
       : weather && site.catalogOnly ? refreshScreening(site).then(() => undefined) : Promise.resolve(undefined),
     providerPoller.refresh(site, "nws"),
   ]);
-  if (results[0].status === "fulfilled" && results[0].value)
-    store.put("forecast", site.id, results[0].value);
+  if (results[0].status === "fulfilled" && results[0].value) {
+    store.put("forecast", site.id, results[0].value.forecast);
+    if (results[0].value.hazard) store.put("hazard-forecast", site.id, results[0].value.hazard);
+  }
   results.forEach((r, i) => {
     if (i === 1 || !weather) return;
     store.put("feed", `${site.id}:${i === 0 ? "weather" : "nws"}`, {

@@ -14,7 +14,8 @@ import type {
 import { scoreHeat, scoreWind, scoreWeather, scoreSoil, scoreFlood, scoreLightning, calculateCompositeRisk, mergeEvidence, alertFloor } from "./risk-scoring";
 import { crewEvidence, crewTaskEffects } from "./crew-risk";
 import { RISK_CONFIG } from "./risk-config";
-export const POLICY_VERSION = "continuous-policy-4";
+import { HAZARD_CHANNELS, HAZARD_KEYS, HAZARD_NAMES, describeHazard, learnedIndex, type HazardEvidence } from "./hazard-model";
+export const POLICY_VERSION = "continuous-policy-5";
 export const TASKS: Task[] = ["mobilization", "installation", "preparation"];
 export const CATEGORIES: Category[] = [
   "weather",
@@ -84,6 +85,7 @@ export function decide(
   screeningNow = now,
   screeningHorizonHours = 24,
   environmentalChannels?: HazardChannel[],
+  hazard?: HazardEvidence | null,
 ): Decision {
   const active = reports.filter(
     (r) => r.siteId === site.id && r.status === "open" && Date.parse(r.createdAt) <= now,
@@ -224,6 +226,19 @@ export function decide(
           source: "Rainfall + curated river-site flag",
         });
     }
+    // HazardCast raises severity and status; it never clears UNKNOWN coverage or an existing control.
+    const learned = hazard && !environmentalChannels ? HAZARD_KEYS.find(k => HAZARD_CHANNELS[k] === category) : undefined;
+    if (learned) {
+      const h = hazard!.day.hazards[learned], name = HAZARD_NAMES[learned], empty = base.severity === null;
+      const modelStatus: TaskState = h.score >= RISK_CONFIG.policy.restrictScore ? "RESTRICTED" : "AVAILABLE";
+      const note = `${name}: ${describeHazard(learned, h)} (${h.score.toFixed(1)}/10, ${hazard!.mode} learned forecast).`;
+      Object.assign(base, {
+        severity: mergeEvidence(base.severity, h.score),
+        status: rank[modelStatus] > rank[base.status] ? modelStatus : base.status,
+        ...(empty ? { title: `${h.score.toFixed(1)}/10 · ${name}`, detail: `${note} Live ${category} coverage is not connected; verify on site.`, mode: hazard!.mode, source: `${name} ${hazard!.modelVersion} · learned next-day probability` }
+          : { detail: `${base.detail} ${note}` }),
+      });
+    }
     if (matching.length) {
       const worst = matching.sort((a, b) => b.severity - a.severity)[0];
       Object.assign(base, {
@@ -235,6 +250,10 @@ export function decide(
         source: "National Weather Service",
       });
     }
+    // Guardrail: an extreme environmental or learned score stops the channel's field tasks.
+    // Crew severity merges after this point; channelDecisions() applies the same rule to live channels.
+    if (!environmentalChannels && base.severity !== null && base.severity >= RISK_CONFIG.policy.holdScore && base.status !== "HOLD")
+      Object.assign(base, { status: "HOLD", title: `${base.title} · extreme ${base.severity.toFixed(1)}/10 hold` });
     taskChannels.push({ ...base });
     if (matchingReports.length) {
       if (!environmentalChannels) base.severity = mergeEvidence(base.severity, Math.max(...matchingReports.map(r => crewEvidence(r, now).score)));
@@ -243,6 +262,8 @@ export function decide(
     }
     return base;
   });
+  const learnedScore = learnedIndex(channels.map(c => c.severity), hazard ?? null);
+  const index = learnedScore ?? calculateCompositeRisk(channels.map(c => ({ score: c.severity })));
   const tasks = TASKS.map((task) => {
     let state: TaskState = "AVAILABLE";
     const reasons: string[] = [];
@@ -260,11 +281,13 @@ export function decide(
     for (const report of active)
       for (const effect of crewTaskEffects(report, now))
         if (effect.tasks.includes(task)) apply(effect.state, `Crew report ${report.id.slice(0, 8)}: ${report.description}`);
+    if (task !== "preparation" && index !== null && learnedScore !== null && index >= RISK_CONFIG.policy.holdScore)
+      apply("HOLD", `OverallCast site index ${index.toFixed(1)}/10 is extreme (${Math.round(hazard!.day.overall.probability * 100)}% chance of warning-level weather near the site).`);
     return { task, state, reasons };
   });
   return {
     siteId: site.id,
-    index: calculateCompositeRisk(channels.map(c => ({ score: c.severity }))),
+    index,
     policyVersion: POLICY_VERSION,
     tasks,
     channels,

@@ -15,7 +15,7 @@ Adapters collect and validate evidence; they do not calculate the final site-ris
 | `wildlife.ts` | Filtered recent public iNaturalist mammal/reptile sightings with low-confidence contextual relevance |
 | `lightning.ts` | Swappable detector interface, unavailable default, explicitly recorded/live or demo events |
 | `provider.ts` | Typed results, persistent cache, in-flight deduplication, HTTP pacing/timeouts/backoff |
-| `feeds.ts` | Fixed-48-hour-lead model feature collection; official-alert compatibility re-export |
+| `feeds.ts` | Fixed-48-hour-lead model feature collection, live HazardCast days for trained plants; official-alert compatibility re-export |
 | `jev.ts` | Validated semantic crew classification or an explicit unavailable result |
 
 ## Environmental collection
@@ -23,6 +23,8 @@ Adapters collect and validate evidence; they do not calculate the final site-ris
 Open-Meteo supplies current estimates plus 168 past hours and 73 forecast hours. Temperature is Fahrenheit, wind mph, and rain millimeters; current accumulation intervals are converted to equivalent hourly rates. Humidity, gusts, soil moisture and CAPE are requested consistently for all sites. These are gridded model estimates, not field instruments. Operational normalization checks completeness and freshness before computing rolling rainfall.
 
 The coordinate cache holds up to 1,000 entries for fifteen minutes, deduplicates pending batches and preserves timestamps on stale fallback. HTTP 429 establishes a shared cooldown; `Retry-After` is bounded to one minute through one hour, with a fifteen-minute default. Persistent failed collections remain stale/unknown in scoring. The compatibility weather API still serves fifty sample coordinates; the supervisor map uses `/api/risk/atlas` and never calls those weather routes.
+
+Keyed and public providers share `ProviderHttp`: one paced queue per origin. HTTP 429 and 5xx responses pause that origin (`Retry-After` when given, else one hour or five minutes), as does `X-RateLimit-Remaining: 0` (one hour). A single timeout fails only its own request; three in a row pause the origin for one minute. Requests refused during a pause say until when and why, e.g. `NOAA NWPS paused until 14:05Z after HTTP 429 (backoff active)`.
 
 NWS official alerts are separate from continuous weather variables. `nws-screening.ts` resolves grids, converts supported units and preserves issue/fetch/valid times. Marine locations use raw grid duration intervals. These deterministic screenings are not custom-model quantiles. Canonical normalization uses only a fresh matching hour to fill missing heat/wind; replay/forecast-period adapters retain their own selected windows.
 

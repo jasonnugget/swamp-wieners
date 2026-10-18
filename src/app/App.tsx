@@ -41,6 +41,7 @@ import LoadingScreen from "./LoadingScreen";
 import HomePage from "./HomePage";
 import { pageHref, pageLabels, readPage, type Page } from "./navigation";
 import Reports, { ReportForm } from "../features/reports/Reports";
+import HazardForecast from "../components/HazardForecast";
 const ModelLab = lazy(() => import("../features/model-lab/ModelLab"));
 const icons: Record<Category, typeof Wind> = {
   weather: Wind,
@@ -219,7 +220,7 @@ export default function App() {
         <main id="workspace-content" className="overflow-x-hidden w-full max-w-full" tabIndex={-1}>
           {page === "home" && <HomePage onNavigate={navigateLink} snapshot={snapshot} cached={offline} selectedSite={site} onSelectSite={setSelected} />}
           {page !== "home" && page !== "atlas" && <div className="page-heading">
-            <div><p className="section-caption">PlanIT / {pageLabels[page]}</p><h1>{page === "intelligence" ? "The work ahead." : page === "lab" ? "Know what your model knows." : page === "reports" ? "Local knowledge that stays." : "Tomorrow starts with today."}</h1><p>{page === "intelligence" ? "Review hazards, unknown coverage, and task restrictions before equipment mobilizes." : page === "lab" ? "Explore heat and ground-wetness estimates. Test local calibration without changing operational decisions." : page === "reports" ? "Pin what the crew sees, document affected tasks, and preserve the report for the next shift." : "Next-day conditions, task restrictions, and unresolved reports, prepared at 6 PM site-local time."}</p></div>
+            <div><p className="section-caption">PlanIT / {pageLabels[page]}</p><h1>{page === "intelligence" ? "The work ahead." : page === "lab" ? "Know what your model knows." : page === "reports" ? "Local knowledge that stays." : "Tomorrow starts with today."}</h1><p>{page === "intelligence" ? "Review hazards, unknown coverage, and task restrictions before equipment mobilizes." : page === "lab" ? "Explore heat and ground-wetness estimates and learned next-day hazard models. Test local calibration without changing operational decisions." : page === "reports" ? "Pin what the crew sees, document affected tasks, and preserve the report for the next shift." : "Next-day conditions, task restrictions, and unresolved reports, prepared at 6 PM site-local time."}</p></div>
             <span className="workspace-connection">{offline ? "Cached workspace" : snapshot.clockMode === "demo" ? "Historical demo" : "Connected"}<span>{date}</span></span>
           </div>}
           {error && (
@@ -644,6 +645,7 @@ export default function App() {
                     );
                   })}
                 </div>
+                <HazardForecast forecast={snapshot.hazardForecasts?.[site.id]} decision={decision} />
               </section>
               {snapshot.siteRisks[site.id] && <section className="site-observation-panel" aria-label="Current environmental evidence">
                 <header><div><h2>Every reading, in context.</h2><p>Current environmental evidence for {site.name}. Model forecasts and replay decisions retain their own time periods above.</p></div><div><strong>{snapshot.siteRisks[site.id].observation.coverage.percent.toFixed(0)}%</strong><p>source coverage</p></div></header>
@@ -694,6 +696,12 @@ export default function App() {
                 site={site}
                 bundle={bundle}
                 forecast={forecast}
+                onReplay={(event, siteId) =>
+                  void action("/demo/replay", { event }, "Demo clock moved to the evening-before briefing. Historical replay.").then(() => {
+                    setSelected(siteId);
+                    navigate("briefings");
+                  })
+                }
               />
             </Suspense>
           ))}

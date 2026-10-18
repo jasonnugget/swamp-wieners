@@ -2,6 +2,7 @@ import type { Alert, Category, Forecast, HazardReport } from "./types";
 import type { HazardScore, RiskExplanation, RiskFactor, SiteObservationV1 } from "./risk";
 import { RISK_CONFIG as C } from "./risk-config";
 import { crewEvidence } from "./crew-risk";
+import { HAZARD_CHANNELS, HAZARD_KEYS, HAZARD_NAMES, describeHazard, type HazardEvidence } from "./hazard-model";
 
 export const clampScore = (n: number) => Math.max(0, Math.min(10, n));
 export const roundScore = (n: number) => Math.round(clampScore(n) * 10) / 10;
@@ -124,6 +125,17 @@ export interface ScoringContext {
   alerts?: Alert[];
   forecast?: Forecast;
   soilThresholds?: number[];
+  hazard?: HazardEvidence | null; // resolved by the caller for the site-local date
+}
+function hazardModelFactors(context: ScoringContext): Partial<Record<Category, RiskFactor>> {
+  const e = context.hazard;
+  if (!e) return {};
+  return Object.fromEntries(HAZARD_KEYS.map(key => {
+    const h = e.day.hazards[key], name = HAZARD_NAMES[key];
+    return [HAZARD_CHANNELS[key], { key: name[0].toLowerCase() + name.slice(1), value: h.probability, score: h.score, weight: 1, confidence: C.hazardModel.confidence,
+      kind: "forecast", mode: e.mode, source: `${name} ${e.modelVersion}: ${describeHazard(key, h)} on ${e.day.date}; learned probability, not an observation`,
+      validFrom: `${e.day.date}T00:00:00`, validTo: `${e.day.date}T23:59:59` } satisfies RiskFactor];
+  }));
 }
 function modelFactors(o: SiteObservationV1, context: ScoringContext): Partial<Record<Category, RiskFactor>> {
   const f = context.forecast, now = context.now;
@@ -139,7 +151,7 @@ function modelFactors(o: SiteObservationV1, context: ScoringContext): Partial<Re
 }
 export function scoreChannels(o: SiteObservationV1, context: ScoringContext): HazardScore[] {
   const alerts = (context.alerts ?? []).filter(a => a.siteId === o.siteId && a.mode === "live" && Date.parse(a.expiresAt) > context.now);
-  const models = modelFactors(o, context);
+  const models = modelFactors(o, context), learned = hazardModelFactors(context);
   const factor = (key: string, value: RiskFactor["value"], score: number | null, weight = 1, confidence = 1): RiskFactor => {
     const path = key === "flood.gauge" ? (o.flood.stagePercentile !== null ? "flood.stagePercentile" : "flood.stageTrend") : key;
     const metadata = o.provenance.fieldEvidence[path];
@@ -155,7 +167,7 @@ export function scoreChannels(o: SiteObservationV1, context: ScoringContext): Ha
   const gaugeCompleteness = (o.flood.stagePercentile !== null ? C.weights.gauge[0] : 0) + (o.flood.stageTrend !== null ? C.weights.gauge[1] : 0);
   const factors: Record<Category, RiskFactor[]> = {
     heat: [factor(w.heatIndexF !== null ? "weather.heatIndexF" : "weather.apparentTemperatureF", w.heatIndexF ?? w.apparentTemperatureF, scoreHeat(w.heatIndexF, w.apparentTemperatureF), 1, w.heatIndexF !== null ? 1 : C.confidence.apparent)],
-    weather: [factor("weather.windMph", w.windMph, scoreWind(w.windMph), C.weights.weather[0]), factor("weather.gustMph", w.gustMph, scoreWind(w.gustMph), C.weights.weather[1]), factor("weather.precipitation1hMm", w.precipitation1hMm, curve(w.precipitation1hMm, C.rain1h), C.weights.weather[2]), factor("weather.weatherCode", w.weatherCode, valid(w.weatherCode) ? C.weatherCodeFloors[w.weatherCode] ?? null : null, C.weights.weather[3])],
+    weather: [factor("weather.windMph", w.windMph, scoreWind(w.windMph), C.weights.weather[0]), factor("weather.gustMph", w.gustMph, scoreWind(w.gustMph), C.weights.weather[1]), factor("weather.precipitation1hMm", w.precipitation1hMm, curve(w.precipitation1hMm, C.rain1h), C.weights.weather[2]), factor("weather.weatherCode", w.weatherCode, valid(w.weatherCode) ? C.weatherCodeFloors[w.weatherCode] ?? 0 : null, C.weights.weather[3])],
     soil: [factor("soil.moisture", s.historicalPercentile ?? s.moistureSurface ?? s.moistureRoot, soilScore, 1, soilConfidence)],
     lightning: [factor("lightning.nearestStrikeMiles", o.lightning.nearestStrikeMiles, curve(o.lightning.nearestStrikeMiles, C.strikeDistance)), factor("lightning.strikes10mi30m", o.lightning.strikes10mi30m, curve(o.lightning.strikes10mi30m, C.strikeCount)), factor("lightning.forecastPotential", o.lightning.forecastPotential, curve(o.lightning.forecastPotential, C.stormPotential), 1, C.confidence.forecastLightning)],
     flood: [factor("flood.rainfall", w.precipitation24hMm, flood[0], C.weights.flood[0], rainCompleteness), factor("flood.gauge", o.flood.stagePercentile, flood[1], C.weights.flood[1], gaugeCompleteness), factor("flood.floodplain", o.flood.floodplain, flood[2], C.weights.flood[2])],
@@ -168,6 +180,8 @@ export function scoreChannels(o: SiteObservationV1, context: ScoringContext): Ha
     let value = values[hazard];
     const list = factors[hazard];
     if (models[hazard]) { list.push(models[hazard]!); value = mergeEvidence(value, models[hazard]!.score); }
+    // A learned probability can raise, never lower, rule and observation evidence.
+    if (learned[hazard]) { list.push(learned[hazard]!); value = mergeEvidence(value, learned[hazard]!.score); }
     if (hazard === "wildfire" && o.wildfire.redFlagAlert !== null) list.push(factor("wildfire.redFlagAlert", o.wildfire.redFlagAlert, o.wildfire.redFlagAlert ? C.alertFloors.redFlag : 0));
     for (const alert of alerts.filter(a => a.category === hazard)) {
       const minimum = alertFloor(alert); value = floor(value, minimum);
@@ -181,12 +195,13 @@ export function scoreChannels(o: SiteObservationV1, context: ScoringContext): Ha
       list.push({ key: `crew:${report.id}`, value: evidence.severity, score: evidence.score, weight: 1, confidence: evidence.confidence, kind: "crew", mode: "crew",
         source: evidence.classification ? "Confirmed JEV crew classification" : "Unclassified crew evidence: provisional MODERATE", validFrom: report.createdAt });
     }
+    const environmentScore = value === null ? null : roundScore(value);
     value = mergeEvidence(value, crew);
     const environmental = list.filter(f => !f.key.startsWith("crew:"));
     const confidence = value === null ? 0 : Math.max(
       environmental.reduce((sum, f) => sum + f.weight * f.confidence, 0) / environmental.reduce((sum, f) => sum + f.weight, 0),
       ...list.filter(f => f.key.startsWith("crew:")).map(f => f.confidence));
-    return { hazard, score: value === null ? null : roundScore(value), confidence,
+    return { hazard, score: value === null ? null : roundScore(value), environmentScore, confidence,
       evidence: [value === null ? "No fresh scoring evidence; hazard remains unknown." : `Continuous screen: ${hazard}.`,
         ...(hazard === "soil" && soilConfidence < 1 ? [calibratedSoil ? "Approximation from training-period anchors; not a measured percentile." : "Absolute moisture fallback has low confidence; regional calibration is missing."] : []),
         ...(hazard === "lightning" ? ["Forecast storm potential does not establish detected strikes or detector coverage."] : []),

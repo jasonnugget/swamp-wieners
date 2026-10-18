@@ -5,6 +5,11 @@ runtime/
 .env
 data/raw/
 data/training.npz
+data/labels/
+data/features/
+data/hazards.npz
+data/hazard-label-report.json
+data/*.log
 test-results/
 playwright-report/
 __pycache__/

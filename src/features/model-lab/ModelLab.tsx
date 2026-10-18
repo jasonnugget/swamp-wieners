@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -14,17 +14,21 @@ import type { Forecast, ModelBundle, Sample, Site } from "../../../shared/types"
 import { forecastSample, heatIndex } from "../../../shared/model";
 import type { CalibrationResult } from "./browser-ml";
 import ForecastChart from "../../components/ForecastChart";
+const HazardLab = lazy(() => import("./HazardLab"));
 
 export default function ModelLab({
   site,
   bundle,
   forecast,
+  onReplay,
 }: {
   site: Site;
   bundle: ModelBundle;
   forecast: Forecast;
+  onReplay?: (event: number, siteId: string) => void;
 }) {
-  const [target, setTarget] = useState<"heat" | "soil">("heat"),
+  const [tab, setTab] = useState<"heat" | "soil" | "hazard">("heat"),
+    target = tab === "hazard" ? "heat" : tab,
     [samples, setSamples] = useState<Sample[]>([]),
     [backend, setBackend] = useState("Checking device…"),
     [busy, setBusy] = useState(false),
@@ -150,8 +154,9 @@ export default function ModelLab({
             Forecast it. Test it. <em>Learn the site.</em>
           </h2>
           <p>
-            Two custom models. Real historical data. A local correction trained
-            on this device.
+            Two forecast-correction models, five learned next-day hazard
+            classifiers and a learned site index. Real historical data. A local
+            correction trained on this device.
           </p>
         </div>
         <span className="backend">
@@ -161,27 +166,43 @@ export default function ModelLab({
       </div>
       <div className="model-tabs">
         <button
-          className={target === "heat" ? "active" : ""}
+          className={tab === "heat" ? "active" : ""}
           onClick={() => {
-            if (!busy) setTarget("heat");
+            if (!busy) setTab("heat");
           }}
           disabled={busy}
         >
           HeatCast <span>Heat exposure</span>
         </button>
         <button
-          className={target === "soil" ? "active" : ""}
+          className={tab === "soil" ? "active" : ""}
           onClick={() => {
-            if (!busy) setTarget("soil");
+            if (!busy) setTab("soil");
           }}
           disabled={busy}
         >
           GroundCast <span>Surface wetness</span>
         </button>
+        <button
+          className={tab === "hazard" ? "active" : ""}
+          onClick={() => {
+            if (!busy) setTab("hazard");
+          }}
+          disabled={busy}
+        >
+          HazardCast <span>Next-day events</span>
+        </button>
         <span className="model-version">
-          64 → 32 → 3 · quantile MLP · {bundle.version}
+          {tab === "hazard"
+            ? "30 → 32 → 16 → 1 networks + heat logistic · calibrated · planit-hazard-2"
+            : `64 → 32 → 3 · quantile MLP · ${bundle.version}`}
         </span>
       </div>
+      {tab === "hazard" ? (
+        <Suspense fallback={<section className="panel empty-state">Loading HazardCast…</section>}>
+          <HazardLab site={site} onReplay={onReplay} />
+        </Suspense>
+      ) : (<>
       <div className="metric-grid lab-metrics">
         <div className="metric">
           <span>Held-out model error</span>
@@ -484,6 +505,7 @@ export default function ModelLab({
           Data provenance ↗
         </a>
       </div>
+      </>)}
     </div>
   );
 }

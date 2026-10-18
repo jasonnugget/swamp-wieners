@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import requests
 from expand_sites import expand_sites
+from common import heat_index
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / 'data/raw'
@@ -94,15 +95,6 @@ def make_sites():
     assert len(sites)==50 and len({s['id'] for s in sites})==50
     (PUBLIC/'sites.json').write_text(json.dumps(sites,indent=2))
     return sites
-
-
-def heat_index(t,r):
-    t=np.asarray(t)*1.8+32; r=np.asarray(r)
-    simple=.5*(t+61+(t-68)*1.2+r*.094)
-    hi=-42.379+2.04901523*t+10.14333127*r-.22475541*t*r-.00683783*t*t-.05481717*r*r+.00122874*t*t*r+.00085282*t*r*r-.00000199*t*t*r*r
-    hi-=np.where((r<13)&(t>=80)&(t<=112),(13-r)/4*np.sqrt(np.maximum(0,(17-np.abs(t-95))/17)),0)
-    hi+=np.where((r>85)&(t>=80)&(t<=87),(r-85)/10*(87-t)/5,0)
-    return np.where((simple+t)/2<80,simple,hi)
 
 
 def site_data(site):

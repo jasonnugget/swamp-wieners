@@ -6,6 +6,7 @@ This directory is imported by the client, server, and unit tests. Keep it free o
 | --- | --- |
 | `types.ts` | Site, forecast, sample, model, evidence, decision, briefing, and snapshot contracts |
 | `model.ts` | Feature construction, NOAA heat-index calculation, and portable dense-network inference |
+| `hazard-model.ts` | HazardCast daily aggregation, calibrated classifiers, OverallCast, score anchors, evidence freshness and learned index |
 | `policy.ts` | Independent task rules, geodesic strike checks, lightning timers and period adapters |
 | `risk.ts`, `providers.ts` | Versioned observations/snapshots, structured evidence and runtime metadata validation |
 | `risk-config.ts`, `risk-scoring.ts` | Continuous channel curves, evidence merge, confidence and dominant-plus-compounding risk |
@@ -20,6 +21,7 @@ This directory is imported by the client, server, and unit tests. Keep it free o
 
 `CrewTeam` ties a roster of reporting names to plant IDs. Snapshots include teams. Report team IDs and names are optional so existing and unassigned reports remain valid; a stored report's team name is historical context.
 
+- Keep `HAZARD_FEATURES` and `dailyHazardFeatures` synchronized with `scripts/prepare_hazard_features.py`. Learned hazard evidence only raises channels; the hold guardrail (`policy.holdScore`) excludes crew severity.
 - Keep the feature order synchronized with `scripts/train.py`. Quantile ordering, residual targets, scale/offset, clipping, and interval adjustment must match exports and browser inference.
 - Unknown or stale evidence does not become zero risk. A low prediction cannot clear an existing report or lightning hold.
 - Lightning holds last thirty minutes from the latest qualifying strike within ten miles. Ignore future timestamps; duplicate events must not extend the timer beyond their timestamp.

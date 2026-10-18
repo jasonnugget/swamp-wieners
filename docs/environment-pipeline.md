@@ -22,7 +22,7 @@ NWS alerts enrich every site's record. Only a successful check within ten minute
 
 ## Scoring and coverage
 
-Numerical scoring is now `continuous-risk-4`, with task policy `continuous-policy-4`. All seven channels, dominant-plus-compounding aggregation, source confidence, structured drivers and semantic crew scoring are documented in [continuous hazard scoring](risk-scoring.md). Replay and forecast-period outputs use those same pure functions; stored historical briefings keep their original values and version.
+Numerical scoring is now `continuous-risk-5`, with task policy `continuous-policy-5` (learned HazardCast evidence and extreme-score holds; see [guardrails](risk-scoring.md#learned-hazards-and-guardrails)). All seven channels, dominant-plus-compounding aggregation, source confidence, structured drivers and semantic crew scoring are documented in [continuous hazard scoring](risk-scoring.md). Replay and forecast-period outputs use those same pure functions; stored historical briefings keep their original values and version.
 
 Field coverage counts 17 primary inputs: temperature, humidity, wind, gusts, 1h/24h/7d rain, weather code, CAPE, surface/root soil moisture, detected-strike count, gauge percentile, flood-alert status, nearby fire distance, red-flag status and relevant public sighting count. Coverage is `available / expected × 100` and is independent of the numerical score. A measured/model-estimated zero is available; null is missing. Missing values never contribute zero. Additional ML predictions and crew scoring factors do not inflate observation coverage; normalized provider forecast inputs do count when available. Confidence includes available factor weights and source completeness. A low partial score is not site clearance.
 

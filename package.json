@@ -15,7 +15,9 @@
     "data:prepare": ".venv/bin/python scripts/prepare_data.py",
     "data:catalog": ".venv/bin/python scripts/expand_sites.py",
     "data:complete": "tsx server/complete-site-data.ts",
-    "ml:train": "OPENBLAS_NUM_THREADS=2 .venv/bin/python scripts/train.py"
+    "ml:train": "OPENBLAS_NUM_THREADS=2 .venv/bin/python scripts/train.py",
+    "data:hazards": "for step in fetch_static fetch_storm_events fetch_iem fetch_asos fetch_firms fetch_tides fetch_osha fetch_storm_cells prepare_hazard_features build_hazard_dataset; do .venv/bin/python scripts/$step.py || exit 1; done",
+    "ml:hazards": "OPENBLAS_NUM_THREADS=2 .venv/bin/python scripts/train_hazards.py"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
